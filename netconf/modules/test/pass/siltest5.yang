@@ -1,0 +1,63 @@
+module siltest5 {
+
+    namespace "http://netconfcentral.org/ns/siltest5";
+    prefix "siltest5";
+    import yuma-ncx { prefix ncx; }
+    description 
+      "Test SIL callback behavior for YANG features.";
+
+    revision 2011-10-08 {
+       description "Initial version.";
+    }
+
+    feature f1;
+
+    feature f2;
+
+    feature f3 { 
+      if-feature f1;
+    }
+
+    leaf c5-leaf {
+      if-feature f1;
+      type string;
+    }
+
+    leaf-list c5-leaf-list {
+      if-feature f2;
+      type string;
+    }
+
+    list c5-list {
+       key a;
+       leaf a { type string; }
+       leaf b { 
+          type leafref { 
+             path "../../c5-leaf"; 
+          }
+       }
+    }
+
+    list c5a-list {
+       if-feature f2;
+       ncx:sil-delete-children-first;  // applies here
+       key a;
+       leaf a { type string; }
+       list cc5 {
+          ncx:sil-delete-children-first;  // applies here
+          key "key1 key2";
+          leaf key1 { type uint32; }
+          leaf key2 { type int32; }
+          leaf yy { 
+            if-feature f3;
+            type int32; 
+          }
+          leaf zz { 
+            if-feature f3;
+            type uint64; 
+            config false; 
+          }
+       }
+    }
+
+}

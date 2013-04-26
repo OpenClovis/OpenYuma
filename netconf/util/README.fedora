@@ -1,0 +1,43 @@
+
+Steps to make a yuma RPM package for fedora
+
+  -- install development versions of packages
+       - libxml2-devel
+       - libssh2-devel
+       - ncurses-devel
+
+  -- set YUMA_ARCH and YUMA_OS environment variables for the system
+     export YUMA_ARCH=i686
+     export YUMA_OS=fc15
+
+  -- To sign packages, make a keypair
+    gpg --import mykey.public
+    gpg --import mykey.private
+
+    (as root) yum install rpmdevtools
+    (as root) yum install rpm-build
+    (as root) yum install redhat-rpm-config
+
+    (from this dir)
+    cp trunk/SPECS/dot-rpmmacros ~/.rpmmacros
+    [edit ~/.rpmmacros as needed]
+
+    (as root) yum install libssh2-devel
+
+    mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+
+    cd yuma (this dir)
+    ./prep-rpm.sh N
+     where N == 1 for yuma 1.x
+             == 2 for yuma 2.x
+
+    cd ~/rpmbuild/SPECS
+
+ N
+(1) rpmbuild -bb --sign yuma.spec
+(2) rpmbuild -bb --sign yuma2.spec
+
+    [enter password for gpg keypair above]
+    [foo.*.rpm should be in ../RPMS/arch/ if all OK]
+
+

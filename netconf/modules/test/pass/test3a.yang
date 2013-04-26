@@ -1,0 +1,62 @@
+module test3 {
+
+    namespace "http://netconfcentral.org/ns/test3";
+    prefix "t3";
+
+
+    revision 2009-09-09 {
+        description "Initial revision.";
+    }
+
+    identity testbase;
+
+    identity testbase1 {
+       base t3:testbase;
+    }
+
+    container test33 {
+      choice f {
+        mandatory true;
+
+        leaf f1 { 
+           if-feature X;
+           type string; 
+        }
+        leaf f2 { type string; }
+      }
+
+      choice g {
+        mandatory false;
+
+        leaf g1 { type string; mandatory true; }
+        leaf g2 { type string; }
+        case g3 {
+          leaf g3a { type string; mandatory true; }
+          leaf g3b { type string; }
+        }
+      }
+    }
+
+    feature X;
+
+    typedef A {
+       type uint32;
+       default 42;
+    }
+
+    typedef B {
+       type A {
+         range "14 .. max";
+       }
+    }
+
+   typedef C {
+     type B {
+       range "min .. 41";
+     }
+     default 15;
+   }
+
+   leaf test-C { type C; }
+
+}

@@ -1,0 +1,18 @@
+module testmalloc {
+
+    namespace "http://netconfcentral.org/ns/testmalloc";
+    prefix "tm";
+
+    revision 2008-10-15 {
+        description "Initial revision.";
+    }
+
+    leaf leafref1 {
+       type leafref {
+          path "../foo";
+       }
+    }
+
+    leaf foo { type int32; }
+
+}

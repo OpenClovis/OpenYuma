@@ -1,0 +1,72 @@
+module testloops {
+
+    namespace "http://netconfcentral.org/ns/testloops";
+    prefix "tl";
+
+    import testloops {
+      prefix testloops;
+    }
+
+    include testloops;
+
+    revision 2009-03-03 {
+        description "Initial revision.";
+    }
+
+    leaf LR1 {
+      type leafref {
+        path "../LR2";
+      }
+    }
+
+    leaf LR2 {
+      type leafref {
+        path "../LR3";
+      }
+    }
+
+    leaf LR3 {
+      type leafref {
+        path "../LR1";
+      }
+    }
+
+    typedef typeloop {
+       type typeloop;
+    }
+
+    typedef typeloop2 {
+       type typeloop3;
+    }
+
+    typedef typeloop3 {
+       type typeloop4;
+    }
+
+    typedef typeloop4 {
+       type typeloop2;
+    }
+
+    grouping grouploop {
+       uses grouploop;
+    }
+
+    grouping grouploop2 {
+       uses grouploop3;
+    }
+
+    grouping grouploop3 {
+       uses grouploop4;
+    }
+
+    grouping grouploop4 {
+       uses grouploop2;
+    }
+
+    feature A { if-feature B; }
+    feature B { if-feature C; }
+    feature C { if-feature A; }
+    feature D { if-feature B; }
+    feature E;
+
+}

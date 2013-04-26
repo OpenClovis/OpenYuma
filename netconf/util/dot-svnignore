@@ -1,0 +1,7 @@
+*.pyc
+*~
+server.log
+*.D
+dependencies
+*.o
+*.a

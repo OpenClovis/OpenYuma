@@ -1,0 +1,464 @@
+.\" Process this file with
+.\" nroff -e -mandoc foo.1
+.\"
+.TH yangdiff 1 "February 6, 2012" Linux "yangdiff 2.2"
+.SH NAME
+yangdiff \-report semantic and syntactic changes between two revisions of a YANG module
+
+.SH SYNOPSIS
+.nf
+
+   yangdiff old=value new=value [parameter=value...]
+
+   yangdiff  --help [brief | normal | full]
+
+   yangdiff  --version
+
+.SH DESCRIPTION
+.B yangdiff
+compares the semantics and syntax between 
+two revisions of the same YANG module.  The 
+conceptual data model is compared, not the 
+individual files.  
+This version of yangdiff supports the YANG data modeling language
+defined in \fBdraft-ietf-netmod-yang-12.txt\fP.
+
+Only semantic changes to the YANG data model are reported.
+For example, unless statement order is significant,
+changing the order is not considered a change, and 
+is not reported.  Reformatted test (whitespace changes)
+are also not reported.
+
+If a data type definition is changed in form,
+but not content, then a 'modify type' message
+will be generated, but no additional sub-fields
+will be reported.
+
+.SH USAGE
+Parameters can be entered in any order, and have the form:
+
+   \fB[start] name [separator [value]]\fP
+
+where:
+
+    \fBstart\fP == 0, 1, or 2 dashes (foo, -foo, --foo)
+
+    \fBname\fP == parameter name
+.nf
+
+         Parameter name completion will be attempted 
+         if a partial name is entered.
+
+.fi
+    \fBseparator\fP == whitespace or equals sign (foo=bar, foo bar)
+
+    \fBvalue\fP == string value for the parameter.
+.nf
+
+         Strings with whitespace need to be double quoted 
+         (--foo="some string")
+
+.fi
+Some examples of valid command line parameters:
+.nf
+
+   foo=3
+   -foo=3
+   --foo=3
+   foo 3
+   foo=fred
+   --foo "fred flintstone"
+.fi
+
+Partial parameter names can be entered if they are unique.
+
+.SH OPTIONS
+.IP --\fBconfig\fP=filespec
+The name of the configuration file to use.
+Any parameter except this one can be set in the config file.
+The default config file 
+.I /etc/yuma/yangdiff.conf
+will be not be checked if this parameter is present.
+.IP --\fBdifftype\fP=string
+The type of comparison output requested.
+Allowed values are 'terse', 'normal', and 'revision'.
+
+The basic format is:
+.nf
+
+  [add/delete/modify] field-name [field-value]
+
+.fi
+The 'terse' option will include the names
+of the top-level fields that are different.
+.nf
+
+     A foo  -->  Added foo in new revision
+     D foo  -->  Deleted foo in new revision
+     M foo  -->  Modified foo in new revision (value too long)
+     M foo from '0' to '1'  -->  Modified foo in new revision
+
+.fi
+The 'normal' option will also include any changes
+for any nested fields or objects.  This is the default
+option.
+
+The 'revision' option will generate the differences report
+in YANG revision-stmt format.  For example:
+.nf
+
+       revision <todays-date> {
+         description 
+          \"
+            - Added import baxtypes
+            - Changed contact from 'tech@acme.com' to 'support@acme.com'
+             - Modified container myobjects
+               - Added list first-list\";
+       }
+
+.fi
+If missing, the the default value 'normal' is used.
+.IP --\fBfeature-disable\fP=module:feature
+Identifies a feature which should be considered disabled.
+Zero or more entries are allowed.
+.IP --\fBfeature-enable-default\fP=boolean
+If true (the default), then features will be enabled by default.
+If false, then features will be disabled by default.
+.IP --\fBfeature-enable\fP=module:feature
+Identifies a feature which should be considered enabled.
+Zero or more entries are allowed.
+.IP --\fBheader\fP=boolean
+If false, the header clauses will be skipped, and any 
+differences between the module headers will not be reported.
+Only object definitions will be compared.
+       
+If true (the default), then header clauses will be compared,
+along will all the object definitions.
+.IP --\fBhelp\fP
+Print this help text and exit.
+The help-mode choice (--brief, --normal, or --full) may also be present
+to control the amount of help text printed.
+.fi
+.IP --\fBhome\fP=dirspec
+Directory specification for the home directory
+to use instead of HOME.
+.IP --\fBindent\fP=number
+Number of spaces to indent (0..9) in formatted output.
+The default is 2 spaces.
+.IP --\fBlog\fP=filespec
+Filespec for the log file to use instead of STDOUT.
+If this string begins with a '~' character,
+then a username is expected to follow or
+a directory separator character.  If it begins
+with a '$' character, then an environment variable
+name is expected to follow.
+.IP --\fBlog-append\fP
+If present, the log will be appended not over-written.
+If not, the log will be over-written.
+Only meaningful if the \fBlog\fP parameter is
+also present.
+.IP --\fBlog-level\fP=enum
+Sets the debug logging level for the program.
+.IP --\fBmodpath\fP=list
+Directory search path for YANG and YIN files.
+Overrides the YUMA_MODPATH environment variable.
+.IP --\fBnew\fP=string
+If this parameter indicates a filename, then it
+represents the YANG source module name 
+to compare as the newer of the two revisions.
+
+If this parameter indicates a directory
+(and the 'old' parameter indicates a filename),
+then it will be used to to search for a
+file with the same name as the 'new' parameter.
+
+If the 'old' parameter identifies a directory
+as well (and the 'subdirs' parameter is true),
+then the modules within the 'new' directory will be 
+compared to files with the same name in the 'old' 
+directory.  If the 'subdirs' parameter is false,
+then all sub-directories within the 'src'
+directory will also be checked.
+
+If this string begins with a '~' character,
+then a username is expected to follow or
+a directory separator character.  If it begins
+with a '$' character, then an environment variable
+name is expected to follow.
+.nf
+
+      ~/some/path ==> <my-home-dir>/some/path
+
+      ~fred/some/path ==> <fred-home-dir>/some/path
+
+      $workdir/some/path ==> <workdir-env-var>/some/path
+
+.fi
+This parameter must be present unless the 'help'
+or 'version' parameters are used.
+.IP --\fBold\fP=string
+The older of the two revisions to compare.
+
+If this parameter indicates a filename, then it
+represents the YANG source module name 
+to compare as the older of the two revisions.
+
+If this parameter indicates a directory,
+then it will be used to to search for a
+file with the same name as identified by
+the 'new' parameter.
+
+If this string represents a filespec, 
+ending with the \fB.yang\fP or \fB.yin\fP extension,
+then only that file location will be checked.
+
+If this string represents a module name, then
+the module search path will be checked for
+a file the \fB.yang\fP or \fB.yin\fP extension.
+
+If this string begins with a '~' character,
+then a username is expected to follow or
+a directory separator character.  If it begins
+with a '$' character, then an environment variable
+name is expected to follow.
+.nf
+
+      ~/some/path ==> <my-home-dir>/some/path
+
+      ~fred/some/path ==> <fred-home-dir>/some/path
+
+      $workdir/some/path ==> <workdir-env-var>/some/path
+
+.fi
+This parameter must be present unless the 'help'
+or 'version' parameters are used.
+.IP --\fBoutput\fP=filespec
+Output directory or file name to use. 
+The default is STDOUT if none is specified.
+
+If this parameter represents an existing directory,
+then the default comparison output file (yangdiff.log)
+will be generated in the specified directory.
+
+If this parameter represents a file name,
+then all comparison output will be directed
+to the specified file.  If the file already exists,
+it will be overwritten.
+
+If this string begins with a '~' character,
+then a username is expected to follow or
+a directory separator character.  If it begins
+with a '$' character, then an environment variable
+name is expected to follow.
+.nf
+
+      ~/some/path ==> <my-home-dir>/some/path
+
+      ~fred/some/path ==> <fred-home-dir>/some/path
+
+      $workdir/some/path ==> <workdir-env-var>/some/path
+
+.fi
+.IP --\fBsubdirs\fP=boolean
+If false, the file search paths for modules, scripts, and data
+files will not include sub-directories if they exist in the
+specified path.
+      
+If true, then these file search paths will include
+sub-directories, if present.  Any directory name beginning
+with a dot (\fB.\fP) character, or named \fBCVS\fP, will be ignored.
+This is the default mode.
+.IP --\fBversion\fP
+Print the yangdiff version string and exit.
+.IP --\fBwarn-idlen\fP=number
+ Control whether identifier length warnings will be
+generated.  The value zero disables all identifier
+length checking.  If non-zero, then a warning will
+be generated if an identifier is defined which 
+has a length is greater than this amount.
+range: 0 | 8 .. 1023.
+The default value is 64.
+.IP --\fBwarn-linelen\fP=number
+Control whether line length warnings will be
+generated.  The value zero disables all line length
+checking.  If non-zero, then a warning will
+be generated if the line length is greater than
+this amount.  Tab characters are counted as 8 spaces.
+range: 0 | 40 .. 4095.
+The default value is 72.
+.IP --\fBwarn-off\fP=number
+Control whether the specified warning number will be
+generated and counted in the warning total for the
+module being parsed.
+range: 400 .. 899.
+This parameter may be entered zero or more times.
+.IP --\fByuma-home\fP=string
+Directory for the yuma project root to use.
+If present, this directory location will
+override the YUMA_HOME environment variable,
+if it is present.  If a zero-length string is
+entered, then the YUMA_HOME environment variable
+will be ignored.
+
+
+.SH INPUT FILES
+
+To compare one module, use the 'old' and 'new'
+parameters to specify YANG module files,
+each with a filespec string ending with the '.yang'
+or '.yin' file extension.  The filespecs must represent
+different files.  If the 'old' parameter represents
+a directory, then this directory will be searched
+for the 'new' filename.
+
+To compare all the modules in a subtree, use
+the 'old' and 'new' parameters to specify a directory
+to be searched for YANG modules to be processed.
+In this mode, each new module is compared to
+a corresponding file within the 'old' subtree.
+Also, dependency and include files
+will be kept separate, for each subtree.
+           
+Unless the 'help' or 'version' parameters is entered, 
+the 'old' and 'new' parameters must be present.
+
+.SH SEARCH PATH
+When a module name is entered as input, or when a
+module or submodule name is specified in an import or include
+statement within the file, the following search algorithm
+is used to find the file:
+.nf    
+
+  1) if the parameter for the file that generated the
+     search request represents a subtree, search that
+     subtree first.
+  2) file is in the current directory
+  3) YUMA_MODPATH environment var (or set by modpath parameter)
+  4) $HOME/modules directory
+  5) $YUMA_HOME/modules directory
+  6) $YUMA_INSTALL/modules directory OR
+     default install module location, '/usr/share/yuma/modules'
+
+.fi
+By default, the entire directory tree for all locations
+(except step 1) will be searched, not just the specified
+directory.  The \fBsubdirs\fP parameter can be used to
+prevent sub-directories from being searched.
+    
+Any directory name beginning with a dot character (\fB.\fP)
+will be skipped.  Also, any directory named \fBCVS\fP will
+be skipped in directory searches.
+
+.SH OUTPUT MODES
+By default, any translation output will be sent to \fBSTDOUT\fP.
+    
+The \fBoutput\fP parameter can be used to specify the 
+full filespec of the output file,  or a
+complete directory specification to be combined
+with the default filename (yangdiff.log).
+
+.SH ERROR LOGGING
+By default, warnings and errors are sent to STDOUT.
+    
+A log file can be specified instead with the \fBlog\fP' parameter.
+
+Existing log files can be reused with the 'logappend'
+parameter, otherwise log files are overwritten.
+    
+The logging level can be controlled with the \fBlog-level\fP
+parameter.
+
+The default log level is 'info'.  The
+log-levels are additive:
+.nf
+
+     off:    suppress all errors (not recommended!)
+             A program return code of '1' indicates some error.
+     error:  print errors
+     warn:   print warnings
+     info:   print generally interesting trace info
+     debug:  print general debugging trace info
+     debug2: print verbose debugging trace info
+     debug3: print very verbose debugging trace info
+     debug4: print maximum debugging trace info
+
+.fi
+
+.SH ENVIRONMENT
+The following optional environment variables can be used
+to control module search behavior:
+
+.IP \fBHOME\fP
+The user's home directory  (e.g., /home/andy)
+.IP \fBYUMA_HOME\fP
+The root of the user's YANG work directory
+(e.g., /home/andy/swdev/netconf)
+.IP \fBYUMA_INSTALL\fP
+The root of the directory that yangdiff data files
+are installed on this system (default is, /usr/share/yuma)
+.IP \fBYUMA_MODPATH\fP
+Colon-separated list of directories to
+search for modules and submodules.
+
+(e.g.: './workdir/modules:/home/andy/test-modules')
+
+The \fBmodpath\fP parameter will override this
+environment variable, if both are present.
+
+.SH CONFIGURATION FILES
+.IP \fByangdiff.conf\fP
+YANG config file
+The default is: \fB/etc/yuma/yangdiff.conf\fP
+    
+An ASCII configuration file format is supported to
+store command line parameters. 
+
+The \fBconfig\fP parameter
+is used to specify a specific config file, otherwise
+the default config file will be checked.
+.nf    
+
+   - A hash mark until EOLN is treated as a comment
+   - All text is case-sensitive
+   - Whitespace within a line is not significant
+   - Whitespace to end a line is significant/
+     Unless the line starts a multi-line string,
+     an escaped EOLN (backslash EOLN) is needed
+     to enter a leaf on multiple lines.
+   - For parameters that define lists, the key components
+     are listed just after the parameter name, without
+     any name,  e.g.,
+    
+            interface eth0 {
+              # name = eth0 is not listed inside the braces
+              ifMtu 1500
+              ifName mySystem
+            }
+
+.fi    
+A config file can contain any number of parameter
+sets for different programs. 
+
+.SH FILES
+The following data files must be present in the module
+search path in order for this program to function:
+    
+  * \fBYANG module library\fP
+    default: /usr/share/yuma/modules/
+    
+.SH DIAGNOSTICS
+Internal diagnostics may generate the following
+type of message if any bugs are detected at runtime:
+.nf
+  
+    [E0]
+         filename.c:linenum error-number (error-msg)
+
+.fi
+.SH AUTHOR
+Andy Bierman, <andy at netconfcentral dot org>
+
+.SH SEE ALSO
+.BR yangdump (1)
+
+

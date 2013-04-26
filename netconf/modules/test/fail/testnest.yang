@@ -1,0 +1,16 @@
+submodule testnest {
+
+    belongs-to testnesttop { prefix tntop; }
+
+    revision 2010-08-21 {
+        description "Initial revision.";
+    }
+
+    grouping one { leaf two { type string; } }
+    feature A;
+    identity B;
+    typedef C { type string; }
+    leaf D { type uint32; }
+    extension E;
+
+}

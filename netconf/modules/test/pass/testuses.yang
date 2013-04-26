@@ -1,0 +1,60 @@
+module testuses {
+
+    namespace "http://netconfcentral.org/ns/testuses";
+    prefix "tu";
+
+    organization
+        "Netconf Central";
+
+    contact
+        "Andy Bierman";
+
+    description
+        "YANG uses-stmt test module.";
+
+    revision 2008-12-17 {
+        description "Initial version.";
+    }
+
+    container foo {
+      uses top-choice;
+    }
+
+    container bar {
+      uses top2-choice;
+    }
+
+    grouping top2-choice {
+      uses top-choice {
+          augment config-source {
+              leaf url {
+                description 
+                  "URL pointing to config data. Only available
+                   if 'url' capability supported.";
+               type string;  //
+              }
+          }
+      }
+    }
+
+    grouping top-choice {
+      choice config-source {
+        mandatory true;
+
+        leaf candidate {
+          description 
+            "Only available if 'candidate' capability supported.";
+          type empty;
+        }
+        leaf running {
+          type empty;
+        }
+        leaf startup {
+          description 
+            "Only available if 'startup' capability supported.";
+          type empty;
+        }
+      }
+    }
+
+}

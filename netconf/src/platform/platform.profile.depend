@@ -1,0 +1,33 @@
+#
+# platform.profile.depend
+#
+######################### PROFILE ########################
+
+# platform.profile must be included before this file!!!
+
+################## MAKE DEPENDENCIES #####################
+# following depend rule is the GNU version! Other versions TBD
+# this rule cannot be included by the top level makefile
+# so platform.profile.cmn was created to allow that Makefile
+# to define a different 'depend' rule.
+depend: dependencies
+
+dependencies: $(DEPS)
+	@if [ ! -f Makefile ]; then \
+	    echo "Error: Makefile missing!"; \
+	    exit 1; \
+	fi
+	@rm -f dependencies
+	@for i in $(DEPS); do \
+	  if [ -f $$i ] ; then \
+	    (cat $$i >> dependencies; echo "" >> dependencies) ; \
+	  else \
+	    (echo "*** Warning: Dependency file $i.D is missing! (Skipping...) ***"; \
+	     echo "# Warning: Missing file $$i !!!") ; \
+	  fi; \
+	done
+	@echo "" >> dependencies
+# delete the .D files to force make depend to rebuild them each time
+# that target is built
+#	@rm -f $(DEPS)
+

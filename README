@@ -1,0 +1,144 @@
+Yuma README
+-----------
+
+Last Updated: 2012-06-26 (v2.2-3)
+
+Pre-Build steps:
+
+   - set netconf/src/platform/platform.profile details
+      - see procdefs.h in this directory for common H defs
+      - CFLAGS and other make details are here
+
+Build Variables:
+
+  CYGWIN=1: build on windows within cygwin environment
+
+  DEBIAN=1: set for ubuntu packaing build; do not use
+     in normal builds
+
+  DEBUG=1: set to add gdb symbols instead of -O2;
+           does not remove the #ifdef DEBUG function
+           NULL pointer checks in external functions
+
+  DESTDIR=string: set the debian target build (default NULL)
+
+  DEVELOPER=1: debian packaging build flag to build the 
+      yuma-dev package.  Do not use in normal builds.
+
+  DOC=1: debian packaging build flag to build the yuma-doc package.
+      Do not use in normal builds
+
+  ETC_PREFIX=string: set the top etc dir (after DESTDIR)
+         default: /etc
+
+  FREEBSD=1: Build for a FreeBSD platform
+
+  FORCE_YUMA_HOME=1: use when building SIL libraries to   
+     link against a development version of yuma.
+     The YUMA_HOME environment variable must be set,
+     and it must point to the 'netconf' directory:
+
+     Bash example using 'mybranch':
+
+     export YUMA_HOME=/home/andy/swdev/yuma/trunk/branches/mybranch/netconf
+
+     The yuma include (H) files from $(YUMA_HOME)/src/*
+     will be used instead of the system H files in /usr/include/yuma.
+
+     The libagt and libncx libraries from $(YUMA_HOME)/target/lib
+     will be used instead of the system libraries in /usr/lib or /usr/lib64.
+     The static versions (libagt.a and libncx.a) will be expected if
+     STATIC=1 is also set.  Otherwise the dynamic library versions
+     will be expected instead.
+
+  FULL_STATIC=1: solve linking problems forcing static versions
+      of all external libraries (used only by debian package build)
+ 
+  LIB64=1: install and look for SIL libs in /usr/lib64/yuma
+         instead of /usr/lib/yuma (used by FC14 64 bit)
+
+  MAC=1: set to compile for MacOsX
+
+  MEMTRACE=1: enables mtrace debugging
+       Used when Memory leak error message printed upon exit.
+       Need to install glibc-utils for the 'mtrace' program.
+       Tools will generate an 'mtracefile' in the CWD.
+       Run mtrace /path/to/program ./mtracefile
+
+  NOTOASTER=1: disables building the example toaster SIL
+
+  PREFIX=string: set the top install dir (after DESTDIR)
+         default: /usr
+
+  PRODUCTION=1: disables the --DDEBUG flag definition
+    in compilation so all #ifdef DEBUG code is removed
+
+  RELEASE=N: sets the version to ver-release instead of
+             version.svnversion
+
+  STATIC=1:set to use static libraries such as libncx.a,
+         instead of dynamic libraries like libncx.so 
+
+  NOFLOAT: disable use of double and tgmath.h; XPath eval
+           of complex numbers will cause invalid results;
+           Cygwin does not support complex.h
+
+  USE_WERROR=1: use -Werror in the compile process
+    Default is not to use -Werror.
+
+To build everything (shared libs) on Linux, this will build 
+everything and install it in the default locations:
+
+   - make [FLAGS]
+   - [sudo] make [FLAGS] install
+
+For example, to build everything (static libs only) on Cygwin:
+
+   - make STATIC=1 NOFLOAT=1 CYGWIN=1
+   - [sudo] make STATIC=1 CYGWIN=1 install
+
+For example, to build everything (shared libs) on Fedora 14, 64-bit:
+
+   - make LIB64=1
+   - [sudo] make LIB64=1 install
+
+For example, to build everything (shared libs) 
+except /usr/lib/yuma/libtoaster.so
+
+   - make NOTOASTER=1
+   - [sudo] make NOTOASTER=1 install
+
+External file dependencies (for netconfd, optional):
+
+   - /etc/services 
+   - /etc/ssh/sshd_config
+   - SELinux config to allow access to port 830
+
+Default Installed Programs:
+
+   - /usr/bin/make_sil_dir
+   - /usr/bin/yangcli
+   - /usr/bin/yangdump
+   - /usr/bin/yangdiff
+   - /usr/sbin/netconfd
+   - /usr/sbin/netconf-subsystem
+
+Default Installed Libraries:
+
+  - /usr/lib/libagt.so.2.2
+  - /usr/lib/libncx.so.2.2
+  - /usr/lib/yuma/libtoaster.so
+
+Default Installed Libraries if LIB64=1:
+
+  - /usr/lib64/libagt.so.2.2
+  - /usr/lib64/libncx.so.2.2
+  - /usr/lib64/yuma/libtoaster.so
+   
+Default Installed Additional Files:
+
+  /usr/share/doc/yuma/*     -- user documentation
+  /etc/yuma/*               -- sample application config files
+  /usr/share/yuma/*         -- root of all YUMA data files
+  /usr/share/yuma/modules/* -- root of installed YANG modules
+

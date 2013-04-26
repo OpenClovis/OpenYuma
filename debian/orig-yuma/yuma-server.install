@@ -1,0 +1,15 @@
+usr/sbin/netconfd
+usr/sbin/netconf-subsystem
+etc/yuma/netconfd-sample.conf
+usr/share/doc/yuma/yuma-netconfd-manual.pdf.gz
+usr/man/man1/netconfd.1.gz
+usr/man/man1/netconf-subsystem.1.gz
+usr/share/yuma/modules/netconfcentral/netconfd.yang
+usr/share/yuma/modules/netconfcentral/yuma-interfaces.yang
+usr/share/yuma/modules/netconfcentral/yuma-mysession.yang
+usr/share/yuma/modules/netconfcentral/yuma-proc.yang
+usr/share/yuma/modules/netconfcentral/yuma-system.yang
+
+
+
+

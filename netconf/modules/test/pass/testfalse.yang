@@ -1,0 +1,36 @@
+module testfalse {
+
+  namespace "http://www.netconfcentral.org/ns/testfalse";
+  prefix "testfalse";
+  
+  revision 2011-03-30 {
+    description "Bug Report. (???) ";
+  }
+
+  container emptynp1;
+
+  container emptynp2 {
+    leaf del { 
+      type string;
+      default "fred";
+    }
+  }
+    
+  container monitor {
+   config false;
+   leaf node {
+     type string;
+   }
+   leaf comment {
+     type string;
+   }
+   leaf starts-with {
+     type string;
+   }
+   leaf preceding {
+     type string;
+   }
+
+  }
+
+}

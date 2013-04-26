@@ -1,0 +1,27 @@
+module testmust2 {
+
+    namespace "http://netconfcentral.org/ns/testmust2";
+    prefix "tm2";
+
+    organization
+        "Netconf Central";
+
+    contact
+        "Andy Bierman";
+
+    description
+        "YANG uses-stmt test module.";
+
+    revision 2008-12-18 {
+        description "Initial version.";
+    }
+
+
+    leaf test-abbreviated-path-parsing {
+       type string;
+
+       must "grandma::foo and (17 div current())";
+
+     }
+
+}

@@ -1,0 +1,643 @@
+.\" Process this file with
+.\" nroff -e -mandoc foo.1
+.\"
+.TH yangcli 1 "February 6, 2012" Linux "yangcli 2.2"
+.SH NAME
+yangcli \- YANG-based NETCONF-over-SSH client application
+
+.SH SYNOPSIS
+.nf
+
+   yangcli [parameter=value...]
+
+   yangcli --help [brief | normal | full]
+
+   yangcli --version
+
+
+.fi
+.SH DESCRIPTION
+.B yangcli
+is a Command Line Interface for the NETCONF protocol.
+It uses the YANG data modeling language to manage
+the NETCONF content layer.
+This version of yangcli supports the YANG data modeling language
+defined in \fBRFC 6020\fP.
+
+.nf
+
+    Normal Mode:
+       An interactive CLI shell with command line history.
+    
+    Autostart-mode:
+       If the 'server' parameter is present, then yangcli will
+        attempt to connect to that server upon startup.  If the
+       'user' and 'password' parameters are also present, then
+       the user will not be prompted before the connection
+       is attempted.  This parameter will be processed first,
+       if script-mode or batch-mode is used.
+    
+    Script-mode:
+       If the 'run-script' or 'run-command' parameter is present,
+       then the specified script or command will be run automatically
+       upon startup.
+
+    Batch-mode:
+       If the 'batch-mode' parameter is present, then either the
+       'run-script' or 'run-command' parameter will be invoked, if
+       present, and then the program will exit.
+.fi
+.SH USAGE
+Parameters can be entered in any order, and have the form:
+
+   \fB[start] name [separator [value]]\fP
+
+where:
+
+    \fBstart\fP == 0, 1, or 2 dashes (foo, -foo, --foo)
+
+    \fBname\fP == parameter name
+.nf
+
+         Parameter name completion will be attempted 
+         if a partial name is entered.
+
+.fi
+    \fBseparator\fP == whitespace or equals sign (foo=bar, foo bar)
+
+    \fBvalue\fP == string value for the parameter.
+.nf
+
+         Strings with whitespace need to be double quoted 
+         (--foo="some string")
+
+.fi
+Some examples of valid command line parameters:
+.nf
+
+   foo=3
+   -foo=3
+   --foo=3
+   foo 3
+   foo=fred
+   --foo "fred flintstone"
+.fi
+
+Partial parameter names can be entered if they are unique.
+
+.SH OPTIONS
+.IP --\fBaliases-file\fP[=filespec]
+Specifies the yangcli command aliases file to use.
+The default is ~/.yuma/.yangcli_aliases.
+.IP --\fBalt-names\fP=boolean
+Altername name match mode to use for UrlPath name searches.
+The default is true (allow matches on alt-name extension).
+.IP --\fBautoaliases\fP=boolean
+Controls whether the yangcli command aliases will
+be saved at exit and loaded at startup.
+If true, the 'aliases-file' parameter will be used if it is set,
+or else the default aliases file will be used
+(~/.yuma/.yangcli_aliases), for loading
+and saving the yangcli command aliases.
+If false, the yangcli command aliases will only be stored
+and loaded manually with the aliases command.
+The default is true.
+.IP --\fBautocomp\fP=boolean
+Controls whether partial keywords will be 
+checked for interactive or script commands.
+If true (the default), the first match for a partial keyword
+will be used if no definition is found for
+a command name or parameter name.
+If false, then exact command and parameter name values
+must be given.
+.IP --\fBautohistory\fP=boolean
+Controls whether the command line history buffer will
+be saved at exit and loaded at startup.
+If true, the default history file will be used
+(~/.yuma/.yangcli_history) for loading
+and saving the history buffer.  This is the default value.
+If false, the history buffer will only be stored
+and loaded manually with the history command.
+.IP --\fBautoload\fP=boolean
+Controls whether any YANG content modules
+will be automatically loaded upon startup or
+upon session startup with a server. This is the
+default value.  If false, the 'load-module' command
+must be used to explicitly load all the desired 
+definition modules.
+.IP --\fBautouservars\fP=boolean
+Controls whether the yangcli user variables will
+be saved at exit and loaded at startup.
+If true, the 'uservars-file' parameter will be used if set,
+or else the default user variables file will be used
+(~/.yuma/yangcli_uservars.xml), for loading
+and saving the yangcli user variables.
+If false, the yangcli user variables will only be stored
+and loaded manually with the uservars command.
+The default is true.
+.IP --\fBbad-data\fP=enum
+Specifies how invalid user input from the CLI
+will be handled when filling PDUs for remote
+operations.
+.nf
+
+   enum values:
+      ignore
+         Silently accept invalid PDU and data model 
+         parameters.  Intended for advanced server
+         testing mode only.
+      warn
+         Warn, but accept invalid PDU and data model 
+         parameters.
+      check
+         Prompt the user to keep the invalid value
+         or re-enter the value.
+      error
+         Prompt the user to re-enter the invalid value.
+.fi  
+.IP --\fBbatch-mode\fP
+If present, the interactive CLI will not be used.
+A script should be provided with the 'run-script'
+parameter, or a command provided with the 'run-command'
+parameter, or else the program will simply exit.
+If the auto-connect mode is enabled, then this will mode
+simply test if a NETCONF session can be established,
+then exit.
+.IP --\fBconfig\fP=filespec
+The name of the configuration file to use.
+Any parameter except this one can be set in the config file.
+The default config file 
+.I /etc/yuma/yangcli.conf
+will be not be checked if this parameter is present.
+.IP --\fBdatapath\fP=list
+Internal file search path for configuration data files.
+Overrides the YUMA_DATAPATH environment variable.
+.IP --\fBdefault-module\fP=string
+Default module name string to use before 'netconf' 
+and 'yangcli' are tried.  The module prefix may need to be
+used for other modules.
+.IP --\fBdeviation\fP=string
+ This parameter identifies a YANG module that
+should only be checked for deviation statements
+for external modules.  These will be collected
+and applied to the real module(s) being processed.
+       
+Deviations are applied as patches to the target module.
+Since they are not identified in the target module at
+all (ala imports), they have to be specified
+explicitly, so they will be correctly processed.
+Zero or more instances of this parameter are allowed.
+.IP --\fBdisplay-mode\fP=enum
+Controls how values are displayed during output
+to STDOUT or a log file.
+.nf
+    enum values:
+       plain
+          Plain identifier without any prefix format.
+       prefix
+          Plain text with XML prefix added format.
+       module
+          Plain text with module name as prefix added format.
+       xml
+          XML format.
+       xml-nons
+          XML format, but without any namespace (xmlns) attributes.
+       json
+          JSON format.
+
+.fi
+.IP --\fBecho-replies\fP=boolean
+Allow RPC replies to be echoes to the log or STDOUT.
+
+If true, <rpc-reply> messages containing data
+will be output to the log, if log-level is  'info' or higher.
+If false, <rpc-reply> messages containing data
+will not be output to the log, regardless of
+the value of log-level.
+.IP --\fBfeature-disable\fP=module:feature
+Identifies a feature which should be considered disabled.
+Zero or more entries are allowed.
+.IP --\fBfeature-enable-default\fP=boolean
+If true (the default), then features will be enabled by default.
+If false, then features will be disabled by default.
+.IP --\fBfeature-enable\fP=module:feature
+Identifies a feature which should be considered enabled.
+Zero or more entries are allowed.
+.IP --\fBfixorder\fP=boolean
+Controls whether PDU parameters will be
+automatically sent to the server in the
+correct order.  
+If true, then canonical order will be used.
+This is the default value.
+If false, the specified order will be used. 
+
+.IP --\fBforce-target\fP=enum
+Controls whether the candidate or running
+configuration datastore will be used as
+the default edit target, when both are supported
+by the server.
+.nf
+      enum values:
+        candidate
+          Force default edit target to be candidate.
+        running
+          Force default edit target to be running.
+.fi
+.IP --\fBhelp\fP
+Print this help text and exit.
+The help-mode choice (--brief, --normal, or --full) may also be present
+to control the amount of help text printed.
+.IP --\fBhome\fP=dirspec
+Directory specification for the home directory
+to use instead of HOME.
+.IP --\fBindent\fP=number
+Number of spaces to indent (0..9) in formatted output.
+The default is 2 spaces.
+.IP --\fBlog\fP=filespec
+Filespec for the log file to use instead of STDOUT.
+If this string begins with a '~' character,
+then a username is expected to follow or
+a directory separator character.  If it begins
+with a '$' character, then an environment variable
+name is expected to follow.
+.IP --\fBlog-append\fP
+If present, the log will be appended not over-written.
+If not, the log will be over-written.
+Only meaningful if the \fBlog\fP parameter is
+also present.
+.IP --\fBlog-level\fP=enum
+Sets the debug logging level for the program.
+.nf
+      enum values:
+        off
+        error
+        warn
+        info
+        debug
+        debug2
+        debug3
+        debug4
+.fi
+.IP --\fBmatch-names\fP=enum
+Match mode to use for UrlPath name searches.
+.nf
+      enum values:
+        exact
+          The name must exactly match the node name
+          for all characters in both name strings.
+        exact-nocase
+          The name must match the node name
+          for all characters in both name strings.
+          Strings are not case-sensitive.
+        one
+          The name must exactly match the first N
+          characters of just one node name, which
+          must be the only partial name match found.
+        one-nocase
+          The name must exactly match the first N
+          characters of just one node name, which
+          must be the only partial name match found.
+          Strings are not case-sensitive.
+        first
+          The name must exactly match the first N
+          characters of any node name. The first one
+          found will be used.
+        first-nocase
+          The name must exactly match the first N
+          characters of any node name. The first one
+          found will be used. Strings are not
+          case-sensitive.
+.fi
+.IP --\fBmodpath\fP=list
+Directory search path for YANG and YIN files.
+Overrides the YUMA_MODPATH environment variable.
+.IP --\fBmodule\fP=string
+YANG or YIN source module name to load upon startup.
+If this string represents a filespec, 
+ending with the \fB.yang\fP or \fB.yin\fP extension,
+then only that file location will be checked.
+
+If this string represents a module name, then
+the module search path will be checked for
+a file the \fB.yang\fP or \fB.yin\fP extension.
+
+If this string begins with a '~' character,
+then a username is expected to follow or
+a directory separator character.  If it begins
+with a '$' character, then an environment variable
+name is expected to follow.
+.nf
+
+      ~/some/path ==> <my-home-dir>/some/path
+
+      ~fred/some/path ==> <fred-home-dir>/some/path
+
+      $workdir/some/path ==> <workdir-env-var>/some/path
+.fi
+.IP --\fBncport\fP=number
+The NETCONF port number to use for starting sessions.
+If not present, then port 830, followed by port 22, will be tried.
+.IP --\fBpassword\fP=string
+User password to use for NETCONF sessions.
+If none, then user will be prompted before connecting.
+.IP --\fBprivate-key\fP=string
+Contains the file path specification
+for the file containing the client-side private key.
+If both 'public-key' and 'private-key' files are
+present, the client will attempt to connect
+to the server using these keys.  If this fails,
+or not done, then password authentication will
+be attempted.
+.IP --\fBprotocols\fP=bits
+Specifies which protocol versions the program or session
+will attempt to use. Empty set is not allowed.
+Default is to enable all protocols.
+.nf
+      bit values:
+        netconf1.0
+          RFC 4741 base:1.0
+        netconf1.1
+          RFC xxxx base:1.1
+.fi
+.IP --\fBpublic-key\fP=string
+Contains the file path specification
+for the file containing the client-side public key.
+If both 'public-key' and 'private-key' files are
+present, the client will attempt to connect
+to the server using these keys.  If this fails,
+or not done, then password authentication will
+be attempted.
+.IP --\fBrun-command\fP=string
+The specified command will be invoked upon startup.
+If the auto-connect parameters are provided, then
+a session will be established before running the
+command.
+.IP --\fBrun-script\fP=string
+The specified script will be invoked upon startup.
+If the auto-connect parameters are provided, then
+a session will be established before running the
+script.  If a quoted string is used, then any parameters
+after the script name will be passed to the script.
+.IP --\fBrunpath\fP=list
+Internal file search path for script files.
+Overrides the YUMA_RUNPATH environment variable.
+.IP --\fBserver\fP=string
+IP address or DNS name of the NETCONF server target to
+use for the auto-startup mode, or as the default value
+when starting a new session.
+.IP --\fBsubdirs\fP=boolean
+If false, the file search paths for modules, scripts, and data
+files will not include sub-directories if they exist in the
+specified path.
+      
+If true, then these file search paths will include
+sub-directories, if present.  Any directory name beginning
+with a dot (\fB.\fP) character, or named \fBCVS\fP, will be ignored.
+This is the default mode.
+.IP --\fBtime-rpcs\fP=boolean
+Measure the round-trip time of each <rpc> request and
+<rpc-reply> at the session level.
+Echo the elapsed time value to screen if in
+interactive mode, as well as the log if the
+log is a file instead of stdout.
+.IP --\fBtimeout\fP=number
+The number of seconds to wait for a response
+from the server before declaring a timeout.
+Zero means do not timeout at all.
+.IP --\fBtransport\fP=enum
+Identifies the transport protocol that should be used.
+This is the default that will be used or the value used
+in auto-connect mode.  The value can also be provided
+when invoking the 'connect' command.
+.nf
+      enum values:
+        ssh
+          NETCONF over SSH.
+          RFC 4742;  RFC 6242
+        tcp
+          NETCONF over TCP.
+          If this enum is selected, then the default --ncport
+          value is set to 2023, and the --protocols value
+          is set to netconf1.0.  The --password value will
+          be ignored.
+.fi
+.IP --\fBuse-xmlheader\fP=
+Specifies how file result variables will be written
+for XML files.  Controls whether the XML preamble
+header will be written or not.
+.IP --\fBuser\fP=string
+User name to use for NETCONF sessions.
+This value will be used in auto-startup mode,
+or as the default value when starting a new
+session.
+.IP --\fBuservars-file\fP=filespec
+Specifies the yangcli user variables file to use.
+The default is ~/.yuma/yangcli_uservars.xml.
+.IP --\fBversion\fP
+Print the program version string and exit.
+.IP --\fBwarn-idlen\fP=number
+ Control whether identifier length warnings will be
+generated.  The value zero disables all identifier
+length checking.  If non-zero, then a warning will
+be generated if an identifier is defined which 
+has a length is greater than this amount.
+range: 0 | 8 .. 1023.
+The default value is 64.
+.IP --\fBwarn-linelen\fP=number
+Control whether line length warnings will be
+generated.  The value zero disables all line length
+checking.  If non-zero, then a warning will
+be generated if the line length is greater than
+this amount.  Tab characters are counted as 8 spaces.
+range: 0 | 40 .. 4095.
+The default value is 72.
+.IP --\fBwarn-off\fP=number
+Control whether the specified warning number will be
+generated and counted in the warning total for the
+module being parsed.
+range: 400 .. 899.
+This parameter may be entered zero or more times.
+.IP --\fByuma-home\fP=string
+Directory for the yuma project root to use.
+If present, this directory location will
+override the YUMA_HOME environment variable,
+if it is present.  If a zero-length string is
+entered, then the YUMA_HOME environment variable
+will be ignored.
+
+.SH SEARCH PATH
+When a module name is entered as input, or when a
+module or submodule name is specified in an import or include
+statement within the file, the following search algorithm
+is used to find the file:
+.nf    
+
+  1) file is in the current directory
+  2) YUMA_MODPATH environment var (or set by modpath parameter)
+  3) $HOME/modules directory
+  4) $YUMA_HOME/modules directory
+  5) $YUMA_INSTALL/modules directory OR
+     default install module location, '/usr/share/yuma/modules'
+
+.fi
+By default, the entire directory tree for all locations
+(except step 1) will be searched, not just the specified
+directory.  The \fBsubdirs\fP parameter can be used to
+prevent sub-directories from being searched.
+    
+Any directory name beginning with a dot character (\fB.\fP)
+will be skipped.  Also, any directory named \fBCVS\fP will
+be skipped in directory searches.
+
+.SH ERROR LOGGING
+By default, warnings and errors are sent to STDOUT.
+    
+A log file can be specified instead with the \fBlog\fP' parameter.
+
+Existing log files can be reused with the 'logappend'
+parameter, otherwise log files are overwritten.
+    
+The logging level can be controlled with the \fBlog-level\fP
+parameter.
+
+The default log level is 'info'.  The
+log-levels are additive:
+.nf
+
+     off:    suppress all errors (not recommended!)
+             A program return code of '1' indicates some error.
+     error:  print errors
+     warn:   print warnings
+     info:   print generally interesting trace info
+     debug:  print general debugging trace info
+     debug2: print verbose debugging trace info
+     debug3: print very verbose debugging trace info
+     debug4: print maximum debugging trace info
+
+.fi
+
+.SH ENVIRONMENT
+The following optional environment variables can be used
+to control module search behavior:
+.IP \fBHOME\fP
+The user's home directory  (e.g., /home/andy)
+.IP \fBYUMA_HOME\fP
+The root of the user's Yuma work directory
+(e.g., /home/andy/swdev/netconf)
+.IP \fBYUMA_INSTALL\fP
+The root of the directory that yangdump
+is installed on this system (default is, /usr/share/yuma)
+.IP \fBYUMA_DATAPATH\fP
+Colon-separated list of directories to
+search for data files.
+(e.g.: './workdir/data-files:/home/andy/test-data')
+The \fBdatapath\fP parameter will override this
+environment variable, if both are present.
+.IP \fBYUMA_MODPATH\fP
+Colon-separated list of directories to
+search for modules and submodules.
+(e.g.: './workdir/modules:/home/andy/test-modules')
+The \fBmodpath\fP parameter will override this
+environment variable, if both are present.
+.IP \fBYUMA_RUNPATH\fP
+Colon-separated list of directories to
+search for script files.
+(e.g.: './workdir/scripts:/home/andy/scripts')
+The \fBrunpath\fP parameter will override this
+environment variable, if both are present.
+.SH CONFIGURATION FILES
+.IP \fByangcli.conf\fP
+YANG config file
+The default is: \fB/etc/yuma/yangcli.conf\fP
+    
+An ASCII configuration file format is supported to
+store command line parameters. 
+
+The \fBconfig\fP parameter
+is used to specify a specific config file, otherwise
+the default config file will be checked.
+.nf    
+
+   - A hash mark until EOLN is treated as a comment
+   - All text is case-sensitive
+   - Whitespace within a line is not significant
+   - Whitespace to end a line is significant/
+     Unless the line starts a multi-line string,
+     an escaped EOLN (backslash EOLN) is needed
+     to enter a leaf on multiple lines.
+   - For parameters that define lists, the key components
+     are listed just after the parameter name, without
+     any name,  e.g.,
+    
+            interface eth0 {
+              # name = eth0 is not listed inside the braces
+              ifMtu 1500
+              ifName mySystem
+            }
+
+.fi    
+A config file can contain any number of parameter
+sets for different programs. 
+
+Each program must have its own section, identifies by its name:
+.nf    
+
+     # this is a comment
+     yangcli {
+        log-level debug
+        default-module yuma-interfaces
+     }
+    
+.fi
+
+.SH FILES
+The following data files must be present in the module
+search path in order for this program to function:
+    
+  * \fBYANG module library\fP
+    default: /usr/share/yuma/modules/
+
+  * \fByangcli command aliases\fP
+    default: ~/.yuma/.yangcli_aliases
+    CLI parameters: --autoaliases, --aliases-file
+    See the 'aliases' and 'alias' command for details.
+    The format of the aliases file is text.
+    A comment is a line that begins with a '#' character,
+    and will be ignored. Comments are not saved if the
+    --autoaliases=true parameter value is used.
+    Single or double quotes can be used.
+.nf
+
+    Example aliases file:
+    ---------------------
+    g=get
+    gc=get-config
+    gcnacm='sget-config --source=running /nacm'
+    geteth0="xget /interfaces/interface[name='eth0']"
+
+.fi
+  * \fByangcli user variables\fP
+    default: ~/.yuma/yangcli_uservars.xml
+    CLI parameters: --autouservars, --uservars-file
+    See the 'uservars' command for details.
+    The format of the uservars file is XML.
+    Refer to the 'vars' container in yangcli.yang
+    for a definition of the XML contents.
+
+.SH DIAGNOSTICS
+Internal diagnostics may generate the following
+type of message if any bugs are detected at runtime:
+.nf
+  
+    [E0]
+         filename.c:linenum error-number (error-msg)
+
+.fi
+.SH AUTHOR
+Andy Bierman, <andy at netconfcentral dot org>
+
+.SH SEE ALSO
+.BR netconf-subsystem (1)
+.BR netconfd (1)
+.BR yangdiff (1)
+.BR yangdump (1)

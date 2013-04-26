@@ -1,0 +1,12 @@
+module testnesttop {
+
+    namespace "http://netconfcentral.org/ns/testnesttop";
+    prefix "tntop";
+
+    include testnest;
+    include testnest2;
+
+    revision 2010-08-20 {
+        description "Initial revision.";
+    }
+}

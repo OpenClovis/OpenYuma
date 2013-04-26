@@ -1,0 +1,11 @@
+submodule testnest3 {
+
+    // added extra line
+    belongs-to testnesttop { prefix tntop; }
+
+    revision 2010-09-25 {
+        description "Initial revision.";
+    }
+    leaf x { type string; }
+    feature A;
+}

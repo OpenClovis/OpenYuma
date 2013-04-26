@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nc:config xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0">
+   <nacm:nacm xmlns:nacm="http://netconfcentral.org/ns/yuma-nacm">
+   </nacm:nacm>
+   <if:interfaces xmlns:if="http://netconfcentral.org/ns/yuma-interfaces">
+      <if:interface>
+         <if:name>lo</if:name>
+      </if:interface>
+      <if:interface>
+         <if:name>eth0</if:name>
+      </if:interface>
+      <if:interface>
+         <if:name>virbr0</if:name>
+      </if:interface>
+   </if:interfaces>
+</nc:config>

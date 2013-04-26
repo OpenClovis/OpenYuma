@@ -1,0 +1,58 @@
+# ----------------------------------------------------------------------------|
+# netconf/src/ncx source files
+NCX_SOURCES = $(YUMA_SRC_ROOT)/ncx/b64.c \
+              $(YUMA_SRC_ROOT)/ncx/bobhash.c \
+              $(YUMA_SRC_ROOT)/ncx/cap.c \
+              $(YUMA_SRC_ROOT)/ncx/cfg.c \
+              $(YUMA_SRC_ROOT)/ncx/cli.c \
+              $(YUMA_SRC_ROOT)/ncx/conf.c \
+              $(YUMA_SRC_ROOT)/ncx/def_reg.c \
+              $(YUMA_SRC_ROOT)/ncx/dlq.c \
+              $(YUMA_SRC_ROOT)/ncx/ext.c \
+              $(YUMA_SRC_ROOT)/ncx/grp.c \
+              $(YUMA_SRC_ROOT)/ncx/help.c \
+              $(YUMA_SRC_ROOT)/ncx/json_wr.c \
+              $(YUMA_SRC_ROOT)/ncx/log.c \
+              $(YUMA_SRC_ROOT)/ncx/ncx_appinfo.c \
+              $(YUMA_SRC_ROOT)/ncx/ncx.c \
+              $(YUMA_SRC_ROOT)/ncx/ncx_feature.c \
+              $(YUMA_SRC_ROOT)/ncx/ncx_list.c \
+              $(YUMA_SRC_ROOT)/ncx/ncxmod.c \
+              $(YUMA_SRC_ROOT)/ncx/ncx_num.c \
+              $(YUMA_SRC_ROOT)/ncx/ncx_str.c \
+              $(YUMA_SRC_ROOT)/ncx/obj.c \
+              $(YUMA_SRC_ROOT)/ncx/obj_help.c \
+              $(YUMA_SRC_ROOT)/ncx/op.c \
+              $(YUMA_SRC_ROOT)/ncx/plock.c \
+              $(YUMA_SRC_ROOT)/ncx/plock_cb.c \
+              $(YUMA_SRC_ROOT)/ncx/rpc.c \
+              $(YUMA_SRC_ROOT)/ncx/rpc_err.c \
+              $(YUMA_SRC_ROOT)/ncx/runstack.c \
+              $(YUMA_SRC_ROOT)/ncx/ses.c \
+              $(YUMA_SRC_ROOT)/ncx/ses_msg.c \
+              $(YUMA_SRC_ROOT)/ncx/status.c \
+              $(YUMA_SRC_ROOT)/ncx/tk.c \
+              $(YUMA_SRC_ROOT)/ncx/top.c \
+              $(YUMA_SRC_ROOT)/ncx/tstamp.c \
+              $(YUMA_SRC_ROOT)/ncx/typ.c \
+              $(YUMA_SRC_ROOT)/ncx/val.c \
+              $(YUMA_SRC_ROOT)/ncx/val_util.c \
+              $(YUMA_SRC_ROOT)/ncx/var.c \
+              $(YUMA_SRC_ROOT)/ncx/xml_msg.c \
+              $(YUMA_SRC_ROOT)/ncx/xmlns.c \
+              $(YUMA_SRC_ROOT)/ncx/xml_util.c \
+              $(YUMA_SRC_ROOT)/ncx/xml_val.c \
+              $(YUMA_SRC_ROOT)/ncx/xml_wr.c \
+              $(YUMA_SRC_ROOT)/ncx/xpath1.c \
+              $(YUMA_SRC_ROOT)/ncx/xpath.c \
+              $(YUMA_SRC_ROOT)/ncx/xpath_wr.c \
+              $(YUMA_SRC_ROOT)/ncx/xpath_yang.c \
+              $(YUMA_SRC_ROOT)/ncx/yang.c \
+              $(YUMA_SRC_ROOT)/ncx/yang_ext.c \
+              $(YUMA_SRC_ROOT)/ncx/yang_grp.c \
+              $(YUMA_SRC_ROOT)/ncx/yang_obj.c \
+              $(YUMA_SRC_ROOT)/ncx/yang_parse.c \
+              $(YUMA_SRC_ROOT)/ncx/yang_typ.c \
+              $(YUMA_SRC_ROOT)/ncx/yin.c \
+              $(YUMA_SRC_ROOT)/ncx/yinyang.c
+

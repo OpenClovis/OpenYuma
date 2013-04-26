@@ -1,0 +1,15 @@
+module trev {
+
+  namespace "http://netconfcentral.org/ns/trev";
+
+  prefix trev;
+
+  revision "2011-07-04";
+
+  revision "2011-06-04";
+
+  revision "2010-07-04";
+
+  revision "2010-01-04";
+ 
+}

@@ -1,0 +1,113 @@
+module testcommit {
+    namespace "http://netconfcentral.org/ns/testcommit";
+    prefix "testcommit";
+    revision 2011-12-04;
+
+    container vehicle {
+        list car {
+            key "regno";
+            unique "model";
+            leaf regno {
+                type string;
+            }
+            leaf model {
+                type string;
+                mandatory true;
+            }
+            leaf-list drivers {
+                type string;
+                min-elements 1;
+                max-elements 10;
+            }
+            leaf owner {
+              type leafref {
+                path "../../../owner/last";
+              }
+            }
+            list carlist {
+               key carid;
+               unique "test1 con/test2";
+               leaf carid {
+                   type uint32;
+               }
+               leaf test1 {
+                   type int8;
+               }
+               container con {
+                   when "../../model = 'ford'";
+                   leaf test2 {
+                       type boolean;
+                   }
+                   leaf test3 {
+                      type boolean;
+                      mandatory true;
+                   }
+               }
+            }
+        }
+    }
+
+    list owner {
+      key "last first";
+      leaf first {
+        type string;
+      }
+      leaf last {
+        type string;
+      }
+      leaf-list models {
+        type leafref {
+          path "../../vehicle/car/model";
+        }
+        max-elements 21;
+        min-elements 1;
+      }
+      choice owner-choice {
+        leaf own1 { type string; }
+        case own2case {
+          choice own2 {
+            case own3 {
+              leaf own4 { type string; mandatory true; }
+              leaf own5 { type string; }
+            }
+            list own-list {
+              key x;
+              leaf x { type boolean; }
+              leaf y { type int32; mandatory true; }
+            }
+          }
+        }
+      }
+    }
+
+    leaf top-mandatory-leaf {
+      type int32;
+      mandatory true;
+    }
+
+    choice top-choice {
+      case a {
+        leaf a1 { type string; }
+        leaf a2 { type uint32; mandatory true; }
+      }
+      case b {
+        leaf-list b1 {
+          type uint8;
+          min-elements 2;
+        }
+        choice b2 {
+          case b2a {
+            leaf b2a1 { type string; mandatory true; }
+            leaf b2a2 { type string; }
+          }
+          container b3-npcon {
+            leaf b3-npcon-leaf { type int32; mandatory true; }
+          }
+        }
+      }
+      case c {
+        leaf c1 { type int32; }
+      }
+    }
+
+}

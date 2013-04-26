@@ -1,0 +1,90 @@
+module t31 {
+   namespace "http://netconfcentral.org/ns/t31";
+   prefix "t31";
+   description "Test SIL code generation for YANG features";
+   revision 2012-02-05;
+
+   feature t31-1;
+
+   feature t31-2;
+
+   feature t31-3 { if-feature t31-2; }
+
+   feature t31-4;
+
+   feature t31-5;
+
+   list t31-list {
+     if-feature t31-1;
+     key a;
+     leaf a { type int32; }
+     leaf b {
+       if-feature t31-2;
+       type string;
+       mandatory true;
+     }
+     leaf c {
+       if-feature t31-3;
+       type string;
+       mandatory true;
+     }
+     container d {
+       if-feature t31-1;
+       if-feature t31-2;
+       leaf dd { type string; }
+       leaf ee { type string; }
+     }
+   }
+
+   rpc t31-rpc {
+     if-feature t31-4;
+     input {
+       leaf a { type string; }
+       leaf b { 
+         if-feature t31-5;
+         type string; 
+       }
+     }
+     output {
+       leaf c { type int32; }
+       leaf d { 
+         if-feature t31-5;
+         type string; 
+       }
+     }
+   }
+
+   notification t31-notif {
+     if-feature t31-4;
+     leaf w { type string; }
+     leaf x { 
+       if-feature t31-5;
+       type string; 
+     }
+     leaf y { type int32; }
+     leaf z { 
+       if-feature t31-5;
+       type string; 
+     }
+   }
+
+   rpc t31-plain-rpc {
+     input {
+       leaf a { type string; }
+       leaf b { type string; }
+     }
+     output {
+       leaf c { type int32; }
+       leaf d { type string; }
+     }
+   }
+
+   notification t31-plain-notif {
+     leaf w { type string; }
+     leaf x { type string; }
+     leaf y { type int32; }
+     leaf z { type string; }
+   }
+
+
+}

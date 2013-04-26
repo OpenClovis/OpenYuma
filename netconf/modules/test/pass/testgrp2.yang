@@ -1,0 +1,15 @@
+module testgrp2 {
+
+    namespace "http://netconfcentral.org/ns/testgrp2";
+    prefix "tgrp2";
+
+    import testgrp { prefix "tgrp"; }
+
+    revision "2010-05-27" {
+        description "Initial revision.";
+    }
+
+    uses tgrp:testgrp;
+
+    rpc foo;
+}

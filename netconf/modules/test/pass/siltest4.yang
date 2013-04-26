@@ -1,0 +1,58 @@
+module siltest4 {
+
+    namespace "http://netconfcentral.org/ns/siltest4";
+    prefix "siltest4";
+    import yuma-ncx { prefix ncx; }
+    description 
+      "Test SIL callback behavior for ncx:sil-delete-children-first.";
+
+    revision 2011-10-08 {
+       description "Initial version.";
+    }
+
+    list c4 {
+       ncx:sil-delete-children-first;  // applies here
+       key x;
+       leaf x { type uint16; }
+       leaf y { 
+         ncx:sil-delete-children-first;  // ignored here
+           type uint32; 
+       }
+       leaf z { type uint64; config false; }
+       leaf cuu { 
+         type union {
+           type int32;
+           type instance-identifier;
+           type uint8;
+           type boolean;
+           type string;
+         }
+       }
+       list cc {
+          ncx:sil-delete-children-first;  // applies here
+          key "xx1 xx2";
+          leaf xx1 { type uint32; }
+          leaf xx2 { type int32; }
+          leaf yy { type int32; }
+          leaf zz { type uint64; config false; }
+          list ccc {
+             // this SIL will get called in ancestor deleted
+             key xxx;
+             leaf xxx { type string; }
+             leaf yyy { type boolean; }
+             leaf zzz { type uint64; config false; }
+             container con-xxx {
+                // this SIL will not get called in ancestor deleted
+                leaf x { type string; }
+             }
+          }
+          container dddd {
+             ncx:sil-delete-children-first;  // applies here
+             leaf xxx2 { type string; }
+             leaf yyy2 { type boolean; }
+             leaf zzz2 { type uint64; config false; }
+          }
+       }
+    }
+
+}

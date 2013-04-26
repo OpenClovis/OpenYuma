@@ -1,0 +1,12 @@
+module testimp {
+
+    namespace "http://netconfcentral.org/ns/testimp";
+    prefix "timp";
+
+    // include testnest;
+    import testnest { prefix bogus; }
+
+    revision 2010-09-27 {
+        description "Initial revision.";
+    }
+}

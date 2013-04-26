@@ -1,0 +1,23 @@
+module testdev {
+
+    namespace "http://netconfcentral.org/ns/testdev";
+    prefix "td";
+
+    revision 2009-08-02 {
+        description "Initial revision.";
+    }
+
+    container test-top {
+       presence "not mandatory top";
+
+       leaf a { 
+          type uint32; 
+          units seconds;
+       }
+
+       leaf b {
+          type string;
+          mandatory true;
+       }
+    }
+}

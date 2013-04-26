@@ -1,0 +1,71 @@
+module test3 {
+
+    namespace "http://netconfcentral.org/ns/test3";
+    prefix "t3";
+
+
+    revision 2008-10-19 {
+        description "Initial revision.";
+    }
+
+
+    container test-D1 {
+      leaf test-D {
+         type local-D;
+      }
+      typedef local-D {
+        type int32 {
+          range "1 .. 4 | 7";
+        }
+      }
+    }
+
+    leaf test-D {
+      type int32 {
+         range "1 .. 4 | 7";
+      }
+    }
+
+    container test33 {
+      presence "not a top-level mandatory container";
+
+      choice f {
+        mandatory true;
+
+        leaf f1 { type string; }
+        leaf f2 { type string; }
+      }
+
+      choice g {
+        mandatory false;
+
+        leaf g1 { type string; mandatory true; }
+        leaf g2 { type string; }
+        case g3 {
+          leaf g3a { type string; mandatory true; }
+          leaf g3b { type string; }
+        }
+      }
+    }
+
+    typedef A {
+       type uint32;
+       default 42;
+    }
+
+    typedef B {
+       type A {
+         range "14 .. max";
+       }
+    }
+
+   typedef C {
+     type B {
+       range "min .. 41 | 45";
+     }
+     default 15;
+   }
+
+   leaf test-C { type C; }
+
+}

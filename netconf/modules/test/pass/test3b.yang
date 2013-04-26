@@ -1,0 +1,27 @@
+module test3b {
+
+    namespace "http://netconfcentral.org/ns/test3b";
+    prefix "t3";
+
+
+    revision 2009-09-03 {
+        description "Initial revision.";
+    }
+
+    container test-D1 {
+      leaf test-D {
+         type local-D;
+      }
+      typedef local-D {
+        type int32 {
+          range "1 .. 4 | 7";
+        }
+      }
+    }
+
+   leaf test-D2 {
+     type int32 {
+       range "1 .. 4 | 7";
+     }
+   }
+}

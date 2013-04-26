@@ -1,0 +1,15 @@
+submodule test8a {
+
+    belongs-to test8 { prefix t8; }
+
+    revision 2011-02-04 {
+        description "Initial revision.";
+    }
+
+    container top {
+       leaf top1 {
+         type string;
+         must "/top";
+       }
+    }
+}

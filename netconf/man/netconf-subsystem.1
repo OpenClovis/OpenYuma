@@ -1,0 +1,41 @@
+.\" Process this file with
+.\" nroff -e -mandoc foo.1
+.\"
+.TH netconf-subsystem 1 "February 6, 2012" Linux "netconf-subsystem 2.2"
+.SH NAME
+netconf-subsystem \- thin client to access netconfd server
+
+.SH SYNOPSIS
+.nf
+
+   netconf-subsystem
+
+.fi
+.SH DESCRIPTION
+.B netconf-subsystem
+is a thin-client application that is called by the
+OpenSSH server to access the netconfd server, when 
+the 'netconf' subsystem is requested.
+.SH USAGE
+The location of this program needs to be configured
+in the /etc/ssh/sshd_config file.  The following
+configuration needs to be present:
+.nf
+
+  Port 22
+  Port 830
+  Subsystem netconf /usr/sbin/netconf-subsystem
+
+.fi
+The actual filespec in the last line will depend
+on the location that this program is installed.
+The default value is shown in the example above.
+
+There are no program options or environment variables
+used by this program.
+
+.SH AUTHOR
+Andy Bierman, <andy at netconfcentral dot org>
+
+.SH SEE ALSO
+.BR netconfd (1)

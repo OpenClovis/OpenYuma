@@ -1,0 +1,99 @@
+.\" Process this file with
+.\" nroff -e -mandoc foo.1
+.\"
+.TH make_sil_dir 1 "February 6, 2012" Linux "make_sil_dir 2.2"
+.SH NAME
+make_sil_dir \- create a server instrumentation library working directory
+
+.SH SYNOPSIS
+.nf
+
+   make_sil_dir [--split] module-name
+
+.fi
+.SH DESCRIPTION
+.B make_sil_dir
+is a script to create a server instrumentation library (SIL)
+root work directory, for a specific YANG module.
+
+If the \fB--split\fP parameter is present, then the
+SIL code generated will be split in 'Yuma' files and 'User' files.
+A Yuma SIL file or external definition begins with the prefix 'y_'.
+A User SIL file or external definition begins with the prefix 'u_'.
+
+The SIL code can be regenerated without calling this script
+by invoking 'make code' from the 'src'
+directory.
+
+The following directories and files would be created
+if the command 'make_sil_dir test' was called from the
+directory ~/work (without the --split option):
+.nf
+
+ ~/work/test/ -+
+               |
+               + bin/
+               |
+               + lib/
+               |
+               + Makefile
+               |
+               + src/ -+
+                       |
+                       + Makefile
+                       |
+                       + test.c   (*** Developer edits this file ***)
+                       |
+                       + test.h
+
+.fi
+In --split mode, the Yuma files never need to be edited.
+All the code that needs device instrumentation is contained
+in the User SIL C file.
+
+The SIL code can be regenerated without calling this script
+by invoking 'make splitcode' from the 'src' directory.
+
+The following directories and files would be created
+if the command 'make_sil_dir --split test' was called from the
+directory ~/work:
+.nf
+
+ ~/work/test/ -+
+               |
+               + bin/
+               |
+               + lib/
+               |
+               + Makefile
+               |
+               + src/ -+
+                       |
+                       + Makefile
+                       |
+                       + u_test.c   (*** Developer edits this file ***)
+                       |
+                       + u_test.h
+                       |
+                       + y_test.c
+                       |
+                       + y_test.h
+
+.fi
+
+.SH USAGE
+This script must be called from the parent directory
+where the SIL root work directory should be created.
+The 'module-name' parameter will be used for the name
+of the directory created.  It must match a module in the
+normal module search path for the SIL code to
+be generated.
+
+.SH AUTHOR
+Andy Bierman, <andy at netconfcentral dot org>
+
+.SH SEE ALSO
+.BR netconfd (1)
+.BR yangcli (1)
+.BR yangdump (1)
+

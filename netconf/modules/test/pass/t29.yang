@@ -1,0 +1,114 @@
+module t29 {
+    namespace "http://netconfcentral.org/ns/t29";
+    prefix "t29";
+    revision 2012-01-22;
+
+    augment /mlist/mchoice/mcase1 {
+      when "mkey = 4";
+      leaf xx { type string; }
+    }
+
+    grouping G {
+      leaf xxx { type string; }
+    }
+
+    leaf t29-a { type int32; }
+    leaf t29-b { type int32; }
+    leaf t29-c { type int32; }
+    leaf t29-d { type int32; }
+
+    list mlist {
+      when "../t29-a = 1";
+      must "../t29-b = 2";
+      key mkey;
+      leaf mkey {
+        must "../../t29-b > 1";
+        type int32;
+      }
+      choice mchoice {
+        when "../t29-c != 3";
+        case mcase1 {
+           when "/t29-c != 4";
+           leaf x {
+             must "../mkey > 0";
+             type int32;
+           }
+           uses G {
+             when "mkey < 10";
+           }
+        }
+        case mcase2 {
+           when "../t29-d != 4";
+           leaf y {
+             must "../mkey > 1";
+             type int32;
+           }
+        }
+      }
+    }
+
+    choice top-choice {
+      case a {
+        leaf a1 { type string; }
+        leaf a2 { type uint32; mandatory true; }
+      }
+      case b {
+        leaf-list b1 {
+          type uint8;
+          min-elements 2;
+        }
+        choice b2 {
+          case b2a {
+            leaf b2a1 { type string; mandatory true; }
+            leaf b2a2 { type string; }
+          }
+          container b3-npcon {
+            leaf b3-npcon-leaf { type int32; mandatory true; }
+          }
+        }
+      }
+      case c {
+        leaf c1 { type int32; }
+      }
+    }
+
+    list list1 {
+      key "a b";
+      leaf a { type string; }
+      leaf b { type string; }
+      choice list1-choice {
+        case c1 {
+          leaf c1-leaf1 { type string; }
+          leaf c1-leaf2 { type uint32; mandatory true; }
+        }
+        container c2 {
+          leaf c2mand { type int32; mandatory true; }
+          leaf c2def { type int32; default 42; }
+          leaf c2opt { type string; }
+        }
+        case c3 {
+          list c3list {
+            key x;
+            leaf x { type int8; }
+            leaf y { type string; }
+            leaf z { type string; }
+          }
+        }
+      }
+    }
+
+    list list2 {
+      key "x";
+      unique zz;
+      unique "z/a z/b z/c";
+      leaf x { type int32; }
+      leaf-list y { type int32; }
+      container z {
+        leaf a { type leafref { path "../../y"; } }
+        leaf b { type boolean; }
+        leaf c { type int8; }
+      }
+      leaf zz { type uint8; }
+    }
+
+}

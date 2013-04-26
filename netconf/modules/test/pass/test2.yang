@@ -1,0 +1,66 @@
+module test2 {
+
+    namespace "http://netconfcentral.org/ns/test2";
+    prefix "t2";
+
+    import test1 { prefix t1; }
+
+    revision 2008-10-15 {
+        description "Initial revision.";
+    }
+
+    typedef XX {
+      type string {
+        pattern "a*";
+      }
+    }
+
+    typedef YY {
+      type string {
+        pattern "b*";
+        pattern "b7*";
+      }
+    }
+
+    typedef ZZ {
+      type YY {
+        pattern "b7b*";
+        pattern "b7b7*";
+      }
+    }
+
+    typedef ZZZ {
+      type t1:AA {
+        pattern "b7b*";
+        pattern "b7b7*";
+      }
+    }
+
+    leaf a {
+      type int32 {
+        range "2 .. 12";
+      }
+    }
+
+    leaf b {
+      type string {
+        length "1 .. 10";
+        pattern "1-9[0-9]*" {
+          error-app-tag "error-test 2, leaf b";
+        }
+      }
+    }
+
+    leaf c {
+      description "Only 5151 should pass the AND pattern test";
+
+      type string {
+        length "1 .. 10";
+        pattern "1-9[0-9]*" {
+          error-message "error-test 2, leaf c";     
+        }    
+        pattern "51*";
+        pattern "[1-9]{4}";
+      }
+    }
+}

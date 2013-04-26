@@ -1,0 +1,12 @@
+#!/bin/bash
+#
+# print the git current commit hash tag
+
+git_version()
+{
+   GITVERSION=`git describe --always`
+   GITMODIFIED=`(git status | grep "modified:\|added:\|deleted:" -q) && echo "-M"`
+   echo $GITVERSION$GITMODIFIED
+}
+
+git_version

@@ -1,0 +1,42 @@
+module testsim {
+
+    namespace "http://netconfcentral.org/ns/testsim";
+    prefix "sim";
+
+    description
+      "simple data structures for compiler testing";
+
+    revision 2011-06-27 {
+        description "Initial revision.";
+    }
+
+    container sim1 {
+       leaf-list aa { 
+          type int16;
+          max-elements 5;
+       }
+    }
+
+    list sim2 {
+       key x;
+       leaf x { type uint16; }
+       leaf y { type uint32; }
+       leaf z { type string; }
+
+    }
+
+    container sim3 {
+     list sim4 {
+       key "xx yy";
+       leaf xx { type uint8; }
+       leaf yy { type uint64; }
+       leaf zz { type leafref { path /sim:sim2/sim:y; } }
+     }
+    }
+
+    leaf sim5 { 
+      when "/sim:sim1/sim:aa = 10";
+      type string; 
+    }
+
+}

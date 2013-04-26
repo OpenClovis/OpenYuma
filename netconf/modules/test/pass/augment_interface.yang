@@ -1,0 +1,37 @@
+module augment_interface {
+
+  yang-version 1;
+
+  namespace "http://www.augment_interface.com/";
+
+  prefix aintf;
+
+  import iana-if-type {
+    prefix ianaift;
+  }
+
+  organization "Augment";
+
+  contact "augment@bug.com";
+
+  description "Example file to find the augment bug.";
+
+  revision "2012-06-14" {
+    description "Initial revision.";
+  }
+
+
+  container augment_interface {
+    list interface {
+      key "name";
+      leaf name {
+        type string;
+      }
+
+      leaf type {
+        type ianaift:iana-if-type;
+        mandatory true;
+      }
+    } // list interface
+  } // container augment_interface
+}

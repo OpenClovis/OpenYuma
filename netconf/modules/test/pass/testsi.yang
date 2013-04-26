@@ -1,0 +1,20 @@
+module testsi {
+
+    namespace "http://netconfcentral.org/ns/testsi";
+    prefix "tsi";
+
+    import yuma-ncx { prefix ncx; }
+
+    revision 2010-02-12 {
+        description "Initial revision.";
+    }
+
+    typedef t1 {
+      type string {
+         ncx:schema-instance;
+      }
+    }
+
+    leaf si1 { type t1; }
+
+}

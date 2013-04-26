@@ -1,0 +1,35 @@
+module t12 {
+
+  namespace "http://netconfcentral.org/ns/t12";
+
+  prefix t12;
+
+  import t11 { prefix t11; }
+
+  revision "2011-07-11" {
+    description 
+      "Augment test";
+  }
+
+  leaf t12-leaf { type uint32; }
+
+  augment /t11:t11-list {
+    container e42 {
+      when "/t12-leaf = 42";
+      leaf ext42 { type string; }
+    }
+    leaf X { type string; }
+  }
+
+  leaf t12-leaf2 { 
+    type string {
+      pattern foo:bar;
+    }
+  }
+
+  leaf t12-leaf3 { 
+    type string {
+      pattern 42;
+    }
+  }
+}

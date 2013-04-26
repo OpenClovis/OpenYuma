@@ -1,0 +1,33 @@
+#
+# debian packagine readme
+# last updated: 2011-08-18
+
+To make a debian distribution:
+
+To sign the packages
+  - set up gpg. create a key pair (not shown)
+    - gpg --import mykey-public
+    - gpg --import mykey-private   
+
+
+For debuild to work:
+
+  sudo apt-get install build-essential devscripts debhelper
+
+For yuma to compile:
+
+  sudo apt-get install libxml2-dev libssh2-1-dev libncurses5-dev libgcrypt-dev
+
+After installation is done:
+
+  cd yuma top directory
+  ./prep-deb.sh n (n=1 for v1, 2 for v2)
+
+  cd ~/build/yuma-n.m (eg, m=15)
+
+  debuild -b
+
+  at the end enter your password from the keypair above
+
+  the yuma_n.m-r_platform.deb package should be created
+  in ~/build

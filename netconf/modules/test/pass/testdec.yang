@@ -1,0 +1,25 @@
+module testdec {
+
+    namespace "http://netconfcentral.org/ns/testdec";
+    prefix "tdec";
+
+    revision 2011-03-03 {
+        description "Initial revision.";
+    }
+
+    leaf dec1 {
+      type decimal64 {
+         fraction-digits 1;
+         range "0.5 .. 30";
+      }
+      default 1.5;
+   }
+
+   leaf dec2 {
+      type decimal64 {
+         fraction-digits 8;
+      }
+      default 1.00033;
+   }
+
+}

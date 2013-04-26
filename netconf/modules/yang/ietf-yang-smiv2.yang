@@ -1,0 +1,49 @@
+module ietf-yang-smiv2 {
+
+    // XXX namespace to be allocated by IANA
+
+    namespace "urn:ietf:params:xml:ns:yang:yang-smiv2";
+    prefix "smi";
+
+    description
+        "This module contains extensions for dealing with 
+         SMIv2 modules.";
+
+    revision 2011-04-14 {
+        description "Update to support object-identity"; 
+    }
+
+    revision 2011-02-18 {
+        description "Initial revision, cloned from yang-smi.yang.";
+    }
+
+    identity object-identity {
+      description
+        "base identity for OBJECT-IDENTITY macrros.";
+    }
+
+    extension oid {
+        description
+           "OBJECT IDENTIFIER value assigned to a particular node.";
+        argument "oid";
+    }
+
+    extension display-hint {
+        description
+           "DISPLAY-HINT value provided in a TEXTUAL-CONVENTION macro.";
+        argument "hint";
+    }
+
+    extension default {
+        description
+           "DEFVAL value provided in an OBJECT-TYPE macro.";
+        argument "default";
+    }
+
+    extension max-access {
+        description
+           "MAX-ACCESS value provided in an OBJECT-TYPE macro.";
+        argument "access";
+    }
+
+}

@@ -1,0 +1,47 @@
+module t11 {
+
+  namespace "http://netconfcentral.org/ns/t11";
+
+  prefix t11;
+
+  revision "2011-07-04" {
+    description 
+      "Bug report";
+  }
+
+  typedef test-pattern {
+    type string {
+      pattern '[0-9a-fA-F]{2}(:[0-9a-fA-F]{2}){5}';
+    }
+  }
+
+  list t11-list {
+    key "id1";
+    leaf id1 { type string; }
+    leaf id2 { type int8; }
+  }
+
+  container t11-con {
+    leaf con1 { 
+      type leafref { path "../../t11-list/id1"; }
+      default "fred";
+    }
+  }
+
+  typedef t11-typ1 { 
+    type leafref { path "/t11-list/id1"; }
+    default "freddy";
+  }
+
+  leaf t11-leaf { 
+    type leafref { path "../t11-list/id1"; }
+  }
+
+  leaf t11-leaf2 { 
+    type leafref { 
+      path "../t11-list" +
+           "/id1"; 
+    }
+  }
+ 
+}

@@ -1,0 +1,24 @@
+module testgrp {
+
+    namespace "http://netconfcentral.org/ns/testgrp";
+    prefix "tgrp";
+
+    revision 2010-05-27 {
+        description "Initial revision.";
+    }
+
+    grouping testgrp {
+      list a {
+        key g1;
+        leaf g1 { type string; }
+        leaf g2 { type string; }
+      }
+   }
+
+   rpc foo {
+    input {
+     leaf bar { type int32; }
+    }
+  }
+
+}

@@ -1,0 +1,44 @@
+module siltest2 {
+
+    namespace "http://netconfcentral.org/ns/siltest2";
+    prefix "sil2";
+
+    description 
+      "Test proper SIL generation of MRO functions and 
+       auto-generated containers.";
+
+    revision 2011-09-10 {
+        description "Initial revision.";
+    }
+
+    container c1 { 
+       leaf counter1 { 
+          config false;
+          type int32;
+       }
+    }
+
+    container c2 { 
+       config false;
+       leaf counter2 { 
+          config false;
+          type int32;
+       }
+    }
+
+    container top {
+       container c3 { 
+          leaf counter3 { 
+             config false;
+             type int32;
+          }
+       }
+       container c4 { 
+          config false;
+          leaf counter4 { 
+             config false;
+             type int32;
+          }
+       }
+    }
+}

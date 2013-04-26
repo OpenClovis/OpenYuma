@@ -1,0 +1,444 @@
+module test {
+
+    namespace "http://netconfcentral.org/ns/test";
+    prefix "t";
+
+    organization
+        "Netconf Central";
+
+    contact
+        "Andy Bierman";
+
+    description
+        "YANG test module 1.";
+
+    reference // testing
+      "RFC 1234;
+       RFC 3456.  more text
+       draft-ietf-netmod-yang-09.txt
+      ";
+
+    revision 2009-12-26 {
+        description "Test module in-progress.";
+    }
+
+    feature feature1;
+    feature feature2;
+    feature feature3;
+    feature feature4;
+
+    container test1 {
+      leaf a { 
+         type string {
+           length 1..max;
+         }
+         default "1";
+      }
+      leaf b { 
+        type uint32 {
+          range min..32;
+        }
+      }
+      leaf c { type binary; }
+      leaf d { 
+        type enumeration {
+          enum x;
+          enum y;
+          enum z;
+        }
+        // mandatory true;
+      }
+      leaf noconfig { 
+        type string;
+        config false;
+      }
+      container e {
+        leaf-list ee {
+          ordered-by user;
+          // min-elements 2;
+          max-elements 5;
+          type string {
+            pattern [a-e][1-9]+;
+          }
+        }
+        leaf eee { 
+	    type string; 
+            default "test";
+        }
+      }
+      choice f {
+        // mandatory true;
+
+        leaf f1 { type string; }
+        leaf f2 { type string; }
+      }
+      choice g {
+        mandatory false;
+
+        leaf g1 { 
+           type string; 
+           mandatory true; 
+        }
+        leaf g2 { 
+           type string; 
+           default "agent-set";
+        }
+        case g3 {
+          leaf g3a { type string; mandatory true; }
+          leaf g3b { type string; }
+        }
+      }
+    }
+
+    list test2 {
+      key a2;
+      ordered-by user;
+      unique b2;
+      leaf a1 { 
+         type int8; 
+         default 4;
+      }
+      leaf a2 { 
+        type string {
+          length 1..5 {
+            error-app-tag leaf-a2-error;
+            error-message 'leaf a2 is invalid';
+          }
+        }
+      }
+      leaf b2 { 
+         type uint32;
+         default 5;
+      }
+    }
+
+   augment /test2 {
+      container xxx;
+      leaf foo { 
+        type string;
+        mandatory true;
+      }
+   }
+
+
+   list test3 {
+      key x;
+
+      list test3deep {
+        key "t:yy t:y";
+
+        leaf b { 
+          type leafref {
+            path "../../x";
+          }
+        }
+
+        leaf bb { 
+          type leafref {
+            path "../yy";
+          }
+        }
+
+        leaf bbb { 
+          type leafref {
+            path "../deepy/yy1";
+          }
+        }
+
+        leaf c { 
+          type leafref {
+            path "../../../test3[x = current()/../b]/test3deep
+                 [yy=current()/../bb][y=current()/../bbb]/deepy/yy3";
+          }
+        }
+
+	leaf y { type string; }
+
+        list deepy {
+          config true;
+          key yy3;
+          leaf yy1 { type instance-identifier; }
+          leaf yy2 { type int64; }
+          leaf yy3 { type string; }
+        }
+
+        list deepz {
+          key zz3;
+          leaf zz1 { type instance-identifier; }
+          leaf zz2 { type int64; }
+          leaf zz3 { type int32; }
+        }
+
+        leaf yy { type int32; }
+        leaf yy64 { type int64; }
+      }
+
+      leaf b2 { 
+        type uint32;
+        default 5;
+      }
+
+      leaf-list c2 { 
+        type int32;
+        min-elements 4;
+        max-elements 4;
+      }
+
+      leaf x { type string; }
+
+   }
+
+
+   identity id-A;
+   identity id-B;
+   identity id-C { base id-A; }
+   identity id-D { base id-C; }
+   identity id-E { base id-D; }
+
+   leaf idtest {
+      type identityref { base id-A; }
+   }
+
+   container musttest {
+     presence "testing one";
+     leaf A { type string; }
+     choice B {
+       mandatory true;
+       case B1 {
+         leaf B1leaf { type string; }
+         leaf B1num { type int32; mandatory true; }
+       }
+       case B2 {
+         leaf B2leaf { type string; }
+       }
+    }
+  }
+
+  grouping Leafs.1 {
+
+    anyxml anyxml.1;
+
+    leaf binary.1 {
+       type binary;
+    }
+
+    leaf bits.1 {
+       type bits {
+         bit zero;
+         bit one;
+         bit two;
+         bit ten { position 10; }
+         bit last;
+       }
+    }
+
+    leaf boolean.1 {
+       type boolean;
+    }
+
+    /* this will be added in yang-05
+     * leaf decimal64.1 {
+     *   type decimal64 { fraction-digits 3; }
+     * }
+     */
+
+    leaf empty.1 {
+       type empty;
+    }
+    
+    leaf enumeration.1 {
+       type enumeration {
+         enum red { value 5; }
+         enum green { value 9; }
+         enum blue { value 11; }
+         enum 'deep purple' { value 17; }
+       }
+    }
+
+    leaf identityref.1 {
+       type identityref { base id-A; }
+    }
+
+    leaf instance-identifier.1 {
+       type instance-identifier { 
+         require-instance false; 
+       }
+    }
+
+    leaf instance-identifier.2 {
+       type instance-identifier { 
+         require-instance true; 
+       }
+    }
+    
+    leaf int8.1 {
+       type int8;
+    }
+
+    leaf int16.1 {
+       type int16;
+    }
+
+    leaf int32.1 {
+       type int32;
+    }
+
+    leaf int64.1 {
+       type int64;
+    }
+
+    leaf leafref.1 {
+       type leafref {
+          path "../instance-identifier.1";
+       }
+    }
+
+    leaf leafref.2 {
+       type leafref {
+          path "../string.1";
+       }
+    }
+
+    leaf string.1 {
+       type string;
+    }
+
+    leaf uint8.1 {
+       type uint8;
+    }
+
+    leaf uint16.1 {
+       type uint16;
+    }
+
+    leaf uint32.1 {
+       type uint32;
+    }
+
+    leaf uint64.1 {
+       type uint64;
+    }
+
+    leaf dec64.1 {
+       type decimal64 {
+         fraction-digits 4;
+       }
+    }
+
+    leaf dec64.2 {
+       type decimal64 {
+         fraction-digits 2;
+         range "0 .. 3 | 9 .. max";
+       }
+    }
+
+    leaf dec64.3 {
+       type decimal64 {
+         fraction-digits 18;
+	 range "3.1234567 .. max";
+       }
+    }
+    
+    leaf union.1 {
+      type union {
+        type int8;
+        type binary;
+        type string;
+        type union {
+          type boolean;
+          type uint64;
+       }
+     }
+   }
+
+ }
+
+ leaf instance.2 {
+     type instance-identifier;
+ }
+
+ leaf instance.3 {
+     type instance-identifier {
+       require-instance false;
+     }
+ }
+
+ leaf leafref.3 {
+    type leafref {
+       path "../test2/a2";
+    }
+ }
+
+ uses Leafs.1;
+
+ container container.1 {
+   uses Leafs.1;
+ }
+
+ container container.2 {
+   presence "this is a presence container";
+   uses Leafs.1;
+ }
+
+ list list.1 {
+   key "string.1 uint32.1";
+   uses Leafs.1;
+ }
+
+ choice choice.1 {
+   case case.1.1 {
+     leaf a { type string; }
+     leaf b { type string; mandatory true; }
+   }
+   leaf c { type string; mandatory true; }
+   leaf d { type int8; }
+ }
+
+ container xpath.1 {
+    // must "name != 'fred' or data2";
+    // must "name != name2 or data2";
+
+   leaf name {
+      when "../data1 >= 4";
+      type string;
+   }
+
+   leaf name2 { type string; }
+
+   leaf data1 { 
+       type uint32;
+   }
+
+   leaf data2 { 
+       when "../data1 < 4";
+       mandatory true;
+       type uint32;
+   }
+
+   leaf data3 {
+     if-feature t:feature1;
+     type string;
+     default foo:bar;
+   }
+
+   leaf data4 {
+     if-feature t:feature2;
+     when "../data1 > 4";
+     mandatory true;
+     type string;
+   }
+ }
+
+ rpc test-rpc {
+   input {
+     leaf a { 
+       type string; 
+       mandatory true; 
+     }
+     leaf b {
+       type string;
+       default '"';
+     }
+   }
+ }
+}

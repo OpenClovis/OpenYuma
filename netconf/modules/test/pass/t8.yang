@@ -1,0 +1,22 @@
+module t8 {
+
+  namespace "http://netconfcentral.org/ns/t8";
+
+  prefix t8;
+
+  import t9 { prefix t9; }
+
+  revision "2011-07-01" {
+    description 
+      "Bug report";
+  }
+
+  augment /t9:t9-one {
+    list mylist {
+      key x;
+      leaf x { type int32; }
+      leaf y { type string; }
+    }
+  }
+
+}

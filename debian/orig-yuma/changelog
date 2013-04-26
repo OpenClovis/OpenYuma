@@ -1,0 +1,72 @@
+yuma (1.12-2) unstable; urgency=medium
+  * Changed numbering to align with debian standards
+  * Fixed bugs in yangcli:
+     * tab completion on complex types
+     * parse-def bug sometimes ignored XML prefix
+     * improved ambiguous command error handling
+  * Fixed yangdump HTML generation for references,
+    sometimes caused invalid xHTML output
+  * Fixed bugs in yangdiff causing incorrect diff results
+  * Added YANG usage statistical reporting to yangdump
+  * Fixed parser bug incorrectly treating list in a
+    grouping from another module as an error
+  * Updated YANG modules in netconfd:
+      * ietf-netconf-with-defaults
+      * ietf-netconf-monitoring
+      * ietf-netconf
+      * ietf-inet-types
+      * ietf-yang-types
+      * yuma-proc
+  * Made all code C++ safe for yangui project
+ -- Andy Bierman <andyb@iwl.com>  Tue, 01 Jun 2010 14:02:00 -0700
+yuma (0.12-1) unstable; urgency=low
+  * Added :url capability support to netconfd
+  * Added if, elif, else, eval, end, while, log-*
+    commands to yangcli
+  * Supporting yang-12 draft
+  * Supporting yang-types-09 draft
+  * Supporting ietf-netconf-with-defaults-07 draft
+  * Added 'user' variable to XPath
+  * Added module-loaded and feature-enabled functions
+    to XPath function library
+  * Fixed bugs in sget, sget-config commands in yangcli
+  * Fixed module search order bug that favored plain YANG
+    file names over names with revision dates in them,
+    and favored YANG over YIN files from a later directory
+    in the search path.
+  * yangcli now limits remote NETCONF operations based
+    on the capabilities reported by the server
+ -- Andy Bierman <andyb@iwl.com>  Fri, 14 May 2010 12:08:00 -0700
+yuma (0.11-2) unstable; urgency=low
+  * Added 'stream_output' boolean to session hdr to disable
+    server output streaming, if desired
+  * Updated ietf-yang-types and ietf-netconf-with-defaults
+    modules
+  * Split yangdump SIL code generation out into yangdumpcode
+  * Fixed packaging bug that put some YANG modules in the
+    wrong package
+  * Fixed bug in yangcli autoload feature
+ -- Andy Bierman <andyb@iwl.com>  Fri, 02 Apr 2010 17:49:00 -0800
+yuma (0.11-1) unstable; urgency=low
+  * Align with YANG draft-11
+  * Changed default startup-cfg.xml creation path so
+    the current directory is not used.
+ -- Andy Bierman <andyb@iwl.com>  Thu, 04 Mar 2010 15:20:00 -0800
+yuma (0.10-2) unstable; urgency=low
+  * Supporting new ietf-yang-types and ietf-netconf-monitoring
+    modules
+  * Updated yuma-nacm module to match I-D version
+  * Fixed bug in netconfd <error-path> for unknown nodes
+ -- Andy Bierman <andyb@iwl.com>  Mon, 22 Feb 2010 20:25:00 -0800
+
+yuma (0.10-1) unstable; urgency=low
+
+  * Align with yang-10 draft
+
+ -- Andy Bierman <andyb@iwl.com>  Mon, 01 Feb 2010 21:24:00 -0800
+
+yuma (0.9.9-1) unstable; urgency=low
+
+  * Initial release
+
+ -- Andy Bierman <andyb@iwl.com>  Sun, 17 Jan 2010 17:17:17 -0800

@@ -1,0 +1,59 @@
+module test9 {
+
+    namespace "http://netconfcentral.org/ns/test9";
+    prefix "t9";
+
+    revision 2010-12-11 {
+        description "Initial revision.";
+    }
+
+    container XX {
+      uses g3;
+    }
+
+    grouping g3 {
+      uses g2;
+    }
+
+    grouping g2 {
+      uses g1;
+    }
+
+    grouping g1 {
+      leaf a { type string; }
+    }
+
+    list L {
+      config false;
+      uses g3;
+    }
+
+    container C {
+      grouping gg {
+        leaf bb { type string; }
+      }
+
+      grouping gg3 {
+        uses gg2;
+        uses gg;
+      }
+
+      grouping gg2 {
+        leaf a { type uint32; }
+        uses gg1;
+      }
+
+      grouping gg1 {
+        leaf cc { type string; }
+      }
+
+      list L {
+        config false;
+        uses gg3;
+      }
+    }
+
+}
+
+
+

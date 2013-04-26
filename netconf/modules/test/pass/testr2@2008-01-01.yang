@@ -1,0 +1,34 @@
+module testr2 {
+
+    namespace "http://netconfcentral.org/ns/testr2";
+    prefix "r2";
+
+    organization
+        "Netconf Central";
+
+    contact
+        "Andy Bierman";
+
+    description
+        "YANG import-by-revision test module.";
+
+    revision 2008-01-01 {
+        description "Initial version.";
+    }
+
+    typedef TestType {
+      type int32 {
+        range 1..9;
+      }
+      default 5;
+    }
+
+    grouping TestGroup {
+       leaf A { type int64; }
+       leaf B { type instance-identifier; }      
+    }
+
+    container bar-r2 {
+       uses r2:TestGroup;
+    }
+}

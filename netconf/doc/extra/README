@@ -1,0 +1,90 @@
+
+Yuma -- A Toolset for the YANG data modeling language and NETCONF protocol
+==========================================================================
+
+Copyright (c) 2008 - 2012, Andy Bierman
+Copyright (c) 2012, YumaWorks, Inc.
+
+See the file "/usr/share/doc/yuma/COPYRIGHT" for information on usage 
+and redistribution of this toolset, and for a DISCLAIMER OF ALL WARRANTIES.
+
+Source:
+-------
+
+  http://www.netconfcentral.org/
+
+FILES:
+------
+
+ - a binary linux program called 'yangdump'
+   /usr/bin/yangdump
+ - a binary linux program called 'yangdiff'
+   /usr/bin/yangdiff
+ - a binary linux program called 'yangcli'
+   /usr/bin/yangcli
+ - a binary linux program called 'netconfd'
+   /usr/sbin/netconfd
+ - a binary linux program called 'netconf-subsystem'
+   /usr/sbin/netconf-subsystem
+ - a binary linux library called 'libncx.so'
+   /usr/lib/libncx.so
+ - a binary linux library called 'libagt.so'
+   /usr/lib/libagt.so
+ - a binary linux library called 'libtoaster.so'
+   /usr/lib/yuma/libtoaster.so
+ - documentation pages
+   /usr/share/doc/yuma/*
+ - a set of freely available YANG modules 
+   /usr/share/yuma/modules/*
+ - a set of sample CLI 'conf' files for the yuma programs
+   /etc/yuma/etc/*
+   (copy foo-sample.conf to foo.conf to enable)
+ - a set of man page files for the yuma programs
+   /usr/man/man1/*
+ - developer utilities
+   /usr/share/yuma/util/*
+ - yangcli user-history file
+   $HOME/.yuma/.yangcli_history
+ - yangcli user-specific temporary files
+   $HOME/.yuma/tmp/*
+
+
+Some of the YANG modules includes with this software were
+generated with the smidump program, available at:
+
+ http://www.ibr.cs.tu-bs.de/projects/libsmi/
+
+WARNING
+=======
+
+This version of yuma implements the YANG language specification
+as defined in RFC 6020:
+
+http://www.ietf.org/rfc/rfc6020.txt
+
+IMPORTANT INSTALLATION NOTE
+===========================
+
+  **************************************************************
+  *                                                            *
+  *  These programs will not function unless the YANG          *
+  *  modules are properly installed and available in           *
+  *  the module path.                                          *
+  *                                                            *
+  *  These files must be installed in one of the default       *
+  *  locations, such as ~/modules or /usr/share/yuma/modules   *
+  *  or the YUMA_INSTALL or YUMA_HOME environment variable     *
+  *  must be properly set.                                     *
+  *                                                            *
+  *  These files are used for CLI and config file processing.  *
+  *                                                            *
+  **************************************************************
+
+
+Refer to the manuals in the /usr/share/doc/yuma/ directories
+for installation and operation instructions.
+
+   file:///usr/share/doc/yuma/index.html
+
+
+

@@ -1,0 +1,169 @@
+
+netconfd <rpc> PDU Callback Path for a Database Node
+Andy Bierman 2010-11-17
+----------------------------------------------------
+
+Note that <rpc-error> generation can occur throughout this 
+sequence, but that call path is not shown. Refer to documentation
+on the 'agt_record_error' and 'agt_record_attr_error' functions
+for details on PDU error handling.
+
+1) session gets incoming PDU
+
+   - Uses Session Control Block (scb) to stream input to agent
+
+2) agt_top_dispatch_msg(scb)
+
+   - Receives the top level element in the PDU 
+   - Determines the YANG module for the namespace
+   - Dispatches element to one of its registered nodes 
+     by (module, /path/to/elname), or generates an error if no
+     'top' callback is registered for the node
+   - use of ncx/top/top_register_node should not be needed unless
+     custom top-level incoming elements are added
+   - agt/agt_rpc/agt_rpc_dispatch is registered for <rpc>
+   - agt/agt_hello/agt_hello_dispatch is registered for <hello>
+
+3) agt_rpc_dispatch(scb, top)
+
+typedef enum agt_rpc_phase_t_ {
+    AGT_RPC_PH_VALIDATE,         /* (2) cb after the input is parsed */
+    AGT_RPC_PH_INVOKE,      /* (3) cb to invoke the requested method */
+    AGT_RPC_PH_POST_REPLY,    /* (5) cb after the reply is generated */ 
+    AGT_RPC_PH_PARSE,                    /* (1) NO CB FOR THIS STATE */ 
+    AGT_RPC_PH_REPLY                     /* (4) NO CB FOR THIS STATE */ 
+} agt_rpc_phase_t;
+
+RPC Callback phases:
+ 1) Parse (AGT_RPC_PH_PARSE)  [NO USER CALLBACK ALLOWED]
+ 2) Validate (AGT_RPC_PH_VALIDATE)
+ 3) Invoke (AGT_RPC_PH_INVOKE)
+ 4) Reply (AGT_RPC_PH_REPLY) [NO USER CALLBACK ALLOWED]
+ 5) Post-Reply (AGT_RPC_PH_POST_REPLY)
+
+  Parsing: 
+   - receives 'top' (== <rpc>) element and saves all attributes
+   - creates an rpc_msg_t (msg) and initializes it
+   - looks for NETCONF message-id attribute
+   - parses method name node (startnode)
+   - finds corresponding object template function for 
+     that method node (obj_template_t:OBJ_TYP_RPC)
+   - (ACL) checks if user is allowed to invoke this RPC method
+   - parse the RPC input section, if any 
+     (agt/agt_rpc/parse_rpc_input)
+     - agt/agt_val_parse/agt_val_parse_nc is used to fill in a 
+       val_value_t tree based on the XML input and the RPC 
+       object template
+   - check for extra input after the <rpc> element
+   - validate all the YANG constraints on the input
+     (agt/agt_rpc/post_psd_state)
+     - ncx/val/val_add_defaults used to fill in the missing defaults
+     - XPath (must/when statements) checked in 
+       agt/agt_val/agt_val_rpc_xpath_check
+     - instance constraints checked in agt/agt_val/agt_val_instance_check
+  - the user validate callback is invoked if it is non-NULL.
+   - If the RPC function needs to return data, then the
+   - msg can be updated 2 ways to do this:
+     1) callback
+      A callback can be used to stream output directly from data 
+      structures to the session.
+      An example is in agt/agt_ncx.c for <get> (get_validate)
+
+       msg->rpc_data_type = RPC_DATA_STD;
+       msg->rpc_datacb = agt_output_filter;
+
+      The data_type is set to the control the RPC reply encoding:
+        RPC_DATA_STD == rpc/output objects will be encoded into
+        a NETCONF <data> element.
+        RPC_DATA_YANG == rpc/output objects will be encoded directly
+        into the <rpc-reply> element.
+      The function prototype for rpc_datacb is defined in agt/agt_rpc.h
+      (agt_rpc_data_cb_t)
+
+    2) static queued data
+       A value is created somehow, such as val_make_simval in ncx/val.c
+       then it is queued into the rpc_dataQ:
+      
+            dlq_enque(newval, &msg->rpc_dataQ);
+
+
+8) [return to rpc_agt_dispatch]
+   VALIDATE PHASE:
+   - Check if a user validate callback is installed for this
+     RPC method, and call it if configured.  For example, the
+     agt/agt_ncx/edit_config_validate function is the registered
+     callback for the <edit-config> operation.
+
+9) edit_config_validate
+   - check the target config exists and ok to write
+   - get edit-config options and save them
+   - call agt/agt_val/agt_val_validate_write for the
+     <config> parameter (if present).
+
+10) agt_val_validate_write
+    - validate_write_val
+      - check nested edit operation and convert it based on 
+        cur/new heuristic
+      - if editop okay, then invoke agt_val_invoke_callback    
+
+11) agt_val_invoke_callback
+    - invoke_btype_cb
+      - invoke_complex_cb
+      - invoke_simval_cb
+     
+12) [return to rpc_agt_dispatch]
+    
+    INVOKE PHASE
+
+   - if no errors and an invoke callback exists for this RPC,
+     then execute it.  Since the 'rpc' definitions are loaded
+     before the callbacks are loaded, it is theoretically 
+     possible to pass through a vendor RPC call with flying colors
+     and it is really a NO-OP, because no callbacks are loaded
+     yet.  It is TBD to fully support this sub-mode as a
+     pre-provisioning feature.
+   
+13) edit_config_invoke
+    - retrieve parameters stored in rpc msg
+
+14) agt_val_apply_write
+    The invoke callback is called by agt/agt_rpc/agt_rpc_dispatch
+    For <edit-config>, the agt/agt_val/agt_val_apply_write function
+    is called.
+
+15) [return to rpc_agt_dispatch]
+
+    - TBD: Need to document rollback-on-error at this point
+    - TBD: need to check for a partial operation, and if so
+      generate the proper rpc_err_rec_t struct for this complex 
+      error report
+
+    PRE-REPLY PHASE
+    - check if an RPC_AGT_PH_PRERPY callback exists and invoke
+      it if so. (This is for agent post-config-cleanup, etc.)
+
+16) REPLY PHASE
+    - check if an RPC_AGT_PH_RPY callback exists and invoke
+      it if so. (This is for agent-specific reply generation, 
+      which is not expected to be used.
+    - if no user callback, then invoke send_rpc_reply instead.
+      This is the normal case.
+
+17) send_rpc_reply
+    - check msg->res, the rpc_errQ, and the reply data structure
+      to see what needs to be generated.
+   - build a namespace prefix map from the <rpc> element, in order
+     to use the same xmlns decls as the request.
+     If (msg->useprefix is false then the default namespace
+     will be set to NETCONF 1.0.
+   - generate all elements and attributes on the fly as much as possible.
+     No NETCONF layer buffers are used for <rpc-reply> output.
+   - generate the <rpc-error> elements in the order the rpc_err_rec_t
+     structs appear in the rpc_errQ, if any.
+   - check if there is a user response callback specified in the reply.
+     If so, then invoke the user callback to generate the response data
+   - If no user callback, then check if any static data is present in
+     the rpc_msg_t instead. If so, generate the output.  Otherwise
+     an empty <data> element might be generated (if data expected
+     and no errors indicated).
+

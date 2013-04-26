@@ -1,0 +1,41 @@
+module augment_bug {
+
+  yang-version 1;
+
+  namespace "http://www.augment_bug.com/";
+
+  prefix abug;
+
+  import augment_interface {
+    prefix aintf;
+  }
+
+  organization "Augment";
+
+  contact "augment@bug.com";
+
+  description "Example file to find the augment bug.";
+
+  revision "2012-06-14" {
+    description "Initial revision.";
+  }
+
+
+  augment "/aintf:augment_interface/aintf:interface" {
+    when "aintf:type = 'ethernetCsmacd'";
+    leaf when_b {
+      type boolean;
+      default 'false';
+    }
+
+    leaf when_i {
+      type int32;
+    }
+
+    container cont {
+      leaf eth {
+        type int32;
+      }
+    } // container cont
+  }
+}

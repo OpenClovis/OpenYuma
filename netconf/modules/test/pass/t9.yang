@@ -1,0 +1,17 @@
+module t9 {
+
+  namespace "http://netconfcentral.org/ns/t9";
+
+  prefix t9;
+
+  revision "2011-07-01" {
+    description 
+      "Bug report";
+  }
+
+  list t9-one {
+    key "id1";
+    leaf id1 { type string; }
+    leaf id2 { type int8; }
+  }
+}

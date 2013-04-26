@@ -1,0 +1,191 @@
+yangcli README version 1
+
+Overview
+
+    Simple single-threaded, single-session NETCONF client
+    Provides CLI interface to NETCONF operations for testing purposes
+
+    Interactive mode provides a basic CLI interface for 
+    NETCONF operations. Commands are defined in ncxcli.ncx
+    as RPC methods.
+
+    Commands in yangcli are defined with the 'rpc' construct
+    in YANG data models.
+
+    NETCONF operations defined in netconf.yang
+    (rpc constructs) are available as commands when connected
+    to a server.
+
+    Local commands available at any time are defined in
+    yangcli.yang.
+
+    Any RPC method defined in any NCX module is available
+    as a command when connected to a server.
+
+    Script mode provides a basic script environment.
+
+    A script can be invoked with the 'run script=script-name'
+    command.  Scripts can call other scripts via the same
+    mechanism, but cannot be called recusively (yet).
+
+    Script parameters are hard-wired to be named P1 .. P9.
+    These parameters are accessed within the script using
+    the syntax $1, $2, etc.
+
+      run script=test-interface P1=eth0 P2=300 P3="my itf test"
+
+    Interactive and CLI syntax is virtually the same
+    Interactive CLI mode is script level 0.
+    There are 2 types of statements:
+ 
+      - Assignment statements
+
+      - Commands
+
+    An assignment statement assigns some value to a user variable.
+    There are 2 user variable namespaces:
+
+      - global (visible to all scripts and interactive CLI mode)
+      - local  (visible just to the current script run level)
+
+
+    An assignment statement for a local variable has the form:
+
+        $foo = assign-expression
+
+    An assignment expression can span multiple lines if each
+    line except the last ends with a backslash '\' char, 
+    followed by a newline '\n' char.
+
+    Lines within a quoted string do not need to be escaped
+    in this manner.
+ 
+    Double quoted or single quoted strings are permitted.
+        
+    An assignment statement for a global variable has the form:
+
+        $$foo = assign-expression
+
+    An assignment expression has several forms:
+ 
+       # Note: all examples could be local ($foo) or global ($$foo)
+
+       # set to the contents of another var
+       $foo = $bar
+
+       # set to the results of an RPC operation
+       $foo = operation-expresion
+
+       # set to the contents of an NCX_BT_STRING quoted string
+       $foo = "quoted string literal"
+
+       # set an NCX_BT_INTERNAL raw XML variable
+       # The 2 char sequence [< must start the raw XML value
+       # The 2 char sequence >] must end the raw XML value
+       $foo = [<some baz="7"> \
+                 <multi-line-xml/> \
+                </some>]
+
+       $filter = [<filter type="xpath" select="/netconf"/>]
+
+       # set an NCX_BT_EXTERNAL var 
+       # to the contents of an XML data file
+       $foo = @somedata.xml
+
+    A command expression has the form
+ 
+      [module-prefix:]command-name [parm]*
+
+    There cannot be any whitespace between the module-prefix,
+    colon, and command name.  
+
+    If the module prefix is present, then only RPC methods
+    from the associated module will be checked.
+
+        acme:reset-subsystem reset-target="/foo/bar[i=23]"
+
+
+    If the module prefix is not present, then the default-module
+    will be used instead first, and then (if connected) the 
+    server RPC methods will be checked.
+
+       edit-config test-option=test-only config=$myconfig \
+          error-option=stop-on-error default-operation=none
+
+    If present, then only the module associated with that prefix 
+    string is used to look up definitions in the registry.
+
+    A parm has several forms:
+       - string literal (quoted or unquoted)
+       - var reference ($bar or $$bar)
+       - extern reference (@data.xml)
+       - inline XML ([<bar/>])
+
+    Parameter prefix chars are optional.  Zero to two
+    dashes are permitted.
+
+    For example, all of these forms below are permitted 
+    to supply the RPC parameter foo with the value 7
+
+    A string data type is used in this example:
+        foo=7
+       -foo=7
+      --foo=7
+        foo 7
+       -foo 7
+      --foo 7
+      --foo "7" 
+
+    Whitespace is permitted before and after the equals sign,
+    if used.  It is also permitted before and after commands.
+
+    Each command line translates to one RPC operation.
+
+    A 'command line' starts with an RPC method as described
+    above, and are terminated with an EOLN   Multiple user
+    or script file lines are concatenated to form one
+    conceptual command line, if the EOLN is preceded
+    by the backslash char:
+
+       edit-config \
+         default-operation=none \
+         config=@myconfig.xml \
+         error-option=rollback-on-error
+
+    Multi-line commands must use the escape-EOLN sequence
+    to indicate line continuation. No whitespace is added
+    during line-splicing
+
+    Comment lines are any lines that start with zero
+    or more whitespace chars, followed by a hash char '#'.
+    The rest of the input line, up to but not including
+    the EOLN char, is skipped.
+
+    A comment will terminate a multi-line command, if 
+    embedded within the command.
+
+    # this is a multi-line edit-config operation
+    edit-config target=running \
+      default-operation=none \
+      test-option=test-then-set \
+      error-option=continue-on-error \
+      config=@test-config.xml
+
+    Local user variables are specified with a dollar sign '$'
+    followed by a valid NcxName string.  Local variables
+    must be unique within the script that they are defined.
+
+    Global user variables are specified with 2 dollar signs '$$'
+    followed by a valid NcxName string.  Global variables
+    are saved in a shared database, and exist after the
+    script ends (like environment vars). 
+
+    Script parameters are specified with 1 dollar sign '$'
+    followed by a number from 1 to 9.
+
+       # typed from the command line or within a script
+       run script=connect-script P1=myserver.example.com
+
+       # script connect using global user and password
+       connect user=$$username password=$$pass server=$1
+

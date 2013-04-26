@@ -1,0 +1,59 @@
+Yuma to-do List (2012-06-26)
+
+This file contains the list of known items not finished in the source code.
+They should be added to the bug tracker.
+  -- Docs
+    -- Design spec
+    -- Doxygen
+  -- Makefiles
+    -- need automated regression tests (make test)
+    -- automake and autoconf need to replace platform/*
+    -- support for Windows needed
+    -- MAC fink packaging not done
+  -- yangdump
+   -- comments are not translated at all; they are always discarded
+   -- ncx:cli YANG convert to unix man files
+   -- ietf validation mode not supported
+   -- YANG to xml2rfc not supported
+   -- XSD translation:  
+   -- HTML generation:
+      -- JQuery menu not supported
+   -- SIL code generation not done:
+     -- RPC output
+     -- support for NCX_ERR_SKIPPED to PASS callback to parent
+        partially handled (or skipped)
+     -- conditional code generation for features and the CLI
+        parms for this functionality is not done
+     -- when-stmt auto-gen code is not done
+  -- yangcli to-do:
+     -- replace libtecla with readline
+     -- command completion for more data types
+     -- command completion based on mirror of database
+  -- server bugs:
+    -- ietf-netconf.yang not used internally.  hacks are used
+       to advertise ietf-netconf but use yuma-netconf.
+       An 'annotation' feature like deviation-stmt is needed
+       to split out the implementation extensions and other
+       YANG statements from the standard module.
+    -- features are not advertised for ietf-netconf, 
+       just capabilities
+    -- openssh client hello bug: the client hello code is not
+       used; not sure why the SSH application timeout occurs even
+       if there is NETCONF traffic; must be doing something
+       wrong in the client or server SSH code.
+    -- load module chicken-and-egg bug:
+      - load a module dynamically and then save some config in
+        in the newly loaded module namespace.  Since there is no
+        'load foo' added to the netconfd CLI or .conf file,
+        this new config will be treated as unknown namespace error
+        on the next reboot
+    -- SIL user callback functions do not yet support a 'PASS' mode,
+       so that multiple callback handlers within the same YANG
+       data structure can be utilized.  
+  -- server optimizations not done:
+    -- save to NVstore:
+      -- user hook to override output to XML file
+      -- write /config/foo in sub-directories instead of
+         XML. Start the XML file(s) for the next layer.
+         /config/foo/bar.xml 
+   

@@ -1,0 +1,64 @@
+module testmandatory {
+
+    namespace "http://netconfcentral.org/ns/testmandatory";
+    prefix "tm";
+
+    revision 2009-08-29 {
+        description "Initial revision.";
+    }
+
+    grouping top-group {
+       leaf XXX {
+          type string;
+          mandatory true;
+       }
+       choice YYY {
+         mandatory true;
+         leaf a { type string; }
+         leaf b { type string; }
+       }
+    }
+
+    uses top-group;
+
+    leaf top-mandatory-leaf {
+       type string;
+       mandatory true;
+    }
+
+    choice top-mandatory-choice {
+       mandatory true;
+       leaf a { type string; }
+       leaf b { type string; }
+    }
+
+    container top-mandatory-container {
+       leaf a {
+          type string;
+          mandatory true;
+       }
+    }
+
+    container top-mandatory-container2 {
+      container next-np-container {
+         leaf a {
+            type string;
+            mandatory true;
+         }
+      }
+    }
+
+    leaf not-top-mandatory-leaf {
+       type string;
+       mandatory true;
+       config false;
+    }
+
+    choice not-top-mandatory-choice {
+       mandatory true;
+       config false;
+       leaf c { type string; }
+       leaf d { type string; }
+    }
+
+}

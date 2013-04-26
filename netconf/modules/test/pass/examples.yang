@@ -1,0 +1,413 @@
+module examples {
+
+    namespace "http://netconfcentral.org/ns/examples";
+    prefix "ex";
+
+    import ietf-inet-types { prefix inet; }
+    organization
+        "Netconf Central";
+
+    contact
+        "Andy Bierman";
+
+    description
+        "Some YANG draft examples.";
+
+    revision 2008-11-09 {
+        description "Initial version.";
+    }
+
+
+    container system {
+        leaf host-name {
+            type string;
+            description "Hostname for this system";
+        }
+
+        leaf-list domain-search {
+            type string;
+            description "List of domain names to search";
+        }
+
+        container login {
+            leaf message {
+                type string;
+                description
+                    "Message given at start of login session";
+            }
+
+            list user {
+                key "name";
+        	leaf name {
+            	    type string;
+		}
+                leaf full-name {
+                    type string;
+                }
+                leaf class {
+                    type string;
+                }
+            }
+        }
+
+        container services {
+            description "Configure externally available services";
+            container "ssh" {
+                presence "Enables SSH";
+                description "SSH service specific configuration";
+                // more leafs, containers and stuff here...
+            }
+        }
+
+        list server {
+            key "name";
+            unique "ip port";
+            leaf name {
+                type string;
+            }
+            leaf ip {
+                 type inet:ip-address;
+            }
+            leaf port {
+                 type inet:port-number;
+            }
+        }
+
+    }
+
+    leaf mgmt-interface {
+        type leafref {
+            path "../interfaces/interface/name";
+        }
+    }
+
+    container default-address {
+        leaf ifname {
+            type leafref {
+                path "../../interfaces/interface/name";
+            }
+        }
+        leaf address {
+            type leafref {
+                path "../../interfaces/interface[name = current()/../ifname]"
+                   + "/address/ip";
+            }
+        }
+    }
+
+    container interfaces {
+      list interface {
+
+         must "ifType != 'ethernet' or " +
+              "(ifType = 'ethernet' and ifMTU = 1500)" {
+             error-message "An ethernet MTU must be 1500";
+         }
+
+         must "ifType != 'atm' or " +
+              "(ifType = 'atm' and ifMTU <= 17966 and ifMTU >= 64)" {
+             error-message "An atm MTU must be  64 .. 17966";
+         }
+
+         key "name";
+         config true;
+
+         leaf name {
+             type string;
+         }
+
+         leaf type {
+            type string;
+         }
+
+         leaf speed {
+             type enumeration {
+                 enum 10m;
+                 enum 100m;
+                 enum auto;
+             }
+         }
+         leaf observed-speed {
+             type uint32;
+             config false;
+         }
+
+         list address {
+             key "ip";
+             leaf ip {
+                 type inet:ip-address;
+             }
+         }
+
+         leaf ifType {
+             type enumeration {
+                 enum ethernet;
+                 enum atm;
+             }
+         }
+
+         leaf ifMTU {
+             type uint32;
+         }
+      }
+    }
+
+    typedef percent {
+        type uint16 {
+            range "0 .. 100";
+        }
+        description "Percentage";
+    }
+
+    leaf completed {
+        type percent;
+    }
+
+    grouping target {
+        leaf address {
+            type inet:ip-address;
+            description "Target IP address";
+        }
+        leaf port {
+            type inet:port-number;
+            description "Target port number";
+        }
+    }
+
+    container peer {
+        container destination {
+            uses target;
+        }
+    }
+
+/*
+    container connection {
+        container source {
+            uses target {
+                refine "address" {
+                    description "Source IP address";
+                }
+                refine "port" {
+                    description "Source port number";
+                }
+            }
+        }
+        container destination {
+            uses target {
+                refine "address" {
+                    description "Destination IP address";
+                }
+                refine "port" {
+                    description "Destination port number";
+                }
+            }
+        }
+    }
+*/
+
+    container food {
+      choice snack {
+          mandatory true;
+          case sports-arena {
+              leaf pretzel {
+                  type empty;
+              }
+              leaf beer {
+                  type empty;
+              }
+          }
+          case late-night {
+              leaf chocolate {
+                  type enumeration {
+                      enum dark;
+                      enum milk;
+                      enum first-available;
+                  }
+              }
+          }
+      }
+   }
+
+   augment /system/login/user {
+       when "class != 'wheel'";
+       leaf uid {
+           type uint16 {
+               range "1000 .. 30000";
+           }
+       }
+   }
+
+    rpc activate-software-image {
+        input {
+            leaf image-name {
+                type string;
+            }
+        }
+        output {
+            leaf status {
+                type string;
+            }
+        }
+    }
+
+
+    notification link-failure {
+        description "A link failure has been detected";
+        leaf if-name {
+            type leafref {
+                path "/interfaces/interface/name";
+            }
+        }
+        leaf if-admin-status {
+            type string;   // ifAdminStatus;
+        }
+    }
+
+    container transfer {
+        choice how {
+            default interval;
+            case interval {
+                leaf interval {
+                    type uint16;
+                    default 30;
+                    units minutes;
+                }
+            }
+            case daily {
+                leaf daily {
+                    type empty;
+                }
+                leaf time-of-day {
+                    type string;
+                    units 24-hour-clock;
+                    default 1am;
+                }
+            }
+            case manual {
+                leaf manual {
+                    type empty;
+                }
+            }
+        }
+    }
+
+    container protocol {
+        choice name {
+            case a {
+                leaf udp {
+                    type empty;
+                }
+            }
+            case b {
+                leaf tcp {
+                   type empty;
+                }
+            }
+        }
+    }
+
+    grouping address {
+        description "A reusable address group.";
+        leaf ip {
+            type inet:ip-address;
+        }
+        leaf port {
+            type inet:port-number;
+        }
+    }
+
+    container http-server {
+        leaf name {
+            type string;
+        }
+        uses ex:address {
+            refine port {
+                default 80;
+            }
+        }
+    }
+
+    list server {
+        if-feature ex:local-storage;
+        key "ip port";
+        leaf name {
+            type string;
+        }
+        uses ex:address;
+    }
+
+    rpc rock-the-house {
+        input {
+           leaf zip-code {
+               type string;
+           }
+        }
+    }
+
+    notification event {
+         leaf event-class {
+             type string;
+         }
+         anyxml reporting-entity;
+         leaf severity {
+             if-feature local-storage;
+             type string;
+         }
+     }
+
+     // not in draft
+     typedef ChannelNumber {
+        type int32 {
+           range 0..max;
+        }
+     }
+
+     augment "/ex:interfaces/ex:interface" {
+         when "ex:type='ds0'";
+         leaf ds0ChannelNumber {
+             type ChannelNumber;
+         }
+     }
+
+     identity crypto-alg {
+         description
+            "Base identity from which all crypto algorithms
+             are derived.";
+     }
+
+     identity des {
+         base "ex:crypto-alg";
+         description "DES crypto algorithm";
+     }
+
+     identity des3 {
+         base "ex:crypto-alg";
+         description "Triple DES crypto algorithm";
+     }
+
+     leaf crypto {
+         type identityref {
+             base "ex:crypto-alg";
+         }
+     }
+
+
+     feature local-storage {
+         description "This feature means the device supports local
+             storage (memory, flash or disk) that can be used to
+             store syslog messages.";
+         reference "yang-02";
+         status current;
+     }
+
+    container syslog {
+       leaf local-storage-limit {
+           if-feature local-storage;
+            config false;
+            description "The amount of local storage that can be
+                used to hold syslog messages.";
+            // !! not in the draft !!
+            type uint32;
+            units bytes;
+         }
+     }
+}

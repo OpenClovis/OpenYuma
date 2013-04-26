@@ -1,0 +1,19 @@
+module negnum {
+
+  namespace "http://www.netconfcentral.org/ns/negnum";
+  prefix "negnum";
+  
+  revision 2011-06-06 {
+    description "Bug Report.";
+  }
+
+  container test1 {
+     leaf longitude {
+       type  int32;
+       description "Longitude of the location";
+     }
+     must "longitude > -180";
+  }
+}
+
+ 

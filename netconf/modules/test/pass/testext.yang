@@ -1,0 +1,40 @@
+module testext {
+
+  namespace "http://netconfcentral.org/ns/testext";
+
+  prefix testext;
+
+  description 
+    "Test extension handling and string indent preservation";
+  revision "2011-06-11" {
+    description 
+      "Test module in-progress.
+       Testing
+         Testing
+           Testing";
+  }
+
+  extension ext-1 {
+    argument ext-1-1 {
+      yin-element true;
+    }
+  }
+
+  extension ext-2 {
+    argument ext-2-1 {
+      yin-element false;
+    }
+  }
+
+  testext:ext-1 foo-message;
+  testext:ext-2 bar-message;
+
+  rpc test-rpc {
+    input {
+      leaf a {
+        type string;
+        default '"';
+      }
+    }
+  }
+}

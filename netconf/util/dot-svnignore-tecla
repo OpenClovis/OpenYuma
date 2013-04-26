@@ -1,0 +1,16 @@
+Makefile
+normal_obj
+config.status
+config.log
+man
+man/*
+man/file/*
+man/prog/*
+man/libr/*
+man/func/*
+*~
+*.D
+dependencies
+*.o
+*.a
+*.so

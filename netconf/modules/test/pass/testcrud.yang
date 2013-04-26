@@ -1,0 +1,41 @@
+module testcrud {
+
+    namespace "http://netconfcentral.org/ns/testcrud";
+    prefix "tcrud";
+
+
+    revision 2010-05-08 {
+        description "Initial revision.";
+    }
+
+    leaf defleaf {
+      type int32;
+      default 42;
+    }
+
+    container pcon {
+      presence "test";
+
+      leaf defleaf {
+         type int32;
+         default 42;
+       }
+    }
+
+    container npcon {
+      leaf defleaf {
+         type int32;
+         default 42;
+       }
+    }
+
+    list deflist {
+      key name;
+      unique defleaf;
+      leaf name { type string; }
+      leaf defleaf {
+         type int32;
+         default 42;
+       }
+    }
+}

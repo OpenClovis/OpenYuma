@@ -1,0 +1,18 @@
+submodule testnest2 {
+
+    // added extra line
+    belongs-to testnesttop { prefix tntop; }
+    include testnest3;
+
+    revision 2010-07-12 {
+        description "Initial revision.";
+    }
+
+    grouping one { leaf two { type string; } }
+    feature A;
+    identity B;
+    typedef C { type string; }
+    leaf D { type uint32; }     
+    extension E;
+
+}

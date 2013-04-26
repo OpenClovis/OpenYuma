@@ -1,0 +1,23 @@
+module testgrouping2 {
+
+    namespace "http://netconfcentral.org/ns/testgrouping2";
+    prefix "foo2";
+
+    import testgrouping { prefix foo1; }
+
+    revision 2009-07-28 {
+        description "Initial revision.";
+    }
+
+    typedef MyType {
+       type boolean;
+    }
+
+    identity my-identity {
+       base foo1:MyBase;
+    }
+
+    container one {
+        uses foo1:ggg;
+    }
+}

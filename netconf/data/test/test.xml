@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nc:config xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0">
+   <t:uint16.1 xmlns:t="http://netconfcentral.com/ns/test">44</t:uint16.1>
+</nc:config>

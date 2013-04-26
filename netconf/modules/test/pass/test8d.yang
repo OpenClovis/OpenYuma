@@ -1,0 +1,23 @@
+submodule test8d {
+
+    belongs-to test8 { prefix t8; }
+
+    include test8a;
+
+    revision 2011-02-04 {
+        description "Initial revision.";
+    }
+
+    augment /top {
+       leaf c {
+         type string;
+         must "/top/a";
+       }
+    }
+
+    leaf ttt {
+       must "/foo/bar";
+       type string;
+    }
+
+}

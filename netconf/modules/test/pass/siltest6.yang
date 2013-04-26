@@ -1,0 +1,26 @@
+module siltest6 {
+
+    namespace "http://netconfcentral.org/ns/siltest6";
+    prefix "siltest6";
+
+    revision 2011-10-28 {
+        description "Initial revision.";
+    }
+
+    container top6 {
+      container profiles {
+        list profile {
+          key id;
+          leaf id { type uint32; }
+          container resources {
+            list resource {
+              key id;
+              leaf id { type uint32; } 
+              leaf id2 { type uint32; } 
+            }
+          }
+        }
+      }
+    }
+
+}

@@ -1,0 +1,37 @@
+module testobsolete {
+
+  namespace "http://netconfcentral.org/ns/testobsolete";
+
+  prefix testobsolete;
+
+  description 
+    "Bug report -- obsolete status getting ignored in mandatory-check.";
+
+  revision "2011-06-23" {
+    description "Initial version";
+  }
+
+  list one {
+    key "id1 id2";
+    leaf id1 { type string; }
+    leaf id2 { type string; }
+    leaf leaf1 {
+      config false;
+      type int32;
+    }
+    leaf leaf2 {
+      type int32;
+      mandatory true;
+      status obsolete;
+    }
+  }
+
+  list two {
+    config false;
+    leaf id { type string; }
+    leaf leaf1a {
+      type int32;
+    }
+  }
+
+}

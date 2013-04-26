@@ -1,0 +1,236 @@
+module device_test { 
+
+    namespace "http://netconfcentral.org/ns/device_test";
+    prefix "dt";
+                
+    revision 2011-09-07 {
+        description "Initial revision.";
+    }
+
+    grouping resourceDescription {
+        description "Common description of resources.";
+        list resourceNode {
+            key id;
+
+            leaf id {
+                description "Unique ID for the resource.";
+                type uint32;
+            }
+
+            leaf resourceType {
+                description "Type identifier for resource.";
+                type uint32;
+            }
+
+            leaf channelId {
+                description "Internal comms channel identifier.
+                             Automatically set, can not be set or adjusted
+                             by users.";
+                type uint32;
+            }
+
+            leaf configuration {
+                description "Base-64 encoded binary configuration.";
+                type binary;
+            }
+
+            leaf statusConfig {
+                description "Base-64 encoded binary configuration of status 
+                             reporting.";
+                type binary;
+            }
+
+            leaf alarmConfig {
+                description "Base-64 encoded binary configuration of alarm 
+                             reporting.";
+                type binary;
+            }
+
+            leaf physicalPath {
+                description "Fixed physical path for the resource.";
+                type string;
+            }
+        }
+    }
+    
+    container xpo {
+        presence "Indicates that the device test API is available.";
+        description "Top-level container for all configuration and status 
+                     objects.";
+
+        ////////////////////////////////////
+        // Start of main configuration block
+        ////////////////////////////////////                        
+        grouping connectionItem {
+            description "Connection container.";
+
+            leaf sourceId {
+                description "The ID of the item providing the input to the 
+                             connection.";
+                type uint32;
+            }
+
+            leaf sourcePinId {
+                description "The pin ID of the source item to use.";
+                type uint32;
+            }
+
+            leaf destinationId {
+                description "The ID of the item accepting the output of the 
+                             connection.";
+                type uint32;
+            }
+
+            leaf destinationPinId {
+                description "The pin ID of the destination item out to use.";
+                type uint32;
+            }
+            
+            leaf bitrate {
+                description "The maximum expected bitrate over this connection.";
+                type uint32;
+                units "bps";
+            }
+        }
+
+        grouping streamItem {
+            description "Stream container.";
+            uses resourceDescription;
+
+            list resourceConnection {
+                description "Connection between two virtual resources.";
+                key id;
+
+                leaf id {
+                    description "Connection identifier.";
+                    type uint32;
+                }
+                uses connectionItem;
+            }
+        }
+        
+        list profile {
+            key id;
+            description "Profile container.";
+
+            leaf id {
+                description "Unique ID for this profile.";
+                type uint32;
+            }
+
+            list stream {
+                description "Stream container.";
+                key id;
+
+                leaf id {
+                    description "Connection identifier.";
+                    type uint32;
+                }
+                uses streamItem;
+            }
+            
+            list streamConnection {
+                description "Connection between two streams.";
+                key id;
+
+                leaf id {
+                    description "Connection identifier.";
+                    type uint32;
+                }
+
+                leaf sourceStreamId {
+                    description "The ID of the stream providing the input to the
+                                 connection.";
+                    type uint32;
+                }
+
+                leaf destinationStreamId {
+                    description "The ID of the stream accepting the output of the
+                                 connection.";
+                    type uint32;
+                }
+
+                uses connectionItem;
+            }
+        }
+
+        leaf activeProfile {
+            description "The number of the active profile.";
+            type uint32;
+        }
+    }
+
+    typedef rpcResult {
+        description "Result codes for XPO3 RPCs.";
+        
+        type enumeration {
+            enum success {
+                description "The operation was successful.";
+            }
+            enum invalidSourceProfileId {
+                description "The operation failed due to the source 
+                             profile ID being invalid.";
+            }
+            enum invalidDestinationProfileId {
+                description "The operation failed due to the destination 
+                             profile ID being invalid.";
+            }
+            enum invalidDestinationStreamId {
+                description "The operation failed due to the destination 
+                             stream ID being invalid.";
+            }
+            enum overwriteFailed {
+                description "The operation failed because there was a 
+                             pre-existing profile or stream in the requested 
+                             destination, and the replace existing flag was set 
+                             to false.";
+            }
+            enum routingFailed {
+                description "As the result of a copy of modify operation, the
+                             profile can no longer be routed.";
+            }
+            enum validationFailed {
+                description "As the result of a copy of modify operation, the
+                             profile can no longer be validated.";
+            }
+            enum invalidTime {
+                description "The time specified was invalid or could not be
+                             parsed.";
+            }
+            enum unknownLanguage {
+                description "The language specified is unknown.";
+            }
+            enum dictionaryReferenceNotFound {
+                description "The dictionary reference requested was not found.";
+            }
+        }
+    }
+    rpc copy-profile {
+        description "Allows a profile to be copied.";
+        
+        input {
+            leaf sourceProfileId {
+                description "The ID of the profile to copy.";
+                type uint32;
+            }
+            
+            leaf destinationProfileId {
+                description "The ID to copy the profile to.";
+                type uint32;
+            }
+            
+            leaf replaceExisting {
+                description "Indicates if the copy operation is able to 
+                             replace an existing profile.";
+                type boolean;
+            }
+        }
+        
+        output {
+            leaf copyResult {
+                description "The result of the copy operation.";
+                type rpcResult;
+            }
+        }
+    }
+}

@@ -1,0 +1,44 @@
+module test7 {
+
+    namespace "http://netconfcentral.org/ns/test7";
+    prefix "t7";
+
+    revision 2009-10-23 {
+        description "Initial revision.";
+    }
+
+    extension X {
+        description "test extension";
+        argument "test-parm";
+   }
+
+ container test-ext {
+  presence "not a top-level mandatory container";
+  t7:X test-string {
+    list test2 {
+      key a2;
+      ordered-by user;
+      unique b2;
+      leaf a1 { 
+         type int8; 
+         default 4;
+      }
+      leaf a2 { 
+        type string {
+          length 1..5 {
+            error-app-tag leaf-a2-error;
+            error-message 'leaf a2 is invalid';
+          }
+        }
+      }
+      leaf b2 { 
+         type uint32;
+         default 5;
+      }
+    }
+  }
+ }
+
+ leaf next { type string; }
+}
+

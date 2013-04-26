@@ -1,0 +1,21 @@
+module siltest7 {
+
+    namespace "http://netconfcentral.org/ns/siltest7";
+    prefix "siltest7";
+
+    revision 2011-12-12 {
+        description 
+          "Initial revision.  Check SIL callback order for various
+           operations.";
+    }
+
+    container top7con {
+      leaf leaf1 { type uint32; }
+    }
+
+    list top7list {
+       key key;
+       leaf key { type uint32; }
+       leaf v1 { type int32; }
+    }
+}

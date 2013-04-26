@@ -1,0 +1,68 @@
+module test10 {
+
+    namespace "http://netconfcentral.org/ns/test10";
+    prefix "t10";
+
+    revision 2011-02-06 {
+        description "Initial revision.";
+    }
+
+    extension e1 {
+       argument parm {
+         yin-element true;
+       }
+    }
+
+    t10:e2  "before ext e2";
+
+    extension e2 {
+       argument parm2 {
+         yin-element false;
+       }
+       t10:e2  "in ext e2";
+    }
+
+    leaf a {
+      t10:e1 "in leaf a";      
+      type int32 {
+        t10:e1  "in type for leaf a";
+        range "2 .. 12" {
+           t10:e1  "in range for type for leaf a";
+        }
+      }
+    }
+
+   t10:e2  "after leaf a";
+
+   typedef T_NcAccessControlType {
+      t10:e2  "in typedef";
+      description 
+        "NCX System access control mode.";
+      type enumeration {
+         t10:e1  "in typedef type";
+         enum open {
+            description "no access control checking enforced";
+            t10:e1  "in typedef type enum open";
+         }
+         enum loose {
+            description 
+               "any RPC method in the netconf namespace can
+                be invoked;  read-only data allowed for all";
+            t10:e1  "in typedef type enum loose";
+         }
+         enum strict {
+            description 
+              "RPC entry must be present to invoke
+               an RPC method; ncxacl Data entry must be present
+               to access any data. (Except for user == 'root'.)";
+         }
+      }
+      default "strict";
+    }
+
+    t10:e2 myleaf {
+      type string;
+      mandatory true;
+      t10:e1 "inside an e2 type";
+    }
+}

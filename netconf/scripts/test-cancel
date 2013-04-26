@@ -1,0 +1,4 @@
+get
+xget /system
+copy-config source=candidate target=running
+xget /system

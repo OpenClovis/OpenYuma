@@ -1,0 +1,21 @@
+module testunion {
+
+  namespace "http://www.netconfcentral.org/ns/testunion";
+  prefix "testunion";
+
+  revision 2011-03-08 {
+    description "Initial version.";
+  }
+
+  leaf t1 {
+    type union {
+      type foo;
+      type uint32;
+    }
+  }
+
+  typedef foo {
+    type empty;
+  }
+
+}

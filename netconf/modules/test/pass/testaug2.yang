@@ -1,0 +1,24 @@
+module testaug2 {
+
+  namespace "http://netconfcentral.org/ns/testaug2";
+
+  prefix testaug2;
+
+  import testobsolete { prefix t3; }
+
+  description "Bug report (???)";
+
+  revision "2011-07-01" {
+    description "Initial version";
+  }
+
+  augment /t3:one {
+    leaf myid1 { type string; }
+    list mylist {
+      key x;
+      leaf x { type int32; }
+      leaf y { type string; }
+    }
+  }
+
+}

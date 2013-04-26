@@ -1,0 +1,22 @@
+
+   <?xml version="1.0" encoding="UTF-8"?>
+   <definitions
+     xmlns="http://schemas.xmlsoap.org/wsdl/"
+     xmlns:SOAP="http://schemas.xmlsoap.org/wsdl/soap/"
+     xmlns:nets="urn:ietf:params:xml:ns:netconf:soap:1.0"
+
+     targetNamespace="urn:myNetconfService"
+     name="myNetconfService.wsdl">
+
+     <import namespace="urn:ietf:params:xml:ns:netconf:soap:1.0"
+             location="http://localhost:8080/netconf/
+                       schema/netconf-soap_1.0.wsdl"/>
+
+     <service name="netconf">
+       <port name="netconfPort" binding="nets:netconfBinding">
+         <SOAP:address location="http://localhost:8080/netconf"/>
+       </port>
+     </service>
+
+   </definitions>
+

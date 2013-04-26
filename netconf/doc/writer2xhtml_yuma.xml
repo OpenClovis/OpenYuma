@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<config>
+  <option name="ignore_hard_line_breaks" value="false" />
+  <option name="ignore_empty_paragraphs" value="false" />
+  <option name="ignore_double_spaces" value="false" />
+  <option name="image_size" value="auto" />
+  <option name="no_doctype" value="false" />
+  <option name="add_bom" value="false" />
+  <option name="encoding" value="UTF-8" />
+  <option name="use_named_entities" value="false" />
+  <option name="hexadecimal_entities" value="true" />
+  <option name="pretty_print" value="false" />
+  <option name="multilingual" value="true" />
+  <option name="template_ids" value=",,," />
+  <option name="separate_stylesheet" value="false" />
+  <option name="custom_stylesheet" value="" />
+  <option name="formatting" value="convert_all" />
+  <option name="frame_formatting" value="convert_all" />
+  <option name="section_formatting" value="convert_all" />
+  <option name="table_formatting" value="convert_all" />
+  <option name="ignore_table_dimensions" value="false" />
+  <option name="list_formatting" value="css1" />
+  <option name="use_default_font" value="false" />
+  <option name="default_font_name" value="" />
+  <option name="use_dublin_core" value="true" />
+  <option name="notes" value="true" />
+  <option name="display_hidden_text" value="false" />
+  <option name="convert_to_px" value="true" />
+  <option name="scaling" value="100%" />
+  <option name="column_scaling" value="100%" />
+  <option name="relative_font_size" value="false" />
+  <option name="font_scaling" value="100%" />
+  <option name="float_objects" value="true" />
+  <option name="tabstop_style" value="" />
+  <option name="formulas" value="image+starmath" />
+  <option name="endnotes_heading" value="" />
+  <option name="footnotes_heading" value="" />
+  <option name="external_toc_depth" value="auto" />
+  <option name="include_toc" value="true" />
+  <option name="split_level" value="1" />
+  <option name="repeat_levels" value="5" />
+  <option name="page_break_split" value="none" />
+  <option name="split_after" value="0" />
+  <option name="image_split" value="none" />
+  <option name="cover_image" value="false" />
+  <option name="calc_split" value="false" />
+  <option name="display_hidden_sheets" value="false" />
+  <option name="display_hidden_rows_cols" value="false" />
+  <option name="display_filtered_rows_cols" value="false" />
+  <option name="apply_print_ranges" value="false" />
+  <option name="use_title_as_heading" value="true" />
+  <option name="use_sheet_names_as_headings" value="true" />
+  <option name="xslt_path" value="" />
+  <option name="save_images_in_subdir" value="false" />
+  <option name="uplink" value="" />
+  <option name="directory_icon" value="" />
+  <option name="document_icon" value="" />
+  <option name="zen_hack" value="false" />
+  <xhtml-style-map block-css="(none)" block-element="blockquote" css="(none)" element="p" family="paragraph" name="Quotations" />
+  <xhtml-style-map block-css="(none)" block-element="" css="(none)" element="address" family="paragraph" name="Sender" />
+  <xhtml-style-map block-css="(none)" block-element="" css="(none)" element="p" family="paragraph" name="Text body" />
+  <xhtml-style-map block-css="(none)" block-element="" css="(none)" element="hr" family="paragraph" name="Horizontal Line" />
+  <xhtml-style-map block-css="(none)" block-element="dl" css="(none)" element="dt" family="paragraph" name="List Heading" />
+  <xhtml-style-map block-css="(none)" block-element="" css="(none)" element="pre" family="paragraph" name="Preformatted Text" />
+  <xhtml-style-map block-css="(none)" block-element="dl" css="(none)" element="dd" family="paragraph" name="List Contents" />
+  <xhtml-style-map css="(none)" element="em" family="text" name="Emphasis" />
+  <xhtml-style-map css="(none)" element="samp" family="text" name="Example" />
+  <xhtml-style-map css="(none)" element="var" family="text" name="Variable" />
+  <xhtml-style-map css="(none)" element="sup" family="text" name="Footnote anchor" />
+  <xhtml-style-map css="(none)" element="strong" family="text" name="Strong Emphasis" />
+  <xhtml-style-map css="(none)" element="code" family="text" name="Source Text" />
+  <xhtml-style-map css="(none)" element="sup" family="text" name="Endnote anchor" />
+  <xhtml-style-map css="(none)" element="kbd" family="text" name="User entry" />
+  <xhtml-style-map css="(none)" element="tt" family="text" name="Teletype" />
+  <xhtml-style-map css="(none)" element="cite" family="text" name="Citation" />
+  <xhtml-style-map css="(none)" element="dfn" family="text" name="Definition" />
+</config>

@@ -1,0 +1,2109 @@
+module yangcli {
+
+    namespace "http://netconfcentral.org/ns/yangcli";
+
+    prefix yc;
+
+    import ietf-yang-types { prefix yang; }
+
+    import yuma-ncx { prefix ncx; }
+
+    import yuma-app-common { prefix ncxapp; }
+
+    import yuma-types { prefix nt; }
+
+    import yuma-netconf { prefix nc; }
+
+    organization  "Netconf Central";
+
+    contact "Andy Bierman <support@netconfcentral.org>.";
+
+    description 
+       "
+        Command Line Interface for the NETCONF protocol: Client side
+
+        Usage:
+           yangcli [parameters]
+           yangcli --help
+           yangcli --version
+
+        Normal Mode:
+           An interactive CLI shell with command line history.
+
+        Autostart-mode:
+           If the 'server' parameter is present, then yangcli will
+           attempt to connect to that server upon startup.  If the
+           'user' and 'password' parameters are also present, then
+           the user will not be prompted before the connection
+           is attempted.  This parameter will be processed first,
+           if script-mode or batch-mode is used.
+    
+        Script-mode:
+           If the 'run-script' or 'run-command' parameter is present,
+           then the specified script or command will be run 
+           automatically upon startup.
+
+        Batch-mode:
+           If the 'batch-mode' parameter is present, then either the
+           'run-script' or 'run-command' parameter will be invoked, if
+           present, and then the program will exit.  Any interactive
+           input breaks in the script or command will be skipped.
+         ";
+
+    revision 2012-10-05 {
+        description
+          "Add uses for YumaHomeParm";
+    }
+
+    revision 2011-10-10 {
+       description 
+         "Add CLI parameters:
+            --aliases-file
+            --autoaliases
+            --autouservars
+            --uservars-file
+            --home
+          Add yangcli local commands:
+            alias
+            aliases
+            unset
+            uservars
+         ";
+    }
+
+    revision 2011-09-05 {
+       description 
+         "Add 'json' to --display-mode enumerations.";
+    }
+
+    revision 2011-08-06 {
+       description 
+         "Add --transport to ConnectParms grouping.";
+    }
+
+    revision 2011-07-19 {
+       description 
+         "Add PublicKeyParms grouping.
+          Added MatchParms (--match-names and --alt-names).
+          Added --force-target parameter.
+          Added show session command.
+          Added --urltarget=<url> parameter to FillParms grouping
+          to allow URL encoded requests to be converted to XPath
+          before use.
+          Added --use-xmlheader=<boolean> parameter to control
+          how XML file variables are generated when written.";
+    }
+
+    revision 2011-06-05 {
+       description 
+          "Added start-timer and stop-timer local RPC functions.
+           Added --echo-replies parameter and system variable.
+           Added --time-rpcs parameter and system variable
+           Added remove command for base:1.1 support";
+    }
+
+    revision 2011-04-22 {
+       description 
+          "Added --protocols parm via uses ProtocolsParm.
+           Also allow setting --protocols in <connect> RPC.";
+    }
+
+    revision 2011-03-19 {
+       description 
+          "Added 'xml-nons' display mode to display-mode parameter.
+           Added 'cli' and 'system' to show command; subset of 
+           show vars.
+           Changed history show default from -1 to 25.";
+    }
+
+    revision 2010-04-16 {
+       description 
+          "Added eval command for XPath expression support";
+    }
+
+    revision 2010-01-14 {
+       description 
+          "Initial published version for 0.9.9 release";
+    }
+
+    typedef LogCount {
+       description 
+          "Number of log entries. -1 means all entries";
+       type int32 {
+          range "-1 | 1 .. max";
+       }
+    }
+
+    typedef LogIndex {
+       description 
+          "Index into a log buffer.";
+       type uint32;
+    }
+
+    typedef TimerId {
+       description 
+          "Identifier for a local timer to use with
+           the start-timer and stop-timer commands.";
+       type uint8 {
+         range "0 .. 15";
+       }
+    }
+
+    typedef NameMatchMode {
+      description
+        "Defines the search mode that should be used
+         when resolving YANG node names in leafs and
+         leaf-lists using the UrlPath data type.";
+      type enumeration {
+        enum exact {
+          description
+            "The name must exactly match the node name
+             for all characters in both name strings.";
+        }
+        enum exact-nocase {
+          description
+            "The name must match the node name
+             for all characters in both name strings.
+             Strings are not case-sensitive.";
+        }
+        enum one {
+          description
+            "The name must exactly match the first N
+             characters of just one node name, which
+             must be the only partial name match found.";
+        }
+        enum one-nocase {
+          description
+            "The name must exactly match the first N
+             characters of just one node name, which
+             must be the only partial name match found.
+             Strings are not case-sensitive.";
+        }
+        enum first {
+          description
+            "The name must exactly match the first N
+             characters of any node name. The first one
+             found will be used.";
+        }
+        enum first-nocase {
+          description
+            "The name must exactly match the first N
+             characters of any node name. The first one
+             found will be used. Strings are not 
+             case-sensitive.";
+        }
+      }
+    }
+
+    typedef AltNameMode {
+      description
+        "Defines the alternate name search mode that 
+         should be used when resolving YANG node names
+         in leafs or leaflists using the UrlPath data type.
+
+         If 'true' then nodes with an 'alt-name' defined
+         will be considered a match if the YANG name or the
+         alternative name matches the search string.
+
+         If 'false' then only the YANG node name will
+         be used in node name searches.";
+      type boolean;
+    }
+   
+    typedef UrlPath {
+       description 
+         "Special URL encoded path expression.
+
+          Normal Encoding Rules:
+
+            - Normal content is encoded as an absolute path.
+            - Keys are encoded as a path step within the URL,
+              instead of a predicate expression like XPath.
+            - The first character must be a forward slash '/'.
+            - Each identifier or key encoded in the URL string
+              is separated by a single forward slash '/' character.
+            - Escaped character sequences are allowed, such
+              as '%20' for the space ' ' character.
+            - If any descendant nodes of a list are included,
+              then all key leafs for that list must be encoded
+              in the URL (or escaped with the dash '-' character
+              to skip that key).
+            - Only key leafs can be encoded within the URL string,
+              similar to a YANG instance-identifier or 
+              schema-instance-identifier string.  Other leafs
+              are not allowed.
+
+            Example URL and XPath strings:
+
+                XPath:  /foo/bar[id='fred'][id2='barney]/baz
+
+              UrlPath:  /foo/bar/fred/barney/baz
+
+            Example showing the 'id2' key leaf escaped:
+
+                XPath:  /foo/bar[id='fred']/baz
+
+              UrlPath:  /foo/bar/fred/-/baz            
+
+         Special Encoding Rules
+ 
+            Since these escaped characters are usually decoded
+            by the time an HTTP gateway program will get them,
+            the forward slash '/' character needs to be treated
+            differently.  To use this character within key leaf
+            content, it must be escaped with another forward
+            slash character. 
+
+            Example showing escaped forward slash in content:
+
+              XPath: /interfaces/interface[name='1/0/22']/mtu
+
+            URLPath: /interfaces/interface/1//0//22/mtu
+
+         Name Matching
+
+            A parameter using the 'NameMatchMode' data type
+            can be used to control how name node searches
+            are done for nodes using this data type.
+
+         Alternate Naming
+
+            A parameter using the 'AltNameMode' data type
+            can be used to control whether alternative
+            node names can be used when name searches
+            are done for nodes using this data type.
+            
+         Exceptions:
+
+            XML namespaces are not ignored, but if multiple
+            sibling nodes have the same local-name, then
+            the first node found will be used.
+
+         ";
+            
+       type string {
+          length "1..max";
+       }
+    }
+
+    typedef YangcliVariableType {
+      description
+        "yangcli user and system variable types";
+      type enumeration {
+        enum session {
+          description "Session variable (for future use)";
+        }
+        enum local {
+          description "Local user variable";
+        }
+        enum config {
+          description "User configuration variable";
+        }
+        enum global {
+          description "Global user variable";
+        }
+        enum system {
+          description "System variable";
+        }
+        enum queue {
+          description "System internal Queue variable";
+        }
+      }
+    }
+
+    /*************************************************************
+     *
+     *     Groupings for parameters used in multiple commands
+     *
+     *************************************************************/
+
+    grouping MatchParms {
+      leaf match-names {
+        description
+          "Match mode to use for UrlPath name searches.";
+        type NameMatchMode;
+      }
+
+      leaf alt-names {
+        description
+          "Match mode to use for UrlPath name searches.";
+        type AltNameMode;
+      }
+    }
+
+    grouping FillParms {
+       choice target-parm {
+         leaf target {
+           description 
+             "XPath target object to fill.  If prefixes are missing
+              then the first match in any namespace will be used.
+              Any prefix used must be the default prefix
+              assigned to the desired YANG module. Prefix usage is
+              optional.";
+
+           // type schema-instance-identifier;  TBD
+
+           type string {
+             length "1..max";
+           }
+           mandatory true;
+           ncx:schema-instance;
+         }
+         leaf urltarget {
+           description 
+             "URL encoded target object to fill.
+              Encoding Rules: TBD.";
+           // type URL: TBD
+           type UrlPath;
+           mandatory true;
+         }
+       }
+
+       leaf optional {
+         description 
+           "If present, then prompt for leafs that are optional.
+            If not, skip these objects.";
+         type empty;
+       }
+
+       anyxml value {
+         description
+           "Contains a string representing the content
+            to use for the filled variable.
+
+            If a string is entered, then the target value being
+            filled must be a leaf or leaf-list.
+
+            If a variable is referenced, then it will 
+            be used as the content, if the target value being
+            filled is a leaf or a leaf-list.
+
+            If the target value is a complex object,
+            then the referenced variable must also be
+            a complex object of the same type. E.g.,
+
+            The global variable 'foo' would be specified as:
+ 
+                value=$$foo
+
+            The local variable 'bar' would be specified as:
+ 
+                value=$bar
+
+            An error will be reported if the global or local
+            variable does not reference the same object type
+            as the target parameter.";
+       }
+
+       uses MatchParms {
+         description
+          "These parameters are ignored unless the
+           'urltarget' parameter is also present.";
+       }
+    }
+
+    grouping CommonPduParms {
+        description
+            "Common parms for some local commands that
+             generate NETCONF PDUs";
+
+        choice from {
+            mandatory true;
+
+            leaf varref {
+                description 
+                   "Use the contents of the specified variable 
+                    as the content";
+                type string;
+            }
+
+            case from-cli {
+                uses FillParms;
+            }
+        }
+    }
+
+    grouping EditParms {
+        description
+            "Common parms for create, merge, replace commands";
+
+        uses CommonPduParms;
+
+	leaf timeout {
+	  description "Timeout to use";
+	  type nt:Timeout;
+        }
+    }
+
+    grouping SGetParms {
+        description
+            "Common parms for sget and sget-config operations.";
+
+        leaf nofill {
+           description
+            "If present, and the 'from-cli' option is used
+             for input, then filling of mandatory nodes
+             and key leafs will be skipped.  Instead, the target
+             object will be treated as a terminating select node
+             in the filter element.";
+           type empty;
+       }
+       uses ncxapp:CliWithDefaultsParm;
+    }
+
+    grouping XGetParms {
+        description
+            "Common parms for xget and xget-config operations.";
+
+	choice from {
+            mandatory true;
+
+            leaf varref {
+                description 
+                   "Use the contents of the specified variable 
+                    as the content";
+                type string;
+            }
+
+            leaf select {
+              description
+                "The XPath expression to use in the retrieval
+                 operation.  The string may only contain
+                 single quotes, which are required for
+                 string literals.  The entire string
+                 will be inserted into a double-quoted
+                 string, within the get-config PDU.
+                 Character entities will be inserted as
+                 needed to maintain well-formed XML.";
+              type string { length "1..max"; }
+              ncx:xpath;
+            }
+
+            leaf urltarget {
+              description
+                "The URL path expression to use in the retrieval
+                 operation.";
+              type UrlPath;
+            }
+        }
+
+	leaf timeout {
+	  description "Timeout to use";
+	  type nt:Timeout;
+        }
+
+        uses ncxapp:CliWithDefaultsParm;
+
+        uses MatchParms {
+          description
+            "These parameters are ignored unless the
+             'urltarget' parameter is also present.";
+        }
+    }
+
+    grouping ConnectParms {
+        description
+          "Common parms for connecting to a NETCONF server.
+           Used by the connect operation and if present at
+           the command line invocation, then the connect
+           operation will be invoked automatically.";
+
+        leaf user {
+          description
+             "User name to use for NETCONF sessions.";
+          type nt:NcxUserName;
+        }
+
+        leaf server {
+           description
+             "IP address or DNS name of the NETCONF server target.";
+          type string;
+        }
+
+        leaf password {
+          description
+            "User password to use for NETCONF sessions.
+             If none, then user will be prompted before connecting.";
+          type string;
+          ncx:password;
+        }
+
+        leaf ncport {
+          description 
+            "NETCONF port number to use.  If not present, then
+             port 830, followed by port 22, will be tried.";
+          type uint16 {
+            range "1..max";
+          }
+          default 830;
+        }
+
+	leaf timeout {
+	  description
+	    "Number of seconds to wait for a response
+	     from the server before declaring a timeout.
+             Zero means do not timeout at all.";
+          type nt:Timeout;
+        }
+ 
+        leaf public-key {
+          type string {
+            length "1 .. max";
+          }
+          description
+            "Contains the file path specification
+             for the file containing the client-side public key.
+             If both 'public-key' and 'private-key' files are
+             present, the client will attempt to connect
+             to the server using these keys.  If this fails,
+             or not done, then password authentication will
+             be attempted.";
+          default "$HOME/.ssh/id_rsa.pub";
+        }
+
+        leaf private-key {
+          type string {
+            length "1 .. max";
+          }
+          description
+            "Contains the file path specification
+             for the file containing the client-side private key.
+             If both 'public-key' and 'private-key' files are
+             present, the client will attempt to connect
+             to the server using these keys.  If this fails,
+             or not done, then password authentication will
+             be attempted.";
+          default "$HOME/.ssh/id_rsa";
+        }
+
+        uses ncxapp:ProtocolsParm;
+
+        leaf transport {
+          description
+            "Identifies the transport protocol that should be used.";
+          type enumeration {
+            enum ssh {
+              description
+                "NETCONF over SSH.";
+              reference
+                "RFC 4742;  RFC 6242";
+            }
+            enum tcp {
+              description
+                "NETCONF over TCP.
+                 If this enum is selected, then the default --ncport
+                 value is set to 2023, and the --protocols value
+                 is set to netconf1.0.  The --password value will
+                 be ignored.";
+              reference
+                "tail-f confd";
+            }
+          }
+          default ssh;
+        }
+    }
+
+    grouping XPathParms {
+        description
+          "Common parameters used for XPath script constructs";
+
+        leaf expr {
+          description
+            "XPath expression string to evaluate.
+             Use quotes if there are any whitespace or
+             special characters in the expression.";
+          type yang:xpath1.0 {
+            length "1..max";
+          }
+          mandatory true;
+        }
+
+        anyxml docroot {
+          description 
+            "Use the contents of the specified variable or
+             external XML file as the conceptual document to
+             apply the expression specified in the 'expr' parameter.
+
+             If this parameter is missing then a dummy document
+             will be used.  This is only allowed if the
+             expression only contains variable references
+             or numeric/string constants.";
+        }
+    }
+
+
+    /*************************************************************
+     *
+     *         CLI parameter set for yangcli program
+     *
+     *************************************************************/
+
+    container yangcli {
+      ncx:cli;
+
+      description
+        "CLI Parameter Set for the NETCONF Client Application.";
+
+      uses ncxapp:NcxAppCommon;
+
+      uses ncxapp:ConfigParm;
+
+      uses ncxapp:YumaHomeParm;
+
+      uses ncxapp:CommonFeatureParms;
+
+      uses ncxapp:SubdirsParm;
+
+      uses ncxapp:HomeParm;
+
+      uses ConnectParms;
+
+      uses MatchParms {
+        refine match-names {
+          default one-nocase;
+        }
+        refine alt-names {
+          default true;
+        }
+      }
+
+      leaf aliases-file {
+        description
+          "Specifies the yangcli command aliases file to use.";
+        type string;
+        default "~/.yuma/.yangcli_aliases";
+      }
+
+      leaf autocomp {
+        description
+          "Controls whether partial keywords will be 
+           checked for interactive or script commands.
+           By default, the first match for a partial keyword
+           will be used if no definition is found for
+           a command name or parameter name.";
+        type boolean;
+        default true;
+      }
+
+      leaf autoaliases {
+        description
+          "Controls whether the yangcli command aliases will
+           be saved at exit and loaded at startup.
+           If true, the 'aliases-file' parameter will be used if it is set,
+           or else the default aliases file will be used
+           (~/.yuma/.yangcli_aliases), for loading
+           and saving the yangcli command aliases.
+           If false, the yangcli command aliases will only be stored
+           and loaded manually with the aliases command.";
+        type boolean;
+        default true;
+      }
+ 
+      leaf autoload {
+        description
+          "Controls whether any modules (except this one)
+           will be automatically loaded upon startup or
+           upon session startup with a server. If false,
+           the 'mgrload' command must be used to
+           explicitly load all the desired YANG modules.";
+        type boolean;
+        default true;
+      }
+
+      leaf autohistory {
+        description
+          "Controls whether the command line history buffer will
+           be saved at exit and loaded at startup.
+           If true, the default history file will be used
+           (~/.yuma/.yangcli_history) for loading
+           and saving the history buffer.
+           If false, the history buffer will only be stored
+           and loaded manually with the history command.";
+        type boolean;
+        default true;
+      }
+
+      leaf autouservars {
+        description
+          "Controls whether the yangcli user variables will
+           be saved at exit and loaded at startup.
+           If true, the 'uservars-file' parameter will be used if set,
+           or else the default user variables file will be used
+           (~/.yuma/yangcli_uservars.xml), for loading
+           and saving the yangcli user variables.
+           If false, the yangcli user variables will only be stored
+           and loaded manually with the uservars command.";
+        type boolean;
+        default true;
+      }
+
+      leaf bad-data {
+        description
+          "Specifies how invalid user input from the CLI
+           will be handled when filling PDUs for remote
+           operations.";
+
+        type enumeration {
+          enum ignore {
+            description 
+              "Silently accept invalid PDU and data model 
+               parameters.  Intended for advanced server
+               testing mode only.";
+          }
+          enum warn {
+            description 
+              "Warn, but accept invalid PDU and data model 
+               parameters.";
+          }
+          enum check {
+            description 
+              "Prompt the user to keep the invalid value
+               or re-enter the value.";
+          }
+          enum error {
+            description 
+              "Prompt the user to re-enter the invalid value.";
+          }
+        }
+        default "check";
+      }
+
+      leaf batch-mode {
+        description
+          "If present, the interactive CLI will not be used.
+           A script should be provided with the 'run-script'
+           parameter, or a command provided with the 'run-command'
+           parameter, or else the program will simply exit.
+           If the auto-connect mode is enabled, then this will mode
+           simply test if a NETCONF session can be established,
+           then exit.";
+         type empty;
+      }
+
+      leaf default-module {
+        description
+           "Default module name string to use before 'netconf' 
+            and 'yangcli' are tried.  The module prefix may need to be
+            used for other modules.";
+         type nt:NcxName;
+      }
+
+      leaf display-mode {
+        description
+           "Controls how values are displayed during output
+            to STDOUT or a log file.";
+         type enumeration {
+           enum plain {
+             description 
+                 "Plain identifier without any prefix format.";
+           }
+           enum prefix {
+             description 
+                "Plain text with XML prefix added format.";
+           }
+           enum module {
+             description 
+                "Plain text with module name as prefix added format.";
+           }
+           enum xml {
+             description 
+                "XML format.";
+           }
+           enum xml-nons {
+             description 
+                "XML format, but no namespace (xmlns) attributes 
+                 will be generated.";
+           }
+           enum json {
+             description 
+                "JSON format.";
+           }
+        }
+        default plain;
+      }
+
+      leaf echo-replies {
+        description
+          "Allow RPC replies to be echoes to the log or STDOUT
+
+           If 'true', <rpc-reply> messages containing data
+           will be output to the log, if log-level is 
+           'info' or higher.
+
+           If 'false', <rpc-reply> messages containing data
+           will not be output to the log, regardless of
+           the value of log-level.
+
+           The $$echo-replies system variable is derived from
+           this parameter.";
+        type boolean;
+        default true;
+      }
+
+      leaf fixorder {
+        description
+          "Controls whether PDU parameters will be
+           automatically sent to the server in the
+           correct order.  If false, the specified order
+           will be used. If true, then canonical order will
+	   be used";
+        type boolean;
+	default true;
+      }
+
+      leaf force-target {
+        description
+          "Controls whether the candidate or running
+           configuration datastore will be used as
+           the default edit target, when both are supported
+           by the server.";
+        type enumeration {
+          enum candidate {
+            description 
+              "Force default edit target to be candidate.";
+          }
+          enum running {
+            description 
+              "Force default edit target to be running.";
+          }
+        }
+	default candidate;
+      }
+
+      uses ncxapp:ModuleParm;
+
+      uses ncxapp:DeviationParm;
+
+      uses ncxapp:DatapathParm;
+
+      uses ncxapp:RunpathParm;
+
+      choice run-startup-mode {
+        leaf run-script {
+          description
+            "The specified script will be invoked upon startup.
+             If the auto-connect parameters are provided, then
+             a session will be established before running the
+             script.  If a quoted string is used, then any parameters
+             after the script name will be passed to the script.";
+           type string { 
+             length "1 .. 4095"; 
+           } 
+        }
+
+        leaf run-command {
+          description
+            "The specified command will be invoked upon startup.
+             If the auto-connect parameters are provided, then
+             a session will be established before running the
+             command.";
+           type string {
+             length "1 .. 4095";
+           }
+        }
+      }
+
+      leaf time-rpcs {
+        description 
+         "Measure the round-trip time of each <rpc> request and
+          <rpc-reply> at the session level.
+          Echo the elapsed time value to screen if in
+          interactive mode, as well as the log if the
+          log is a file instead of stdout.
+          The $$time-rpcs system variable is derived from this
+          parameter.";
+        type boolean;
+        default false;
+      }
+
+      leaf uservars-file {
+        description
+          "Specifies the yangcli user variables file to use.";
+        type string;
+        default "~/.yuma/yangcli_uservars.xml";
+      }
+
+      leaf use-xmlheader {
+        description
+          "Specifies how file result variables will be written
+           for XML files.  Controls whether the XML preamble
+           header will be written or not.";
+        type boolean;
+        default true;
+      }
+
+    }
+
+    /*************************************************************
+     *
+     *        RPC methods for local commands within yangcli
+     *
+     *************************************************************/
+
+    rpc alias {
+      description 
+        "Show or set a specific yangcli command alias.
+        
+         * Show all aliases in memory (same as aliases):
+
+           yangcli>  alias   
+
+         * Show one alias 'foo':
+
+           yangcli>  alias foo
+
+         * Set one alias; make sure there is no whitespace
+           between the '=' char and either string.  If the value
+           has whitespace, it must be quoted. If the equals sign
+           is present, then a valid value string must be present.
+
+           Quotes will be preserved if used:
+             * Single quotes can appear within doubled-quoted 
+               strings but not any double quotes.
+             * Double quotes can appear within single-quoted strings
+               but not any single quotes.
+
+           The first token in a plain command or the first token
+           in the right-hand-side expression in an assignment
+           statement can be an alias.
+
+           The alias name must exact match the token.
+           A new command line will be constructed replacing
+           the alias name with its value.  The new command
+           line will then be parsed as usual.
+
+           yangcli>  alias s=show
+           yangcli>  alias getfoo='sget-config source=running /top/foo'
+
+        * Aliases can override real commands, so be careful
+          not to unintentionally alter real commands.
+
+           yangcli>  alias get-config='get-config source=running'
+       ";
+      input {
+        ncx:default-parm var;
+        ncx:default-parm-equals-ok;
+
+        leaf var {
+          description "The alias command string.";
+          type string { length "1 .. max"; }
+        }
+      }
+    }
+
+    rpc aliases {
+      description "Manage the yangcli command aliases";
+      input {
+
+        choice alias-action {
+          default show;
+
+          leaf show {
+            description 
+              "Show all the yangcli command aliases.";
+            type empty;
+          }
+
+          leaf clear {
+            description 
+              "Delete all the yangcli aliases from memory.";
+            type empty;
+          }
+
+          leaf load {
+            description 
+              "Load the yangcli command aliases from the
+               specified file spec.  The default aliases
+               file will be loaded automatically at startup
+               if the '--autoaliases' parameter is present.";
+            type string;
+            default "~/.yuma/.yangcli_aliases";
+          }
+
+          leaf save {
+            description 
+              "Save the yangcli command aliases to the 
+               specified filespec. The default aliases
+               file will be saved automatically at shutdown
+               if the '--autoaliases' parameter is present.";
+            type string;
+            default "~/.yuma/.yangcli_aliases";
+          }
+        }
+      }
+    }
+
+    rpc cd {
+      description "Change the current working directory.";
+      input {
+        ncx:default-parm dir;
+
+        leaf dir { 
+           description "Directory path to use.";
+           type string;
+           mandatory true;
+        }
+      }
+    }
+
+    rpc connect {
+      description "Connect to a NETCONF server.";
+      input {
+        ncx:default-parm server;
+
+        uses ConnectParms {
+          refine user {
+    	    mandatory true;
+          }
+          refine server {
+  	    mandatory true;
+          }
+          refine password {
+  	    mandatory true;
+          }
+        }
+      }
+    }
+
+    rpc create {
+      description
+       "Create some NETCONF config data with the edit-config operation";
+      input {
+        ncx:default-parm  target;
+        uses EditParms;
+      }
+    }
+
+    rpc delete {
+      description
+       "Delete some NETCONF config data with the edit-config operation";
+      input {
+        ncx:default-parm  target;
+        choice delete-target {
+          mandatory true;
+          leaf target {
+            description 
+             "Xpath expression indicating the node which is going
+              to be deleted.";
+            type string;
+          }
+          leaf urltarget {
+            description
+              "The URL path expression to use in the delete 
+               operation.";
+            type UrlPath;
+          }
+        }
+      }
+    }
+
+    rpc elif {
+      description 
+        "Evaluate an XPath expression locally on the manager.
+         and execute the block of commands that follow
+         if the expression is true.  The block ends
+         when a matching 'elif', 'else', or 'end' command is reached.
+         This may only be used after an 'if' or 'elif' command
+         or an error (no matching if command) will occur.
+        ";
+      input {
+        ncx:default-parm expr;
+        uses XPathParms;
+      }
+    }
+
+    rpc else {
+      description 
+        "End an 'if' or 'elif' command block, and start a new
+         command block that must end with an 'end' command.
+         If no 'if' or 'elif' block is in progress then an error 
+         will occur.
+        ";
+    }
+
+    rpc end {
+      description 
+        "End an 'if' command block or a 'while' command block.
+         If no block is in progress then an error will occur.
+        ";
+    }
+
+    rpc eval {
+      description 
+        "Evaluate an XPath expression locally on the manager.
+         All local variables will be available to the session
+         context, in the following precedence:
+            1) current script run level
+            2) global variable
+
+         When the result of an eval command is saved
+         to a user variable, it may be altered as follows:
+
+           Convert to string:
+            - <data> is a simple type
+            - <data> contains 1 node that is a simple type
+             
+           Remove the <data> container:
+            - <data> contains a single complex element
+             
+           Retain the <data> container:
+            - <data> contains multiple elements
+
+         Usage Examples:
+
+         > $x = 5
+             x = '5'
+         > $x = eval '$x + 10'
+             x = '15'
+         > $y = xget /system
+             y = data {
+                   system { ... }
+                 }
+         > $z = eval '//sysname' docroot=$y
+             z = 'Linux'
+         > $w = eval '/system/uname' docroot=$y
+             w = uname {
+                   sysname 'Linux'
+                   ...
+                 }
+        ";
+
+      input {
+        ncx:default-parm expr;
+        uses XPathParms;
+      }
+
+      output {
+        anyxml data {
+          description
+            "The XPath result, returned in a data element.
+
+             The content will be a simple string for boolean, string,
+             and number result types.
+
+             The content will be zero or more child elements, 
+             in their proper namespaces, if the result is a node-set.
+             Only the requested node(s) will be returned,
+             not their entire path to the document root,
+             like the get and get-config operations.
+
+             An empty 'data' element will be returned if the result
+             is an empty node-set.";
+          mandatory true;
+        }
+      }
+    }
+
+    rpc eventlog {
+      description "Access the notification event log";
+      input {
+        ncx:default-parm show;
+
+        choice eventlog-action {
+          default show-case;
+
+          case show-case {
+            leaf show {
+              description 
+                "Show the specified number of event log
+                 buffer entries. -1 means show all entries.
+                 If the --full or --brief help-mode parameters
+                 are entered, then the output will be altered.";
+              type LogCount;
+              default -1;
+            }
+
+            leaf start {
+              description 
+                "Start at the specified event index number instead of
+                 the beginning of the event log.";
+              type LogIndex;
+            }
+
+            uses ncxapp:HelpMode;
+          }
+
+          leaf clear {
+            description 
+              "Clear the specified number of notification 
+               event log entries.  The value zero means
+               clear all the entries.";
+            type LogCount;
+            default 25;
+          }
+        }
+      }
+    }
+
+    rpc fill {
+      description 
+       "Fill a value for reuse in a NETCONF PDU or other operation.
+  
+        Used in an assignment statement to create a variable
+        for later use:
+
+            $foo = fill --target=/t:foo-con/bar-list \
+                        --optional \
+                        --current-value=$bar    ";
+       input {
+         ncx:default-parm  target;
+         uses FillParms;
+       }
+       output {
+         anyxml data {
+           description 
+             "The result of the fill operation.
+
+              The name of the value node may not really 
+              be 'data'. If the 'target' or 'current-value'
+              input parameters are used, then the name
+              of the result node will be copied instead.
+
+              The data type will be inherited from the 'target'
+              or 'current_value' parameters, and not really be 
+              an 'anyxml' structure.  YANG does have a data 
+              type that supports this feature.";
+         }
+       }
+    }
+
+    rpc get-locks {
+       description 
+          "Get a lock for the running configuration
+           and the candidate and startup configurations,
+           if needed.  If all the locks cannot be obtained,
+           then release all of them (all-or-nothing).
+           The entire operation must be completed within
+           the lock timeout interval, if it is set.";
+       input {
+
+         leaf lock-timeout {
+           description 
+             "Total time to wait to retrieve all the locks needed
+              to complete the get-locks command.  A value of zero
+              means to wait forever and not use a timeout value.";
+           type nt:Timeout;
+           default 120;
+         }
+
+         leaf retry-interval {
+           description 
+             "Retry interval to use if a lock is temporarily
+              unavailable.  The client will wait this number of
+              seconds before attempting to get the current lock.";
+           units seconds;
+           type uint32 { range "1 .. 300"; }
+           default 2;
+         }
+
+         leaf cleanup {
+           description 
+             "Indicates whether the locks obtained should be
+              automatically released if an RPC operation
+              fails (after the get-locks succeeds).";
+           type boolean;
+           default true;
+         }
+       }
+    }
+
+    rpc help {
+      description "Print the yangcli help text";
+      input {
+        ncx:default-parm command;
+
+        choice helptype {
+          leaf command {
+            description "Show help for the specified command,
+                         also called an RPC method";
+            type nt:NcxIdentifier;
+          }
+          leaf commands {
+            description "Show info for all local commands";
+            type empty;
+          }
+          leaf notification {
+            description "Show help for the specified notification";
+            type nt:NcxIdentifier;
+          }
+          leaf object {
+            description "Show help for the specified object";
+            type union {
+              type nt:NcxIdentifier;
+              type UrlPath;
+            }
+          }
+          leaf type {
+            description "Show help for the specified type";
+            type nt:NcxIdentifier;
+          }
+        }
+        uses ncxapp:HelpMode;
+      }
+    }
+
+    rpc history {
+      description "Access the command line history buffer";
+      input {
+        ncx:default-parm show;
+
+        choice history-action {
+          default show-case;
+
+          case show-case {
+            leaf show {
+              description 
+                "Show the specified number of history
+                 buffer entries. -1 means show all entries.";
+              type LogCount;
+              default 25;
+            }
+            uses ncxapp:HelpMode;
+          }
+
+          leaf clear {
+            description 
+              "Clear all the history buffer entries.";
+            type empty;
+          }
+
+          leaf load {
+            description 
+              "Load the command history buffer from the
+               specified file spec.";
+            type string;
+            default "~/.yuma/.yangcli_history";
+          }
+
+          leaf save {
+            description 
+              "Save the command history buffer in the 
+               specified filespec.";
+            type string;
+            default "~/.yuma/.yangcli_history";
+          }
+        }
+      }
+    }
+
+    rpc if {
+      description 
+        "Evaluate an XPath expression locally on the manager.
+         and execute the block of commands that follow
+         if the expression is true.  The block ends
+         when a matching 'elif', 'else', or 'end' command is reached.
+        ";
+      input {
+        ncx:default-parm expr;
+        uses XPathParms;
+      }
+    }
+
+    rpc insert {
+      description
+       "Insert some NETCONF config data with the edit-config operation";
+      input {
+        ncx:default-parm  target;
+
+        uses EditParms;
+
+        leaf order {
+          description 
+            "The insert order that should be used.
+             If the values 'before' or 'after' are selected,
+             then the edit-target parameter must also be present.";
+          type enumeration {
+            enum first;
+            enum last;
+            enum before;
+            enum after;
+          }
+          default last;
+        }
+
+	leaf operation {
+          description "The edit-config operation that should be used.";
+          type enumeration {
+            enum create;
+            enum merge;
+            enum replace;
+          }
+          default merge;
+        }
+
+	leaf edit-target {
+          description 
+            "The value or key clause that should be used.
+             This parameter should only be present if the
+             order selected is 'before' or 'after'.
+
+             For a leaf-list, the edit-target contains the
+             value of the target leaf-list node within the
+             configuration being edited.  The new config
+             will be inserted before or after this leaf-list
+             node, depending on the order selected.
+             E.g., edit-target='some leaf content'.
+
+             For a list, the edit-target contains the
+             key values of the target list node within the
+             configuration being edited.  The new config
+             will be inserted before or after this list
+             node, depending on the order selected.
+             E.g., edit-target=[name='fred'][zipcode=90210].";
+
+          type string;
+        }
+      }
+    }
+
+    rpc list {
+      description "List some NETCONF info.";
+      input {
+        choice listtype {
+          mandatory true;
+
+          leaf commands {
+            description "List all local and remote commands";
+            type empty;
+          }
+
+          leaf files {
+            description 
+               "List all available data files.";
+            type empty;
+          }
+
+          leaf objects {
+            description "List all available top-level object names.";
+            type empty;
+          }
+
+          leaf oids {
+            description "List all available object identifiers.";
+            type empty;
+          }
+
+          leaf modules {
+            description 
+              "List all available local YANG files.";
+            type empty;
+          }
+
+          leaf scripts {
+            description 
+               "List all available script files.";
+            type empty;
+          }
+        }
+
+        leaf module {
+          description "List only from this module, if specified.";
+          type nt:NcxIdentifier;
+        }
+
+        uses ncxapp:HelpMode;
+      }
+    }
+
+    rpc log-error {
+      description
+       "Write a message to the output log if the log-level
+        is greater or equal to 'error'.";
+      input {
+        ncx:default-parm msg;
+        leaf msg {
+          description 
+            "The formatted text string to write to the log.";
+          type string;
+          mandatory true;
+        }
+      }
+    }
+
+    rpc log-warn {
+      description
+       "Write a message to the output log if the log-level
+        is greater or equal to 'warn'.";
+      input {
+        ncx:default-parm msg;
+        leaf msg {
+          description 
+            "The formatted text string to write to the log.";
+          type string;
+          mandatory true;
+        }
+      }
+    }
+
+    rpc log-info {
+      description
+       "Write a message to the output log if the log-level
+        is greater or equal to 'info'.";
+      input {
+        ncx:default-parm msg;
+        leaf msg {
+          description 
+            "The formatted text string to write to the log.";
+          type string;
+          mandatory true;
+        }
+      }
+    }
+
+    rpc log-debug {
+      description
+       "Write a message to the output log if the log-level
+        is greater or equal to 'debug'.";
+      input {
+        ncx:default-parm msg;
+        leaf msg {
+          description 
+            "The formatted text string to write to the log.";
+          type string;
+          mandatory true;
+        }
+      }
+    }
+
+    rpc merge {
+      description
+       "Merge some NETCONF config data with the edit-config operation";
+      input {
+        ncx:default-parm target;
+        uses EditParms;
+      }
+    }
+
+    rpc mgrload {
+      description 
+        "Load a module or other file into the client.
+         Use the 'load' command to load a module into
+         the server.";
+      input {
+        ncx:default-parm module;
+        leaf module {
+          description
+             "Module name to load";
+          type nt:NcxName;
+          mandatory true;
+        }
+        leaf revision {
+          description
+             "Module revision to load.";
+          type nt:Date;
+        }
+        uses ncxapp:DeviationParm;
+      }
+    }
+
+    rpc pwd {
+      description "Print the current working directory.";
+    }
+
+    rpc replace {
+      description
+       "Create some NETCONF config data with the edit-config operation";
+      input {
+        ncx:default-parm target;
+        uses EditParms;
+      }
+    }
+
+    rpc quit {
+      description "Quit the yangcli application";
+    }
+
+    rpc recall {
+       description 
+         "Recall the specified command line history 
+          buffer entry into the current command line.";
+
+       input {
+         ncx:default-parm index;
+
+         leaf index {
+           description 
+             "Index [0..N] of the command line
+              history entry to recall.";
+           type LogIndex;
+           mandatory true;
+         }
+      }
+    }
+
+    rpc release-locks {
+       description 
+         "Unlock all the server databases that were
+          previously locked with the get-locks command.";
+    }
+
+    rpc remove {
+      description
+       "Remove some NETCONF config data with the edit-config operation";
+      input {
+        ncx:default-parm  target;
+        leaf target {
+          description 
+           "Xpath expression indicating the node which is going
+            to be deleted.";
+          type string;
+          mandatory true;
+        }
+      }
+    }
+
+    rpc run {
+      description "Internal command to run a script.";
+      input {
+        ncx:default-parm script;
+
+        leaf script {
+           description "script filespec to run";
+           type string;
+           mandatory true;
+        }
+
+        // hardwired parameter names required at this time
+        // just allow 9 parameter/value pairs
+        // P0 is reserved for the name of the called script
+
+        leaf P1 {
+           description "script parameter $1";
+           type string;
+        }
+        leaf P2 {
+           description "script parameter $2";
+           type string;
+        }
+        leaf P3 {
+           description "script parameter $3";
+           type string;
+        }
+        leaf P4 {
+           description "script parameter $4";
+           type string;
+        }
+        leaf P5 {
+           description "script parameter $5";
+           type string;
+        }
+        leaf P6 {
+           description "script parameter $6";
+           type string;
+        }
+        leaf P7 {
+           description "script parameter $7";
+           type string;
+        }
+        leaf P8 {
+           description "script parameter $8";
+           type string;
+        }
+        leaf P9 {
+           description "script parameter $9";
+           type string;
+        }
+      }
+    }
+
+    rpc save {
+      description "Meta command to save configuration edits.";
+    }
+
+    rpc sget {
+      description
+       "Get some NETCONF running config or state data with the get
+        operation, using an optional subtree filter.";
+      input {
+        ncx:default-parm target;
+        uses CommonPduParms;
+        uses SGetParms;
+      }
+      output {
+        anyxml data {
+          description 
+            "The data resulting from the retrieval operation.";
+        }
+      }
+    }
+
+    rpc sget-config {
+      description
+       "Get some NETCONF config data with the get-config
+        operation, using an optional subtree filter.";
+      input {
+        ncx:default-parm target;
+        uses CommonPduParms;
+        uses SGetParms;
+        container source {
+          description "Particular configuration to retrieve.";
+
+          choice config-source {
+            mandatory true;
+
+            leaf candidate {
+              if-feature nc:candidate;
+              description 
+                "Only available if 'candidate' capability supported.";
+              type empty;
+            }
+            leaf running {
+              type empty;
+            }
+            leaf startup {
+              if-feature nc:startup;
+              description 
+                "Only available if 'startup' capability supported.";
+              type empty;
+            }
+            leaf url {
+              if-feature nc:url;
+              description 
+                "URL pointing to config data. Only available
+                 if 'url' capability supported.";
+             type nc:ConfigURIType;
+            }
+          }
+        }
+      }
+      output {
+        anyxml data {
+          description 
+            "The data resulting from the retrieval operation.";
+        }
+      }
+    }
+
+    rpc show {
+      description 
+        "Local show command for yangcli session info.";
+      input {
+        choice showtype {
+          mandatory true;
+
+          leaf cli {
+            description 
+              "Show the yangcli CLI parameters.";
+            type empty;
+          }
+
+          leaf module {
+            description 
+              "Show full info for one module loaded 
+               within the current session.";
+            type nt:NcxIdentifier;
+          }
+
+          leaf modules {
+            description 
+              "Show info for all modules loaded within the 
+               current session.";
+            type empty;
+          }
+
+          leaf local {
+            description 
+              "Show info for one local user variable.";
+            type nt:NcxName;
+          }
+
+          leaf locals {
+            description 
+              "Show info for all local user variables.";
+            type empty;
+          }
+
+          leaf global {
+            description 
+              "Show full info for one global user variable.";
+            type nt:NcxName;
+          }
+
+          leaf globals {
+            description 
+              "Show info for all global user variables.";
+            type empty;
+          }
+
+          leaf objects {
+            description 
+              "Show config database objects loaded within the 
+               current session.";
+            type empty;
+          }
+
+          leaf session {
+            description 
+              "Show the current session info, including the initial
+               server capabilities for the session.";
+            type empty;
+          }
+
+          leaf system {
+            description 
+              "Show the read-only system environment variables
+               and the read-write yangcli program variables.";
+            type empty;
+          }
+
+          leaf var {
+            description 
+              "Show info for one local or global variable.";
+            type nt:NcxName;
+          }
+         
+          leaf vars {
+            description 
+              "Show truncated info for all program variables";
+            type empty;
+          }
+
+          leaf version {
+            description 
+              "Show yangcli version info.";
+            type empty;
+          }
+        }
+        uses ncxapp:HelpMode;
+      }
+    }
+
+    rpc start-timer {
+      description 
+        "Start a timer to do simple performance measurements.";
+      input {
+        ncx:default-parm id;
+        leaf id {
+          description 
+            "The timer ID to use.";
+          type TimerId;
+          default 0;
+        }
+        leaf restart-ok {
+          description 
+            "Indicates whether the timer will be used if
+             it is already running.  If 'true', the timer
+             will be restarted if it is already running.
+             If 'false', an error will occur if the timer
+             is already running.";
+          type boolean;
+          default true;
+        }
+      }
+    }
+
+    rpc stop-timer {
+      description 
+        "Stop a timer and output the delta value.";
+      input {
+        ncx:default-parm id;
+        leaf id {
+          description 
+            "The timer ID to use.";
+          type TimerId;
+          default 0;
+        }
+        leaf echo {
+          description 
+            "Echo the elapsed time value to screen if in
+             interactive mode, as well as the log if the
+             log is a file instead of stdout.";
+          type boolean;
+          default true;
+        }
+      }
+      output {
+        // yangcli local RPC commands can return 1 value of any type
+        // as an output parameter.  No extra parameters will be
+        // processed in assignment statements
+        leaf delta {
+          description
+            "The elapsed time since the timer started.";
+          type decimal64 {
+            fraction-digits 6;  // microseconds
+          }
+          units seconds;
+        }
+      }
+    }
+
+    rpc while {
+      description 
+        "Evaluate an XPath expression locally on the manager.
+         and execute the block of commands that follow
+         while the expression is true.  The block ends
+         when a matching 'end' command is reached.
+        ";
+      input {
+        ncx:default-parm expr;
+        uses XPathParms;
+        leaf maxloops {
+          description
+            "Set a maximum number of loops that can be
+             iterated for this while command.
+             The value zero means that no maximum will be
+             enforced.  Use this mode with caution.";
+          type uint32;
+          default 65535;
+        }
+      }
+    }
+
+    rpc xget {
+      description
+       "Get some NETCONF running config or state data with the get
+        operation, using an optional XPath filter.";
+      input {
+        ncx:default-parm select;
+        uses XGetParms;
+      }
+      output {
+        anyxml data {
+          description 
+            "The data resulting from the retrieval operation.";
+        }
+      }
+    }
+
+    rpc xget-config {
+      description
+       "Get some NETCONF config data with the get-config
+        operation, using an optional XPath filter.";
+      input {
+        ncx:default-parm select;
+        uses XGetParms;
+
+        container source {
+          description "Particular configuration to retrieve.";
+
+          choice config-source {
+            mandatory true;
+
+            leaf candidate {
+              if-feature nc:candidate;
+              description 
+                "Only available if 'candidate' capability supported.";
+              type empty;
+            }
+            leaf running {
+              type empty;
+            }
+            leaf startup {
+              if-feature nc:startup;
+              description 
+                "Only available if 'startup' capability supported.";
+              type empty;
+            }
+            leaf url {
+              if-feature nc:url;
+              description 
+                "URL pointing to config data. Only available
+                 if 'url' capability supported.";
+             type nc:ConfigURIType;
+            }
+          }
+        }
+      }
+      output {
+        anyxml data {
+          description 
+            "The data resulting from the retrieval operation.";
+        }
+      }
+    }
+
+    rpc unset {
+      description 
+        "Delete a specific yangcli command alias.
+        
+         * Delete one alias 'foo':
+           yangcli>  unset foo
+       ";
+      input {
+        leaf name {
+          description 
+            "Name of the yangcli command alias to delete.";
+          type nt:NcxName;
+          mandatory true;
+        }
+      }
+    }
+
+    rpc uservars {
+      description "Manage the yangcli user variables";
+      input {
+
+        choice uservars-action {
+          mandatory true;
+
+          leaf clear {
+            description 
+              "Delete all the yangcli user variables from memory.";
+            type empty;
+          }
+
+          leaf load {
+            description 
+              "Load the yangcli user variables from the
+               specified XML file spec.  The default user variables
+               file will be loaded automatically at startup
+               if the '--autouservars' parameter is present.
+               The container 'vars' data structure represents
+               the format of the XML file expected.";
+            type string;
+            default "~/.yuma/yangcli_uservars.xml";
+          }
+
+          leaf save {
+            description 
+              "Save the yangcli user variables to the 
+               specified filespec. The default user variables
+               file will be saved automatically at shutdown
+               if the '--autouservars' parameter is present.
+               The container 'vars' data structure represents
+               the format of the XML file that will be written.";
+            type string;
+            default "~/.yuma/yangcli_uservars.xml";
+          }
+        }
+      }
+    }
+
+    container vars {
+      description 
+        "Represents all saved yangcli user variables";
+      list var {
+        description 
+          "Data structure to save one yangcli user variable";
+        key name;
+        leaf name { 
+          type nt:NcxName; 
+          description "Name of the user variable";
+        }
+        leaf target {
+          //need to treat as string in case referenced modules 
+          //are not loaded when yangcli starts
+          //ncx:schema-instance;
+          type string;
+          description 
+            "Target variable if variable represents a node 
+             from a datastore.";
+        }
+        leaf vartype {
+          type YangcliVariableType;
+          description
+            "User variable type; only 'global' variables can 
+             be saved in the yangcli uservars file.";
+          default global;
+        }
+        anyxml value {
+          description 
+            "Node value renamed to 'value' since YANG requires
+             each node to have a consistent name.";
+        }
+      }
+    }
+
+}
+
+

@@ -1,0 +1,47 @@
+module testgrouping {
+
+    namespace "http://netconfcentral.org/ns/testgrouping";
+    prefix "foo";
+
+    revision 2009-07-28 {
+        description "Initial revision.";
+    }
+
+    typedef MyType {
+       type int32;
+    }
+
+    identity MyBase;
+
+    identity my-identity {
+       base MyBase;
+    }
+
+    grouping ggg {
+       leaf XXX { type int32; }
+       container test-top {
+         typedef MyType2 { type uint16; }
+         must "foo:bar < 42";
+
+         must "bar = 142";
+         leaf bar { 
+           type uint8;
+           when "../foo:XXX =  11";
+         }
+         leaf baz { 
+             must "../goo = 'my-identity'";
+             type MyType;
+         }
+         leaf goo { 
+            type identityref {
+               base MyBase;
+            }
+            default my-identity;
+         }
+         leaf AA { type MyType2; }
+         leaf BB { type foo:MyType2; }
+
+      }
+   }
+
+}

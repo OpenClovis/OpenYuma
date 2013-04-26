@@ -1,0 +1,98 @@
+module siltest3 {
+
+    namespace "http://netconfcentral.org/ns/siltest3";
+    prefix "siltest3";
+
+    description 
+      "Test SIL code generation for nested lists and union types.";
+
+    revision 2011-09-16 {
+       description "Initial version.";
+    }
+
+    list u {
+      key ux;
+      leaf ux { 
+        type union {
+          type uint32; 
+          type string;
+        }
+      }
+      leaf uy { type uint32; }
+      leaf uz { config false; type uint32; }
+      leaf uu { 
+        config false; 
+        type union {
+          type int32;
+          type instance-identifier;
+          type uint8;
+          type boolean;
+        }
+      }
+    }
+
+    list c {
+       key x;
+       leaf x { type uint16; }
+       leaf y { type instance-identifier; }
+       leaf z { type uint64; config false; }
+       leaf cuu { 
+         type union {
+           type int32;
+           type instance-identifier;
+           type uint8;
+           type boolean;
+           type string;
+         }
+       }
+       list cc {
+          key "xx1 xx2 xx3 xx4 xx5 xx6 xx7 xx8 xx9";
+          leaf xx1 { 
+            type union {
+              type uint32; 
+              type string;
+            }
+          }
+          leaf xx2 { type int8; }
+          leaf xx3 { type int16; }
+          leaf xx4 { type int32; }
+          leaf xx5 { type int64; }
+          leaf xx6 { type uint8; }
+          leaf xx7 { type uint16; }
+          leaf xx8 { type uint32; }
+          leaf xx9 { type uint64; }
+
+          leaf yy { type int32; }
+          leaf zz { type uint64; config false; }
+          list ccc {
+             key xxx;
+             leaf xxx { type string; }
+             leaf yyy { type boolean; }
+             leaf zzz { type uint64; config false; }
+          }
+       }
+    }
+
+    identity x;
+
+    rpc r { 
+      input {
+        leaf a { type string; }
+        leaf b { type int8; }
+      }
+      output {
+        leaf c { type int64; }
+        leaf d { type identityref { base x; } }
+      } 
+    }
+
+    notification n { 
+      leaf a { type binary; }
+      leaf b { type instance-identifier; }
+      leaf c { type int64; }
+      leaf d { type identityref { base x; } }
+    }
+
+
+
+}

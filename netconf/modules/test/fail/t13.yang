@@ -1,0 +1,53 @@
+module t13 {
+
+  namespace "http://netconfcentral.org/ns/t13";
+
+  prefix t13;
+
+  revision "2011-09-11" {
+    description 
+      "mandatory / default test";
+  }
+
+  leaf t13-leaf { 
+    type uint32;
+    mandatory true;
+    default 11;
+  }
+
+  grouping g1 {
+    leaf t13-leaf2 { 
+      type uint32;
+      default 11;
+    }
+  }
+
+  grouping g2 {
+    leaf t13-leaf3 { 
+      type uint32;
+      mandatory true;
+    }
+  }
+
+  uses g1 {
+    refine t13-leaf2 {
+      mandatory true;
+    }
+  }
+
+  uses g2 {
+    refine t13-leaf3 {
+      default 11;
+    }
+  }
+
+  container c {
+    uses g2 {
+      refine t13-leaf3 {
+        default 11;
+        mandatory false;
+      }
+    }
+  }
+
+}

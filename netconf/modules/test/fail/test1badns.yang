@@ -1,0 +1,22 @@
+module test1badns {
+
+    prefix "t1";
+
+    include test1a;
+    include test1b;
+    include test1c;
+
+    revision 2008-10-12 {
+        description "Initial revision.";
+    }
+
+    typedef AA {
+      type string {
+        pattern ".*";
+      }
+    }
+
+    leaf t22 { type boolean; }
+    leaf t23 { type string; config false; }
+
+}

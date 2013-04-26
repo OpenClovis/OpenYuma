@@ -1,0 +1,28 @@
+submodule test1b {
+
+    belongs-to test1 { prefix t1; }
+
+    revision 2008-10-12 {
+        description "Initial revision.";
+    }
+
+    list test1-b.sub { 
+       key "a b c";
+
+       leaf a { type int32; }
+       leaf b { type int16; }
+       leaf c { type int64; }
+       choice d {
+         case e {
+           leaf f { type empty; }
+           leaf g { type int32; mandatory true; }
+           leaf h { type int32; config false; }
+         }
+         leaf i { 
+	   type leafref { 
+	     path /test1-b.sub/a; 
+           }
+         }
+       }
+    }
+}

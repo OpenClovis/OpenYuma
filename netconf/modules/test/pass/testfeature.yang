@@ -1,0 +1,65 @@
+module testfeature {
+
+    namespace "http://netconfcentral.org/ns/testfeature";
+    prefix "tf";
+
+    revision 2010-01-29 {
+        description "Initial revision.";
+    }
+
+    feature A { if-feature B; }
+    feature B;
+
+
+    rpc f1 {
+     input {
+       leaf a {
+         if-feature A;
+         type string;
+         mandatory true;
+       }
+       leaf b {
+         if-feature B;
+         type string;
+         mandatory true;
+       }
+       leaf c {
+         type string;
+         mandatory true;
+       }
+     }
+     output {
+       leaf o1 {
+         if-feature A;
+         type string;
+         mandatory true;
+       }
+       leaf o2 {
+         if-feature B;
+         type string;
+         mandatory true;
+       }
+       leaf o3 {
+         type string;
+         mandatory true;
+       }
+     }
+   }
+
+   list f2 {
+       key c2;
+       leaf a2 {
+         if-feature A;
+         type string;
+         mandatory true;
+       }
+       leaf b2 {
+         if-feature B;
+         type string;
+         mandatory true;
+       }
+       leaf c2 {
+         type string;
+       }
+   }
+}

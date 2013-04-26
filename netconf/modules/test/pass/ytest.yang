@@ -1,0 +1,125 @@
+module ytest {
+
+  namespace "http://www.netconfcentral.org/ns/ytest";
+  prefix "ytest";
+
+  organization
+    "Netconf Central";
+
+  contact
+    "Andy Bierman";
+
+  revision 2011-01-30 {
+    description "Code generation testing.";
+  }
+
+  rpc test19 {
+   input {
+    container t-2 {
+      container inside {
+      }
+    }
+    leaf-list q { type int32; }
+   }
+   output {
+        container t-1 {
+  	  leaf id2-id2 {
+	    description "Unique ID";
+	    type union {
+              type uint32;
+              type string;
+            }
+	  }
+       }
+       leaf-list z { type boolean; }
+   }
+  }
+
+  list one {
+    key i;
+    leaf i { type int32; }
+    leaf j { type string; }
+    container two {
+      leaf-list a { type uint32; }
+      list objects {
+	key id-id;
+
+	leaf id-id {
+	  description "Unique ID";
+	  type union {
+            type uint32;
+            type string;
+          }
+	}
+
+        container t-1 {
+  	  leaf id2-id2 {
+	    description "Unique ID";
+	    type union {
+              type uint32;
+              type string;
+            }
+	  }
+        }
+      }
+    }
+
+    container three {
+      description
+       "second sub container";
+
+      list objects {
+	key id;
+
+	leaf id {
+	  description "Unique ID";
+	  type uint32;
+	}
+      }
+    }
+  }
+
+
+  notification n1 {
+  }
+
+  notification n2 {
+    container t-2 {
+      leaf id2-id2 {
+        type string;
+      }
+    }
+  }
+
+
+  notification n3 {
+    container t-3 {
+      leaf id2-id2 {
+	    description "Unique ID";
+	    type union {
+              type uint32;
+              type string;
+            }
+       }
+    }
+  }
+
+  rpc test17;
+
+  rpc test18 {
+   input {
+      leaf id3 {
+	    type union {
+              type uint32;
+              type string;
+            }
+       }
+   }
+   output {
+     anyxml out;
+   }
+ }
+
+
+
+}

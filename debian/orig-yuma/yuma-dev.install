@@ -1,0 +1,9 @@
+usr/bin/make_sil_dir.sh
+usr/bin/yangdumpcode
+usr/share/doc/yuma/yumatools-dev-license.pdf.gz
+usr/share/doc/yuma/yuma-dev-manual.pdf.gz
+usr/include/yuma/
+usr/share/yuma/util/
+etc/yuma/yangdumpcode-sample.conf
+usr/man/man1/yangdumpcode.1.gz
+usr/man/man1/make_sil_dir.sh.1.gz

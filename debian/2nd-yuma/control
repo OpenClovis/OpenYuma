@@ -1,0 +1,18 @@
+Source: yuma
+Section: devel
+Priority: extra
+Maintainer: Andy Bierman <andy@netconfcentral.org>
+Build-Depends: debhelper (>= 7)
+Standards-Version: 3.8.1
+Homepage: http://www.netconfcentral.org/
+
+Package: yuma
+Architecture: any
+Depends: libxml2, ${shlibs:Depends}, ${misc:Depends}
+Description: YANG-based Unified Modular Automation tools
+ Yuma Tools is a YANG-based NETCONF-over-SSH client and server
+ development toolkit.  The netconfd server includes an automated
+ central NETCONF protocol stack, based directly on YANG modules.
+ The yangdump and yangdiff development tools are also
+ included, to compile and process YANG modules.
+

@@ -1,0 +1,29 @@
+module t30 {
+    namespace "http://netconfcentral.org/ns/t30";
+    prefix "t30";
+    revision 2012-02-04;
+
+    leaf t30-a { type int32; }
+    leaf t30-b { type int32; }
+    leaf t30-c { type int32; }
+
+    list t30-list {
+      key "x";
+      leaf x { type int32; }
+      leaf-list y { type int32; }
+      container z {
+        when "../x > 4 and /t30-a > 3";
+        must "../y = ../../t30-a";
+        leaf a { 
+          type uint8;
+          mandatory true;
+        }
+        leaf b { 
+          when "/t30-b = /t30-c";
+          mandatory true;
+          type boolean;
+        }
+      }
+    }
+
+}

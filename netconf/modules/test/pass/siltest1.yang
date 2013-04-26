@@ -1,0 +1,54 @@
+module siltest1 {
+
+  namespace "http://www.netconfcentral.org/ns/siltest1";
+  prefix "siltest1";
+
+  description 
+    "Bug Report -- nested SIL callbacks not called correctly.";  
+
+  revision 2011-06-21 {
+    description "Initial version.";
+  }
+
+  leaf sil-leaf { type string; }
+
+  leaf sil-rleaf { 
+    config false;
+    type string; 
+  }
+
+  container sil-rcon { 
+    config false;
+
+    leaf rcon1 { type string; }
+    leaf rcon2 { type int32; }
+  }
+
+  list sil-list {
+    key sil-list-key;
+ 
+    leaf sil-list-key { type int8; }
+
+    leaf sil-list-leaf { type string; }
+
+    leaf sil-list-rleaf { 
+      config false;
+      type string; 
+    }
+  
+    leaf sil-list-rleaf2 { 
+      config false;
+      type int8; 
+    }
+  }
+
+  container sil-A {
+    container sil-B {
+      container sil-C {
+        leaf val1 { type string; }
+        leaf val2 { type string; }
+      }
+    }
+  }
+
+}

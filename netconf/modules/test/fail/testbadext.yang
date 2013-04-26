@@ -1,0 +1,14 @@
+module testbadext {
+
+    namespace "http://netconfcentral.org/ns/testbadext";
+    prefix "tbe";
+
+    import  foobar { prefix xxxx; }
+
+    include garbage;
+    
+    revision 2011-02-28 {
+        description "Initial revision.";
+    }
+
+}

@@ -1,0 +1,43 @@
+module testrev2 {
+
+    namespace "http://netconfcentral.org/ns/testrev2";
+    prefix "trev2";
+
+    import testr1 {
+        prefix r1;
+        revision-date 2009-02-02;
+    }
+
+    import testr2 {
+        prefix r2;
+        revision-date 2008-01-01;
+    }
+
+    organization
+        "Netconf Central";
+
+    contact
+        "Andy Bierman";
+
+    description
+        "YANG import-by-revision test module 2.";
+
+    revision 2010-06-10 {
+        description "Initial version.";
+    }
+
+    container foo {
+      uses r1:TestGroup1;
+    }
+
+    container bar {
+      uses r2:TestGroup;
+    }
+
+    leaf baz {
+      type r2:TestType {
+        range 2..max;
+      }
+    }
+
+}

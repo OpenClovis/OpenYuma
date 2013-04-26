@@ -1,0 +1,32 @@
+This package was debianized by Andy Bierman <andy@netconfcentral.org> on
+Sat, 19 Feb 2011 12:01:00 -0700.
+
+It was downloaded from <http://www.netconfcentral.org>
+
+Upstream Author(s):
+
+    Andy Bierman <andy@netconfcentral.org>
+
+Copyright:
+
+    Copyright (C) 2008 - 2011, Andy Bierman
+
+License:
+
+    BSD
+
+The Debian packaging is:
+
+    Copyright (C) 2011, Andy Bierman <andy@netconfcentral.org>
+
+and is licensed under the BSD license.
+The Yuma software and documentation is subject to a 
+software license.
+
+See `yuma-legal-notices.pdf' installed
+in the '/usr/share/doc/yuma' directory for
+additional license information pertaining to
+external packages used by some Yuma programs.
+
+
+

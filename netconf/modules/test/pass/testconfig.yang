@@ -1,0 +1,32 @@
+module testconfig {
+
+    namespace "http://netconfcentral.org/ns/testconfig";
+    prefix "tcfg";
+
+    organization
+        "Netconf Central";
+
+    contact
+        "Andy Bierman";
+
+    description
+        "YANG config-stmt test module.";
+
+    revision 2011-01-20 {
+        description "Initial version.";
+    }
+
+    grouping A {
+       leaf a { type string; }
+    }
+
+    container foo {
+      config false;
+      uses A;
+    }
+
+    augment /foo {
+      leaf b { type string; }
+    }
+
+}

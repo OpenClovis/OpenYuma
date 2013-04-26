@@ -1,0 +1,32 @@
+module test4 {
+
+    namespace "http://netconfcentral.org/ns/test4";
+    prefix "t4";
+
+    revision 2009-09-09 {
+        description "Initial revision.";
+    }
+
+    typedef aa-type {
+      description "test type";
+      type int32 { range "1..10 | 20..30"; }
+    }
+
+    container a {
+       leaf-list aa { 
+          type aa-type;  
+          max-elements 5;
+       }
+    }
+
+    leaf b {
+      type leafref { path ../a/aa; }
+    }
+
+    list c {
+       key x;
+       leaf x { type uint16; }
+       leaf y { type instance-identifier; }
+    }
+
+}

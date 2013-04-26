@@ -1,0 +1,44 @@
+module testdev_dev {
+
+    namespace "http://netconfcentral.org/ns/testdev_dev";
+    prefix "td_dev";
+
+    import testdev { prefix tdev; }
+
+    import test { prefix test; }
+
+    revision 2009-08-02 {
+        description "Initial revision.";
+    }
+
+    deviation /tdev:test-top/tdev:b {
+      deviate replace {
+         type uint32;
+      }
+      deviate replace {
+         mandatory false;
+      }
+    }
+
+    deviation /tdev:test-top/tdev:a {
+      deviate replace {
+         units minutes;
+      }
+      deviate add {
+         default 30;
+      }
+    }
+
+    deviation /test:test1/test:d {
+      deviate add {
+         default y;
+      }
+    }
+
+    deviation /test:test1/test:e/test:ee {
+      deviate replace {
+         max-elements 10;
+      }
+    }
+   
+}

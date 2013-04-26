@@ -1,0 +1,14 @@
+module test6 {
+
+    namespace "http://netconfcentral.org/ns/test6";
+    prefix "t6";
+    import test5 { prefix t5; }
+
+    revision 2008-11-20 {
+        description "Initial revision.";
+    }
+
+    augment /t5:test5/t5:a {
+      leaf g3 { type int32; }
+    }
+}

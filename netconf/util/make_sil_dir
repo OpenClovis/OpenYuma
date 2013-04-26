@@ -1,0 +1,78 @@
+#!/bin/sh
+#
+# Generate a SIL directory structure
+#
+# P1 == the module name to use
+mod=""
+split=0
+if [ $# -eq  1 ]; then
+  mod=$1
+elif [ $# -eq  2 ]; then
+  if [ "$1" = "--split" ]; then
+    mod=$2
+    split=1
+  fi
+fi
+
+if [ "$mod" = "" ]; then
+  echo "Usage: make_sil_dir [--split] <module-name>"
+  echo "Call from the parent directory where SIL dir should be created"
+  echo "   Add --split parameter to generate separate Yuma and User SIL files"
+  exit 1
+fi
+
+if [ -f $mod ]; then
+  echo "Error: File '$mod' already exists"
+  exit 1
+fi
+
+if [ -d $mod ]; then
+  echo "Error: Directory '$mod' already exists"
+  exit 1
+fi
+
+mkdir $mod
+
+if [ ! -d $mod ]; then
+  echo "Error: Make directory '$mod' failed"
+  exit 1
+fi
+
+
+mkdir $mod/src
+mkdir $mod/bin
+mkdir $mod/lib
+
+if [ -z $YUMA_HOME ]; then
+  if [ ! -f /usr/share/yuma/util/makefile.sil ]; then
+    echo "Error: /usr/share/yuma/util/makefile.sil not found"
+    exit 1
+  else
+    echo "MODULE_NAME=$mod" > $mod/src/Makefile
+    cat /usr/share/yuma/util/makefile.sil >> $mod/src/Makefile
+    cp /usr/share/yuma/util/makefile-top.sil $mod/Makefile
+  fi
+else
+  if [ ! -f $YUMA_HOME/util/makefile.sil ]; then
+    echo "Error: $YUMA_HOME/util/makefile.sil not found"
+    exit 1
+  else 
+    echo "MODULE_NAME=$mod" > $mod/src/Makefile
+    cat $YUMA_HOME/util/makefile.sil >> $mod/src/Makefile
+    cp $YUMA_HOME/util/makefile-top.sil $mod/Makefile
+  fi
+fi
+
+cd $mod/src
+
+if [ $split -eq 1 ]; then
+yangdump format=uh indent=4 module=$mod output=u_$mod.h
+yangdump format=uc indent=4 module=$mod output=u_$mod.c
+yangdump format=yh indent=4 module=$mod output=y_$mod.h
+yangdump format=yc indent=4 module=$mod output=y_$mod.c
+else
+yangdump format=h indent=4 module=$mod output=$mod.h
+yangdump format=c indent=4 module=$mod output=$mod.c
+fi
+
+cd ../..

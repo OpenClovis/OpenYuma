@@ -1,0 +1,14 @@
+module test8 {
+
+    namespace "http://netconfcentral.org/ns/test8";
+    prefix "t8";
+
+    include test8a;
+    include test8b;
+
+    revision 2011-02-04 {
+        description "Initial revision.";
+    }
+}
+
+

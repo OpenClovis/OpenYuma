@@ -1,0 +1,69 @@
+module yuma-mysession {
+
+  namespace "http://netconfcentral.org/ns/yuma-mysession";
+
+  prefix "myses";
+
+  import yuma-app-common { prefix appcmn; }
+  import ietf-netconf-with-defaults { prefix wd; }
+
+  organization  "Netconf Central";
+
+  contact
+    "Andy Bierman <andy@netconfcentral.org>";
+
+  description
+    "This module contains RPC methods for 
+     customizing the default session settings
+     for the current session.";
+
+  revision 2010-05-10 {
+    description 
+       "Added default to line-size parameter.";
+  }
+
+  revision 2009-08-11 {
+    description 
+       "Initial published version";
+  }
+
+  grouping session-params {
+    uses appcmn:IndentParm;
+      
+    leaf linesize {
+      description
+        "The desired maximum number of characters printed
+         per line.  The server may exceed this number.
+         It is only a suggestion, not a hard limit.";
+      type uint32 { range "40 .. 1024"; }
+      default 72;
+    }
+    leaf with-defaults {
+      description
+        "The desired maximum number of characters printed
+         per line.  The server may exceed this number.
+         It is only a suggestion, not a hard limit.";
+      type wd:with-defaults-mode;
+    }
+  }
+
+  rpc get-my-session {
+    description
+      "Get the customization settings for this session";
+    output {
+      uses session-params;
+    }
+  }        
+
+  rpc set-my-session {
+    description
+      "Set the customization settings for this session.
+       This is like a merge operation.  Only the values that
+       are present will be used to overwrite the existing
+       settings.";
+    input {
+      uses session-params;
+    }
+  }        
+
+}
