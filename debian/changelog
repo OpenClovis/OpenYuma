@@ -1,3 +1,5 @@
+OpenYuma (2.2-5): Fork project
+
 yuma (2.2-5) stable; urgency=high
   * netconfd:
     - fix error-path bugs

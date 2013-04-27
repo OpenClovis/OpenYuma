@@ -1,16 +1,16 @@
-Name:           yuma
+Name:           OpenYuma
 Version:        2.2
 Release:        5%{?dist}
 Summary:        YANG-based Unified Modular Automation Tools
 
 Group:          Development/Tools
 License:        BSD
-URL:            http://www.yumaworks.com/
+URL:            http://www.github.com/OpenClovis/OpenYuma
 Source0:        %{name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 %description
-Yuma is a YANG-based NETCONF-over-SSH client and server
+OpenYuma is a YANG-based NETCONF-over-SSH client and server
 development toolkit.  The netconfd server includes an automated
 central NETCONF protocol stack, based directly on YANG modules.
 The yangcli client supports single sessions over SSH with some
@@ -79,7 +79,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/yuma/
 
 %post
-echo "Yuma installed."
+echo "OpenYuma installed."
 echo "Check the user manuals in /usr/share/doc/yuma"
 
 %changelog
@@ -115,7 +115,7 @@ echo "Check the user manuals in /usr/share/doc/yuma"
     - update 3 IETF modules
     - fix test.yang so the default NP containers do not cause errors
     - refactor yuma-app-common to support --no-config in YumaPro
-    - update metconfcentral YANG modules so they align with Yuma
+    - update metconfcentral YANG modules so they align with OpenYuma
 
 
 * Wed Aug 08 2012 Andy Bierman <andy at yumaworks.com> 2.2-4 
@@ -754,13 +754,13 @@ BuildArch: noarch
 Summary:  YANG-based Unified Modular Automation Tools (Developer)
 
 %description devel
-Yuma Tools is a YANG-based NETCONF-over-SSH client and server
+OpenYuma Tools is a YANG-based NETCONF-over-SSH client and server
 development toolkit.  This package contains H files, scripts,
 and other files needed to create SIL code for use with
 the netconfd server.
 
 %post devel
-echo "Yuma developer files installed."
+echo "OpenYuma developer files installed."
 
 %files devel
 %defattr(-,root,root,-)

@@ -1,4 +1,4 @@
-Name:           yuma
+Name:           OpenYuma
 Version:        1.12
 Release:        2%{?dist}
 Summary:        YANG-based Unified Modular Automation Tools
@@ -10,7 +10,7 @@ Source0:        %{name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 %description
-Yuma Tools is a YANG-based NETCONF-over-SSH client and server
+OpenYuma Tools is a YANG-based NETCONF-over-SSH client and server
 development toolkit.  The netconfd server includes an automated
 central NETCONF protocol stack, based directly on YANG modules.
 The yangdump and yangdiff development tools are also
@@ -22,12 +22,12 @@ Summary:  YANG-based Unified Modular Automation Tools (shared libs)
 Requires: libxml2
 
 %description shlibs
-Yuma Tools is a YANG-based NETCONF-over-SSH client and server
+OpenYuma Tools is a YANG-based NETCONF-over-SSH client and server
 development toolkit.  This package contains the libncx shared library.
 
 %post shlibs
 ldconfig
-echo "Yuma Tools shared libraries installed."
+echo "OpenYuma Tools shared libraries installed."
 echo "Check the user manuals in /usr/share/doc/yuma"
 
 %files shlibs
@@ -63,7 +63,7 @@ Requires: libxml2
 Requires: yuma-shlibs
 
 %description client
-Yuma Tools (client only) is a YANG-based NETCONF-over-SSH 
+OpenYuma Tools (client only) is a YANG-based NETCONF-over-SSH 
 client application, which provides a CLI-like interface
 for any NETCONF server that supports YANG modules.
 The yangdump and yangdiff development tools are also
@@ -85,7 +85,7 @@ make install LDFLAGS+=--build-id RELEASE=2 \
 DESTDIR=$RPM_BUILD_ROOT
 
 %post client
-echo "Yuma Tools client programs installed."
+echo "OpenYuma Tools client programs installed."
 echo "Check the user manuals in /usr/share/doc/yuma"
 
 %clean
@@ -190,12 +190,12 @@ Requires: libxml2
 Requires: yuma-shlibs
 
 %description server
-Yuma Tools is a YANG-based NETCONF-over-SSH client and server
+OpenYuma Tools is a YANG-based NETCONF-over-SSH client and server
 development toolkit.  The netconfd server includes an automated
 central NETCONF protocol stack, based directly on YANG modules.
 
 %post server
-echo "Yuma Tools server programs installed."
+echo "OpenYuma Tools server programs installed."
 echo "Check the user manuals in /usr/share/doc/yuma"
 
 %files server
@@ -226,13 +226,13 @@ Requires: yuma-shlibs
 Requires: yuma-server
 
 %description dev
-Yuma Tools is a YANG-based NETCONF-over-SSH client and server
+OpenYuma Tools is a YANG-based NETCONF-over-SSH client and server
 development toolkit.  This package contains H files, scripts,
 and other files needed to create SIL code for use with
 the netconfd server.
 
 %post dev
-echo "Yuma Tools developer files installed."
+echo "OpenYuma Tools developer files installed."
 echo "Check the user manuals in /usr/share/doc/yuma"
 
 %files dev

@@ -1,4 +1,4 @@
-Yuma README
+OpenYuma README
 -----------
 
 Last Updated: 2012-06-26 (v2.2-3)
@@ -23,9 +23,9 @@ Build Variables:
   DESTDIR=string: set the debian target build (default NULL)
 
   DEVELOPER=1: debian packaging build flag to build the 
-      yuma-dev package.  Do not use in normal builds.
+      openyuma-dev package.  Do not use in normal builds.
 
-  DOC=1: debian packaging build flag to build the yuma-doc package.
+  DOC=1: debian packaging build flag to build the openyuma-doc package.
       Do not use in normal builds
 
   ETC_PREFIX=string: set the top etc dir (after DESTDIR)
@@ -34,7 +34,7 @@ Build Variables:
   FREEBSD=1: Build for a FreeBSD platform
 
   FORCE_YUMA_HOME=1: use when building SIL libraries to   
-     link against a development version of yuma.
+     link against a development version of OpenYuma.
      The YUMA_HOME environment variable must be set,
      and it must point to the 'netconf' directory:
 
@@ -42,7 +42,7 @@ Build Variables:
 
      export YUMA_HOME=/home/andy/swdev/yuma/trunk/branches/mybranch/netconf
 
-     The yuma include (H) files from $(YUMA_HOME)/src/*
+     The OpenYuma include (H) files from $(YUMA_HOME)/src/*
      will be used instead of the system H files in /usr/include/yuma.
 
      The libagt and libncx libraries from $(YUMA_HOME)/target/lib
@@ -139,6 +139,6 @@ Default Installed Additional Files:
 
   /usr/share/doc/yuma/*     -- user documentation
   /etc/yuma/*               -- sample application config files
-  /usr/share/yuma/*         -- root of all YUMA data files
+  /usr/share/yuma/*         -- root of all OPENYUMA data files
   /usr/share/yuma/modules/* -- root of installed YANG modules
 
