@@ -4,8 +4,8 @@ Release:        2%{?dist}
 Summary:        YANG-based Unified Modular Automation Tools
 
 Group:          Development/Tools
-License:        IWL
-URL:            http://yuma.iwl.com/
+License:        BSD
+URL:            http://www.github.com/OpenClovis/OpenYuma
 Source0:        %{name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -55,7 +55,7 @@ echo "Check the user manuals in /usr/share/doc/yuma"
 
 Summary: YANG-based Unified Modular Automation Tools (client-side)
 Group: Development/Tools
-License: IWL
+License: BSD
 
 Requires: ncurses
 Requires: libssh2
