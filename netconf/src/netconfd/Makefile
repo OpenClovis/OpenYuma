@@ -77,7 +77,7 @@ install:
 ifndef DEVELOPER
 	mkdir -p $(REAL_INST)
 	mkdir -p $(LIB_INST)
-	install $(OWNER) $(GRP) $(BIN_INST)/$(PROG) $(REAL_INST)
+	install -m 755 $(BIN_INST)/$(PROG) $(REAL_INST)
 endif  # DEVELOPER
 
 uninstall:
@@ -91,7 +91,7 @@ distclean: superclean
 # intermediate files
 netconfd: $(OBJS) $(LIBTARGS)
 	$(LINK) $(CFLAGS) $(LFLAGS) -rdynamic $(OBJS) \
-	-o $(BIN_INST)/$(PROG) $(LPATH) $(FPATH) $(LIBS)
+	-o $(BIN_INST)/$(PROG) -L$(PREFIX)/lib $(LPATH) $(FPATH) $(LIBS)
 
 .PHONY: netconfd
 

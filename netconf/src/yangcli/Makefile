@@ -107,7 +107,7 @@ test:
 install:
 ifndef DEVELOPER
 	mkdir -p $(REAL_INST)
-	install $(OWNER) $(GRP)  $(BIN_INST)/$(PROG) $(REAL_INST)
+	install -m 755 $(BIN_INST)/$(PROG) $(REAL_INST)
 endif
 
 uninstall:
@@ -118,7 +118,7 @@ distclean: superclean
 # this real rule keeps make from deleting the $(OBJS) as
 # intermediate files
 yangcli: $(OBJS) $(LIBTARGS)
-	$(LINK) $(LN_EXTRA) $(CFLAGS) $(LFLAGS) $(OBJS) -o $(BIN_INST)/$(PROG) $(LPATH) $(MYLIBS)
+	$(LINK) $(LN_EXTRA) $(CFLAGS) $(LFLAGS) $(OBJS) -o $(BIN_INST)/$(PROG) -L$(PREFIX)/lib $(LPATH) $(MYLIBS)
 
 
 .PHONY: yangcli

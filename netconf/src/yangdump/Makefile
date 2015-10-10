@@ -53,14 +53,14 @@ test:
 install:
 ifndef DEVELOPER
 	mkdir -p $(REAL_INST)
-	install $(OWNER) $(GRP) $(BIN_INST)/$(SUBDIR_NM) $(REAL_INST)
+	install -m 755 $(BIN_INST)/$(SUBDIR_NM) $(REAL_INST)
 endif
 
 uninstall:
 	rm -f  $(REAL_INST)/$(SUBDIR_NM)
 
 yangdump: $(OBJS) $(LIBTARGS)
-	$(LINK) $(CFLAGS) $(LFLAGS) $(OBJS) -o $(BIN_INST)/$(SUBDIR_NM) $(LPATH) $(FPATH) $(LIBS)
+	$(LINK) $(CFLAGS) $(LFLAGS) $(OBJS) -o $(BIN_INST)/$(SUBDIR_NM) -L$(PREFIX)/lib $(LPATH) $(FPATH) $(LIBS)
 
 clean:
 	rm -f $(OBJS) $(BIN_INST)/$(SUBDIR_NM)

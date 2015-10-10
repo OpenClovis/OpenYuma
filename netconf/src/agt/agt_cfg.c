@@ -350,8 +350,8 @@ static status_t
     FILE *fil = fopen((const char *)txidfile, "w");
     if (!fil) {
         res = errno_to_status();
-        log_error("\nError: Open txid file for write failed (%s)", 
-                  get_error_string(res));
+        log_error("\nError: Opening txid file (%s) for write failed (%s)", 
+                  (const char *)txidfile, get_error_string(res));
         return res;
     } 
 
@@ -494,7 +494,7 @@ agt_cfg_transaction_t *
         return NULL;
     }
 
-    memset(txcb, 0x0, sizeof txcb);
+    memset(txcb, 0x0, sizeof(*txcb));
     dlq_createSQue(&txcb->undoQ);
     dlq_createSQue(&txcb->auditQ);
     dlq_createSQue(&txcb->deadnodeQ);

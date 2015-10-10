@@ -62,7 +62,7 @@ else
 install: $(BLD_INCLUDES)
 # install static or dynamic libncx file
 	mkdir -p $(REAL_INST)
-	install -v $(OWNER) $(GRP) \
+	install -m 644 \
 	$(LIB_INST)/lib$(SUBDIR_NM).$(LIBNCXSUFFIX) $(REAL_INST)
 ifndef STATIC
 # libncx.so --> libncx.so.M.N
@@ -88,7 +88,7 @@ ifndef FREEBSD
 ifndef DESTDIR
 ifndef MAC
 # skip in MacOsX, RPM, FreeBSD and rest of debian fakeroot builds
-	ldconfig $(REAL_INST)
+	#ldconfig $(REAL_INST)
 endif  # MAC
 endif  # DESTDIR
 endif  # FREEBSD
@@ -143,10 +143,10 @@ endif
 $(LBASE)/libncx.so.$(SOVERSION): $(OBJS)
 ifdef FREEBSD
 	$(CC) $(CFLAGS) -shared $(RDYNAMIC) -Wl,-soname,libncx.so.$(SOVERSION) \
-	-o $@ $(OBJS) -L/usr/local/lib $(LC) -lxml2
+	-o $@ $(OBJS) -L/usr/local/lib -L$(PREFIX)/lib $(LC) -lxml2
 else
 	$(CC) $(CFLAGS) -shared $(RDYNAMIC) -Wl,-soname,libncx.so.$(SOVERSION) \
-	-o $@ $(OBJS) $(LC) -lxml2
+	-o $@ $(OBJS) -L$(PREFIX)/lib $(LC) -lxml2
 endif
 
 # this rule is ignored if STATIC=1; used only on MacOSX
