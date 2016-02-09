@@ -2836,6 +2836,7 @@ static status_t
 
         tk_type_t tktyp = TK_CUR_TYP(tkc);
         const xmlChar *val = TK_CUR_VAL(tkc);
+        const xmlChar *objprefix = TK_CUR_MOD(tkc);
 
         /* check the current token type */
         switch (tktyp) {
@@ -2849,9 +2850,16 @@ static status_t
             return retres;
         case TK_TT_MSTRING:
             /* vendor-specific clause found instead */
-            res = ncx_consume_appinfo(tkc, mod, &mod->appinfoQ);
-            CHK_EXIT(res, retres);
-            continue;
+            if(!xml_strcmp(val, YANG_K_AUGMENT) && !xml_strcmp(objprefix, "direct-must-augment-ex")) {
+                /* direct-must-augment-ex:augment parse as normal augment
+                   and allow direct must sub-statements
+                 */
+                break;
+            } else {
+                res = ncx_consume_appinfo(tkc, mod, &mod->appinfoQ);
+                CHK_EXIT(res, retres);
+                continue;
+            }
         case TK_TT_TSTRING:
             break;  /* YANG clause assumed */
         default:

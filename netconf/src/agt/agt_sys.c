@@ -122,8 +122,8 @@ date         init     comment
 *                       C O N S T A N T S                           *
 *                                                                   *
 *********************************************************************/
-
-#define system_N_system (const xmlChar *)"system"
+#define ietf_system_N_system_state (const xmlChar *)"system-state"
+#define system_N_system (const xmlChar *)"yuma"
 #define system_N_sysName (const xmlChar *)"sysName"
 #define system_N_sysCurrentDateTime (const xmlChar *)"sysCurrentDateTime"
 #define system_N_sysBootDateTime (const xmlChar *)"sysBootDateTime"
@@ -185,10 +185,12 @@ date         init     comment
 static boolean              agt_sys_init_done = FALSE;
 
 /* system.yang */
+static ncx_module_t         *ietf_sysmod;
 static ncx_module_t         *sysmod;
 
 /* cached pointer to the <system> element template */
-static obj_template_t *systemobj;
+static obj_template_t *ietf_system_state_obj;
+static obj_template_t *yuma_system_obj;
 
 /* cached pointers to the eventType nodes for this module */
 static obj_template_t *sysStartupobj;
@@ -501,8 +503,10 @@ static void
 static void
     init_static_sys_vars (void)
 {
+    ietf_sysmod = NULL;
     sysmod = NULL;
-    systemobj = NULL;
+    ietf_system_state_obj = NULL;
+    yuma_system_obj = NULL;
     sysStartupobj = NULL;
     sysConfigChangeobj = NULL;
     sysCapabilityChangeobj = NULL;
@@ -545,7 +549,7 @@ status_t
     init_static_sys_vars();
     agt_sys_init_done = TRUE;
 
-    /* load the system module */
+    /* load the yuma module */
     res = ncxmod_load_module(AGT_SYS_MODULE, 
                              NULL, 
                              &agt_profile->agt_savedevQ,
@@ -554,11 +558,28 @@ status_t
         return res;
     }
 
-    /* find the object definition for the system element */
-    systemobj = ncx_find_object(sysmod,
-                                system_N_system);
+    /* load the ietf-system module */
+    res = ncxmod_load_module(AGT_IETF_SYS_MODULE,
+                             NULL,
+                             &agt_profile->agt_savedevQ,
+                             &ietf_sysmod);
+    if (res != NO_ERR) {
+        return res;
+    }
 
-    if (!systemobj) {
+    /* find the object definition for the system element */
+    ietf_system_state_obj = ncx_find_object(ietf_sysmod,
+                                ietf_system_N_system_state);
+
+    if (!ietf_system_state_obj) {
+        return SET_ERROR(ERR_NCX_DEF_NOT_FOUND);
+    }
+
+    yuma_system_obj = 
+        obj_find_child(ietf_system_state_obj,
+                        AGT_SYS_MODULE,
+                        system_N_system);
+    if (!yuma_system_obj) {
         return SET_ERROR(ERR_NCX_DEF_NOT_FOUND);
     }
 
@@ -633,7 +654,7 @@ status_t
 status_t
     agt_sys_init2 (void)
 {
-    val_value_t           *topval, *unameval, *childval, *tempval;
+    val_value_t           *ietf_system_state_val, *yuma_system_val, *unameval, *childval, *tempval;
     cfg_template_t        *runningcfg;
     const xmlChar         *myhostname;
     obj_template_t        *unameobj;
@@ -652,57 +673,69 @@ status_t
         return SET_ERROR(ERR_INTERNAL_VAL);
     }
 
-    /* add /system */
-    topval = val_new_value();
-    if (!topval) {
+    /* add /system-state */
+    ietf_system_state_val = val_new_value();
+    if (!ietf_system_state_val) {
         return ERR_INTERNAL_MEM;
     }
-    val_init_from_template(topval, systemobj);
+    val_init_from_template(ietf_system_state_val, ietf_system_state_obj);
 
     /* handing off the malloced memory here */
-    val_add_child_sorted(topval, runningcfg->root);
+    val_add_child_sorted(ietf_system_state_val, runningcfg->root);
 
-    /* add /system/sysName */
+    /* add /system-state/yuma */
+    yuma_system_val = val_new_value();
+    if (!yuma_system_val) {
+        return ERR_INTERNAL_MEM;
+    }
+    val_init_from_template(yuma_system_val, yuma_system_obj);
+
+    /* handing off the malloced memory here */
+    val_add_child_sorted(yuma_system_val, ietf_system_state_val);
+
+
+
+    /* add /system-state/yuma/sysName */
     myhostname = (const xmlChar *)getenv("HOSTNAME");
     if (!myhostname) {
         myhostname = (const xmlChar *)"localhost";
     }
-    childval = agt_make_leaf(systemobj, system_N_sysName, myhostname, &res);
+    childval = agt_make_leaf(yuma_system_obj, system_N_sysName, myhostname, &res);
     if (childval) {
-        val_add_child(childval, topval);
+        val_add_child(childval, yuma_system_val);
     } else {
         return res;
     }
 
-    /* add /system/sysCurrentDateTime */
-    childval = agt_make_virtual_leaf(systemobj, system_N_sysCurrentDateTime,
+    /* add /system-state/yuma/sysCurrentDateTime */
+    childval = agt_make_virtual_leaf(yuma_system_obj, system_N_sysCurrentDateTime,
                                      get_currentDateTime, &res);
     if (childval) {
-        val_add_child(childval, topval);
+        val_add_child(childval, yuma_system_val);
     } else {
         return res;
     }
 
-    /* add /system/sysBootDateTime */
+    /* add /system-state/yuma/sysBootDateTime */
     tstamp_datetime(tstampbuff);
-    childval = agt_make_leaf(systemobj, system_N_sysBootDateTime,
+    childval = agt_make_leaf(yuma_system_obj, system_N_sysBootDateTime,
                              tstampbuff, &res);
     if (childval) {
-        val_add_child(childval, topval);
+        val_add_child(childval, yuma_system_val);
     } else {
         return res;
     }
 
-    /* add /system/sysLogLevel */
-    childval = agt_make_virtual_leaf(systemobj, system_N_sysLogLevel,
+    /* add /system-state/yuma/sysLogLevel */
+    childval = agt_make_virtual_leaf(yuma_system_obj, system_N_sysLogLevel,
                                      get_currentLogLevel, &res);
     if (childval) {
-        val_add_child(childval, topval);
+        val_add_child(childval, yuma_system_val);
     } else {
         return res;
     }
 
-    /* add /system/sysNetconfServerId */
+    /* add /system-state/yuma/sysNetconfServerId */
     buffer = m__getMem(256);
     if (buffer == NULL) {
         return ERR_INTERNAL_MEM;
@@ -712,11 +745,11 @@ status_t
 
     res = ncx_get_version(p, 247);
     if (res == NO_ERR) {
-        childval = agt_make_leaf(systemobj, system_N_sysNetconfServerId,
+        childval = agt_make_leaf(yuma_system_obj, system_N_sysNetconfServerId,
                                  buffer, &res);
         m__free(buffer);
         if (childval) {
-            val_add_child(childval, topval);
+            val_add_child(childval, yuma_system_val);
         } else {
             return res;
         }
@@ -726,21 +759,21 @@ status_t
     }
     buffer = NULL;
 
-    /* add /system/sysNetconfServerCLI */
+    /* add /system-state/yuma/sysNetconfServerCLI */
     tempval = val_clone(agt_cli_get_valset());
     if (tempval == NULL) {
         return ERR_INTERNAL_MEM;
     }
-    val_change_nsid(tempval, topval->nsid);
+    val_change_nsid(tempval, yuma_system_val->nsid);
 
-    childval = agt_make_object(systemobj, system_N_sysNetconfServerCLI, &res);
+    childval = agt_make_object(yuma_system_obj, system_N_sysNetconfServerCLI, &res);
     if (childval == NULL) {
         val_free_value(tempval);
         return ERR_INTERNAL_MEM;
     }
     val_move_children(tempval, childval);
     val_free_value(tempval);
-    val_add_child(childval, topval);
+    val_add_child(childval, yuma_system_val);
 
     /* get the system information */
     memset(&utsbuff, 0x0, sizeof(utsbuff));
@@ -748,20 +781,20 @@ status_t
     if (retval) {
         log_warn("\nWarning: <uname> data not available");
     } else {
-        unameobj = obj_find_child(systemobj, AGT_SYS_MODULE, system_N_uname);
+        unameobj = obj_find_child(yuma_system_obj, AGT_SYS_MODULE, system_N_uname);
         if (!unameobj) {
             return SET_ERROR(ERR_NCX_DEF_NOT_FOUND);
         } 
 
-        /* add /system/uname */
+        /* add /system-state/yuma/uname */
         unameval = val_new_value();
         if (!unameval) {
             return ERR_INTERNAL_MEM;
         }
         val_init_from_template(unameval, unameobj);
-        val_add_child(unameval, topval);
+        val_add_child(unameval, yuma_system_val);
 
-        /* add /system/uname/sysname */
+        /* add /system-state/yuma/uname/sysname */
         childval = agt_make_leaf(unameobj, system_N_sysname,
                                  (const xmlChar *)utsbuff.sysname, &res);
         if (childval) {
@@ -770,7 +803,7 @@ status_t
             return res;
         }
 
-        /* add /system/uname/release */
+        /* add /system-state/yuma/uname/release */
         childval = agt_make_leaf(unameobj, system_N_release,
                                  (const xmlChar *)utsbuff.release, &res);
         if (childval) {
@@ -779,7 +812,7 @@ status_t
             return res;
         }
 
-        /* add /system/uname/version */
+        /* add /system-state/yuma/uname/version */
         childval = agt_make_leaf(unameobj, system_N_version,
                                  (const xmlChar *)utsbuff.version, &res);
         if (childval) {
@@ -788,7 +821,7 @@ status_t
             return res;
         }
         
-        /* add /system/uname/machine */
+        /* add /system-state/yuma/uname/machine */
         childval = agt_make_leaf(unameobj, system_N_machine,
                                  (const xmlChar *)utsbuff.machine, &res);
         if (childval) {
@@ -797,7 +830,7 @@ status_t
             return res;
         }
 
-        /* add /system/uname/nodename */
+        /* add /system-state/yuma/uname/nodename */
         childval = agt_make_leaf(unameobj, system_N_nodename,
                                  (const xmlChar *)utsbuff.nodename, &res);
         if (childval) {

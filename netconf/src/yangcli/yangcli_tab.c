@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2008 - 2012, Andy Bierman, All Rights Reserved.
+ * Copyright (c) 2013 - 2016, Vladimir Vassilev, All Rights Reserved.
  * 
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -43,8 +44,10 @@ date         init     comment
 #include <errno.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <assert.h>
 
 #include "libtecla.h"
+#include "yangcli_wordexp.h"
 
 #include "procdefs.h"
 #include "log.h"
@@ -154,7 +157,7 @@ date         init     comment
  *    comstate == completion state to use
  *    line == line passed to callback
  *    parmval == parm value string to check
- *    word_start == start position within line of the 
+ *    word_start == start position within line of the
  *                  word being completed
  *    word_end == word_end passed to callback
  *    parmlen == length of parameter value already entered
@@ -220,7 +223,7 @@ static status_t
  *    cpl == word completion struct to fill in
  *    comstate == completion state record to use
  *    line == line passed to callback
- *    word_start == start position within line of the 
+ *    word_start == start position within line of the
  *                  word being completed
  *    word_end == word_end passed to callback
  *    parmlen == length of parameter name already entered
@@ -309,6 +312,13 @@ static status_t
 
 }  /* fill_parm_completion */
 
+static status_t
+    fill_xpath_predicate_completion (obj_template_t *rpc, obj_template_t *parentObj,
+                                    WordCompletion *cpl,
+                                    const char *line,
+                                    int word_start,
+                                    int word_end,
+                                    int cmdlen);
 
 /********************************************************************
  * FUNCTION fill_xpath_children_completion
@@ -319,7 +329,7 @@ static status_t
  *    parentObj == object template of parent to check
  *    cpl == word completion struct to fill in
  *    line == line passed to callback
- *    word_start == start position within line of the 
+ *    word_start == start position within line of the
  *                  word being completed
  *    word_end == word_end passed to callback
  *    cmdlen == command length
@@ -331,7 +341,7 @@ static status_t
  *   status
  *********************************************************************/
 static status_t
-    fill_xpath_children_completion (obj_template_t *parentObj,
+    fill_xpath_children_completion (obj_template_t *rpc, obj_template_t *parentObj,
                                     WordCompletion *cpl,
                                     const char *line,
                                     int word_start,
@@ -345,8 +355,8 @@ static status_t
     word_start ++;
     cmdlen --;
     while(word_iter <= word_end) {
-        if (line[word_iter] == '/') {
-            // The second '/' is found
+        if ((line[word_iter] == '/') || (line[word_iter] == '[')) {
+            // The second '/' or predicate condition starting with '[' is found
             // find the top level obj and fill its child completion
             char childName[128];
             int child_name_len = word_iter - word_start;
@@ -356,15 +366,21 @@ static status_t
                 return NO_ERR;
             obj_template_t *childObj = 
                 obj_find_child(parentObj,
-                               obj_get_mod_name(parentObj),
+                               NULL/*obj_get_mod_name(parentObj)*/,
                                (const xmlChar *)childName);
             cmdlen = word_end - word_iter;
 
             // put the children path with topObj into the recursive 
             // lookup function
-            return fill_xpath_children_completion(childObj, 
-                                                  cpl,line, word_iter,
-                                                  word_end, cmdlen);
+            if(line[word_iter] == '/') {
+                return fill_xpath_children_completion(rpc, childObj,
+                                                      cpl,line, word_iter,
+                                                      word_end, cmdlen);
+            } else if(line[word_iter] == '[') {
+                return fill_xpath_predicate_completion(rpc, childObj,
+                                                      cpl,line, word_iter,
+                                                      word_end, cmdlen);
+            }
         }
         word_iter ++;
     }
@@ -385,6 +401,14 @@ static status_t
             continue;
         }
 
+        if(!obj_get_config_flag(childObj)) {
+            const xmlChar* rpc_name;
+            rpc_name = obj_get_name(rpc);
+            if(0==strcmp((const char*)rpc_name, "create")) continue;
+            if(0==strcmp((const char*)rpc_name, "replace")) continue;
+            if(0==strcmp((const char*)rpc_name, "delete")) continue;
+        }
+
         retval = cpl_add_completion(cpl, line, word_start, word_end,
                                     (const char *)&pathname[cmdlen], "", "");
         if (retval != 0) {
@@ -394,6 +418,100 @@ static status_t
     return NO_ERR;
 }  /* fill_xpath_children_completion */
 
+/********************************************************************
+ * FUNCTION fill_xpath_predicate_completion
+ *
+ * fill the command struct for one XPath predicate
+ *
+ * INPUTS:
+ *    parentObj == object template of parent to check
+ *    cpl == word completion struct to fill in
+ *    line == line passed to callback
+ *    word_start == start position within line of the
+ *                  word being completed
+ *    word_end == word_end passed to callback
+ *    cmdlen == command length
+ *
+ * OUTPUTS:
+ *   cpl filled in if any matching commands found
+ *
+ * RETURNS:
+ *   status
+ *********************************************************************/
+static status_t
+    fill_xpath_predicate_completion (obj_template_t *rpc, obj_template_t *parentObj,
+                                    WordCompletion *cpl,
+                                    const char *line,
+                                    int word_start,
+                                    int word_end,
+                                    int cmdlen)
+{
+    const xmlChar         *pathname;
+    int                    retval;
+    int word_iter = word_start + 1;
+    // line[word_start] == '/'
+    word_start ++;
+    cmdlen --;
+    while(word_iter <= word_end) {
+        if (line[word_iter] == ']') {
+            // The second ']'
+            // fill parentObj child completion
+            int predicate_len = word_iter - word_start;
+            if (parentObj == NULL)
+                return NO_ERR;
+
+            if(((word_iter+1)>word_end) || (line[word_iter+1] != '/')) {
+                return NO_ERR;
+            }
+            word_iter ++;
+
+            cmdlen = word_end - word_iter;
+
+            return fill_xpath_children_completion(rpc, parentObj,
+                                                  cpl,line, word_iter,
+                                                      word_end, cmdlen);
+        }
+        word_iter ++;
+    }
+    obj_template_t * childObj = obj_first_child_deep(parentObj);
+    for(;childObj!=NULL; childObj = obj_next_child_deep(childObj)) {
+        pathname = obj_get_name(childObj);
+        /* check if there is a partial command name */
+        if (cmdlen > 0 &&
+            strncmp((const char *)pathname,
+                    &line[word_start],
+                    cmdlen)) {
+            /* command start is not the same so skip it */
+            continue;
+        }
+
+        if( !obj_is_data_db(childObj)) {
+            /* object is either rpc or notification*/
+            continue;
+        }
+
+        if(!obj_get_config_flag(childObj)) {
+            const xmlChar* rpc_name;
+            rpc_name = obj_get_name(rpc);
+            if(0==strcmp((const char*)rpc_name, "create")) continue;
+            if(0==strcmp((const char*)rpc_name, "replace")) continue;
+            if(0==strcmp((const char*)rpc_name, "delete")) continue;
+        }
+
+        if(!obj_is_leaf(childObj)) {
+            const xmlChar* rpc_name;
+            continue;
+        }
+
+        retval = cpl_add_completion(cpl, line, word_start, word_end,
+                                    (const char *)&pathname[cmdlen], "", "");
+        if (retval != 0) {
+            return ERR_NCX_OPERATION_FAILED;
+        }
+    }
+    return NO_ERR;
+
+} /* fill_xpath_predicate_completion */
 
 /********************************************************************
  * FUNCTION check_find_xpath_top_obj
@@ -527,6 +645,7 @@ static obj_template_t *
  *********************************************************************/
 static status_t
     check_save_xpath_completion (
+        obj_template_t *rpc,
         WordCompletion *cpl,
         ncx_module_t *mod,
         const char *line,
@@ -548,6 +667,14 @@ static status_t
         if (cmdlen > 0 && strncmp((const char *)pathname, 
                                   &line[word_start], cmdlen)) {
             continue;
+        }
+
+        if(!obj_get_config_flag(modObj)) {
+            const xmlChar* rpc_name;
+            rpc_name = obj_get_name(rpc);
+            if(0==strcmp((const char*)rpc_name, "create")) continue;
+            if(0==strcmp((const char*)rpc_name, "replace")) continue;
+            if(0==strcmp((const char*)rpc_name, "delete")) continue;
         }
 
 #ifdef DEBUG_TRACE
@@ -589,6 +716,7 @@ static status_t
  *********************************************************************/
 static status_t
     fill_xpath_root_completion (
+        obj_template_t *rpc,
         WordCompletion *cpl,
         completion_state_t *comstate,
         const char *line,
@@ -602,7 +730,7 @@ static status_t
         modptr_t *modptr = (modptr_t *)
             dlq_firstEntry(&comstate->server_cb->modptrQ);
         for (; modptr != NULL; modptr = (modptr_t *)dlq_nextEntry(modptr)) {
-            res = check_save_xpath_completion(cpl, modptr->mod, line,
+            res = check_save_xpath_completion(rpc, cpl, modptr->mod, line,
                                               word_start, word_end, cmdlen);
             if (res != NO_ERR) {
                 return res;
@@ -613,7 +741,7 @@ static status_t
         for (modptr = (modptr_t *)dlq_firstEntry(get_mgrloadQ());
              modptr != NULL;
              modptr = (modptr_t *)dlq_nextEntry(modptr)) {
-            res = check_save_xpath_completion(cpl, modptr->mod, line,
+            res = check_save_xpath_completion(rpc, cpl, modptr->mod, line,
                                               word_start, word_end, cmdlen);
             if (res != NO_ERR) {
                 return res;
@@ -622,7 +750,7 @@ static status_t
     } else {
         ncx_module_t * mod = ncx_get_first_session_module();
         for (;mod!=NULL; mod = ncx_get_next_session_module(mod)) {
-            res = check_save_xpath_completion(cpl, mod, line,
+            res = check_save_xpath_completion(rpc, cpl, mod, line,
                                               word_start, word_end, cmdlen);
             if (res != NO_ERR) {
                 return res;
@@ -674,6 +802,12 @@ static status_t
     (void)rpc;
     int word_iter = word_start + 1;
     // line[word_start] == '/'
+
+    if(word_start==word_end) {
+        // this is the case where the cursor is under the / (not after) ignore completion
+        return NO_ERR;
+    }
+
     word_start ++;
     cmdlen --;
     while(word_iter <= word_end) {
@@ -690,7 +824,7 @@ static status_t
 
               // put the children path with topObj into the recursive 
               // lookup function
-              return fill_xpath_children_completion (topObj, cpl, line,
+              return fill_xpath_children_completion (rpc, topObj, cpl, line,
                                                      word_iter, word_end, 
                                                      cmdlen);
         }
@@ -698,7 +832,7 @@ static status_t
     }
 
     // The second '/' is not found
-    return fill_xpath_root_completion(cpl, comstate, line, 
+    return fill_xpath_root_completion(rpc, cpl, comstate, line, 
                                       word_start, word_end, cmdlen);
 
 }  /* fill_one_xpath_completion */
@@ -1003,7 +1137,7 @@ static boolean
             if (line[word_cur - 2] == '-') {
                 if ((word_cur - 3) >= word_start) {
                     /* check for previous char before '--' */
-		  if (isspace((int)line[word_cur - 3])) {
+          if (isspace((int)line[word_cur - 3])) {
                         /* this a real '--' command start */
                         return TRUE;
                     } else {
@@ -1030,6 +1164,66 @@ static boolean
     }
 
 } /* is_parm_start */
+
+static obj_template_t* get_unique_param_w_value_compl_match(obj_template_t* inputobj, char* str)
+{
+    obj_template_t* childobj;
+    unsigned int matchcount;
+    /* try to find this parameter name */
+    childobj = obj_find_child_str(inputobj, NULL,
+                                 (const xmlChar *)str,
+                                 strlen(str));
+    if (childobj == NULL) {
+        matchcount = 0;
+
+        /* try to match this parameter name */
+        childobj = obj_match_child_str(inputobj, NULL,
+                                       (const xmlChar *)str,
+                                       strlen(str),
+                                       &matchcount);
+
+        if (childobj && matchcount > 1) {
+            /* ambiguous command error
+             * but just return no completions
+             */
+            childobj=NULL;
+        }
+    }
+
+    /* check if the parameter is an empty, which
+     * means another parameter is expected, not a value
+     */
+    if (childobj!=NULL && obj_get_basetype(childobj) == NCX_BT_EMPTY) {
+        childobj=NULL;
+    }
+    return childobj;
+}
+
+void parse_cmdline_completion_variable(char* str, int* param_index, int* value_index)
+{
+    int i;
+    *param_index = -1;
+    *value_index=-1;
+
+    /* abc=def - *param_index=0   *eq_sign_index=3 */
+    /* -abc=def - *param_index=1  *eq_sign_index=4 */
+    /* --abc=def - *param_index=2 *eq_sign_index=5 */
+    if(str[0]=='-' && str[1]=='-' && str[2]!='-') {
+        *param_index=2;
+    } else if(str[0]=='-' && str[1]!='-') {
+        *param_index=1;
+    } else {
+        *param_index=0;
+    }
+    i=*param_index;
+    assert(i>=0);
+    while(str[i]!=0 && str[i]!='=') {
+        i++;
+    }
+    if(str[i]=='=') {
+        *value_index=i+1;
+    }
+}
 
 
 /********************************************************************
@@ -1085,274 +1279,63 @@ static status_t
                      int *tokenstart)
 
 {
-    obj_template_t       *childobj;
-    const char           *str, *seqstart, *equals;
-    uint32                withequals, matchcount;
-    boolean               inbetween, gotdashes;
+    yangcli_wordexp_t p;
+    int i;
 
-    withequals = 0;
-    inbetween = FALSE;
-    gotdashes = FALSE;
-    equals = NULL;
-
-    *expectparm = FALSE;
-    *emptyexit = FALSE;
     *parmobj = NULL;
-    *tokenstart = 0;
+    *emptyexit= FALSE;
+    *expectparm=TRUE;
 
-    /* get the last char entered */
-    str = &line[word_end - 1];
+    yangcli_wordexp(line, &p, 0);
 
-    /* check starting in between 2 token sequences */
-    if (isspace((int)*str)) {
-        inbetween = TRUE;
-
-        /* the tab was in between tokens, not inside a token
-         * skip all the whitespace backwards
-         */
-        while (str >= &line[word_start] && isspace((int)*str)) {
-            str--;
+    for (i = 0; i < p.we_wordc; i++) {
+        if(p.we_word_line_offset[i]+strlen(p.we_wordv[i])==word_end) {
+            /*cursor at the end of a parameter[=value] - completion possible*/
+            break;
+        } else if((p.we_word_line_offset[i]<=word_end) && (p.we_word_line_offset[i]+strlen(p.we_wordv[i])>word_end)) {
+            /*cursor in the middle of parameter[=value] - completion not possible*/
+            *emptyexit=TRUE;
+            return;
         }
-
-        if (isspace((int)*str)) {
-            /* only found spaces, so this is the line start */
-            *expectparm = TRUE;
-            *tokenstart = word_end;
-            return NO_ERR;
-        } /* else found the end of some text */
-    } else if (is_parm_start(line, 
-                             word_start, 
-                             (int)(str - line))) {
-        /* got valid -<tab> or --<tab> */
-        *expectparm = TRUE;
+    }
+    if(i==p.we_wordc) {
+        /*next parameter starts from scratch*/
+        *emptyexit=FALSE;
         *tokenstart = word_end;
-        return NO_ERR;
-    } else if (*str =='"' || *str == '\'') {
-        /* last char was the start or end of a string
-         * no completions possible at this point
-         */
-        *emptyexit = TRUE;
-        return NO_ERR;
-    }
-
-    /* str is pointing at the last char in the token sequence
-     * that needs to be checked; e.g.:
-     *    somecommand parm1=3 --parm2=fred<tab>
-     *    somecommand parm1<tab>
-     *
-     * count the equals signs; hack to guess if
-     * this is a complete assignment statement
-     */
-    while (str >= &line[word_start] && !isspace((int)*str)) {
-        if (*str == '=') {
-            if (equals == NULL) {
-                equals = str;
-            }
-            withequals++;
-        }
-        str--;
-    }
-
-    /* figure out where the backwards search stopped */
-    if (isspace((int)*str)) {
-        /* found a space entered so see if
-         * the string following it looks like
-         * the start of a parameter or a value
-         */
-        seqstart = ++str;
+    } else if(p.we_wordv[i][0]=='/') {
+        /* ignore tokens that are probably default argument Xpath */
+        *tokenstart = p.we_word_line_offset[i];
+        *emptyexit=FALSE;
     } else {
-        /* str backed up all the way to word_start
-         * start the forward analysis from this char
-         */
-        seqstart = str;
-    }
+        int param_index;
+        int value_index;
+        char* param;
+        obj_template_t* childobj;
 
-    /* str is now pointing at the preceding token sequence
-     * check if the parameter start sequence is next
-     */
-    if (*str == '-') {
-        /* try to find any matching parameters
-         * within the rpc/input section
-         */
-        seqstart++;
-        gotdashes = TRUE;
-        if (str+1 < &line[word_end]) {
-            /* -<some-text ... <tab>  */
-            str++;
-            if (*str == '-') {
-                if (str+1 < &line[word_end]) {
-                    /* --<some-text ... <tab>  */
-                    seqstart++;
-                    str++;
-                } else {
-                    /* entire line is --<tab> 
-                     * return parameter list
-                     */
-                    *expectparm = TRUE;
-                    *tokenstart = word_end;
-                    return NO_ERR;
-
-                }
-            } /*else  -<some-text ... <tab>  */
-        } else {
-            /* entire line is -<tab> 
-             * return parameter list
-             */
-            *expectparm = TRUE;
-            *tokenstart = word_end;
-            return NO_ERR;
-        }
-    } /* else token does not start with any dashes */
-
-    /* got a sequence start so figure out what to with it */
-    if (inbetween) {
-        if (withequals == 1) {
-            /* this profile fits 
-             *   '[-]-<parmname>=<parmval><spaces><tab>'
-             * assume that a new parameter is expected
-             * and cause all of them to be listed
-             */
-            *expectparm = TRUE;
-            *tokenstart = word_end;
-            return NO_ERR;
-        } else {
-            /* this profile fits 
-             *    '[-]-<parmname><spaces><tab>'
-             * this entire token needs to be matched to a
-             * parameter in the RPC input section
-             *
-             * first find the end of the parameter name
-             */
-            str = seqstart;
-
-            while (str < &line[word_end] && 
-                   !isspace((int)*str) &&
-                   *str != '=') {
-                str++;
-            }
-
-            /* try to find this parameter name */
-            childobj = obj_find_child_str(inputobj, NULL,
-                                          (const xmlChar *)seqstart,
-                                          (uint32)(str - seqstart));
-            if (childobj == NULL) {
-                matchcount = 0;
-
-                /* try to match this parameter name */
-                childobj = obj_match_child_str(inputobj, NULL,
-                                               (const xmlChar *)seqstart,
-                                               (uint32)(str - seqstart),
-                                               &matchcount);
-
-                if (childobj && matchcount > 1) {
-                    /* ambiguous command error
-                     * but just return no completions
-                     */
-                    *emptyexit = TRUE;
-                    return NO_ERR;
-                }
-            }
-
-            /* check find/match child result */
-            if (childobj == NULL) {
-                /* do not recognize this parameter,
-                 * so just return no matches
-                 */
+        *tokenstart = p.we_word_line_offset[i];
+        parse_cmdline_completion_variable(p.we_wordv[i], &param_index, &value_index);
+        if(value_index!=-1) {
+            unsigned int param_len = value_index-1;
+            param = malloc(param_len+1);
+            memcpy(param,p.we_wordv[i],param_len);
+            param[param_len]=0; 
+            *tokenstart=param_len+*tokenstart;
+            childobj=get_unique_param_w_value_compl_match(inputobj,param);
+            free(param);
+            if(childobj==NULL) {
                 *emptyexit = TRUE;
-                return NO_ERR;
-            }
-
-            /* else found one matching child object */
-            *tokenstart = word_end;
-
-            /* check if the parameter is an empty, which
-             * means another parameter is expected, not a value
-             */
-            if (obj_get_basetype(childobj) == NCX_BT_EMPTY) {
-                *expectparm = TRUE;
             } else {
-                /* normal leaf parameter; needs a value */
                 *parmobj = childobj;
+                *expectparm=FALSE;
             }
-            return NO_ERR;
+        } else if(param_index!=-1) {
+            *tokenstart=param_index+*tokenstart;
+            *emptyexit = FALSE;
         }
     }
-
-    /* not in between 2 tokens so tab is 'stuck' to
-     * this preceding token; determine if a parameter
-     * or a value is expected
-     */
-    if (withequals == 1) {
-        /* this profile fits 
-         *   '[--]<parmname>=<parmval><tab>'
-         * assume that a parameter value is expected
-         * and cause all of them to be listed that
-         * match the partial value string
-         */
-        *tokenstart = (int)((equals+1) - line);
-
-        /* try to find the parameter name */
-        childobj = obj_find_child_str(inputobj, NULL,
-                                      (const xmlChar *)seqstart,
-                                      (uint32)(equals - seqstart));
-        if (childobj == NULL) {
-            matchcount = 0;
-            
-            /* try to match this parameter name */
-            childobj = obj_match_child_str(inputobj, NULL,
-                                           (const xmlChar *)seqstart,
-                                           (uint32)(equals - seqstart),
-                                           &matchcount);
-
-            if (childobj && matchcount > 1) {
-                /* ambiguous command error
-                 * but just return no completions
-                 */
-                *emptyexit = TRUE;
-                return NO_ERR;
-            }
-        }
-
-        /* check find/match child result */
-        if (childobj == NULL) {
-            /* do not recognize this parameter,
-             * so just return no matches
-             */
-            *emptyexit = TRUE;
-        } else {
-            /* match the found parameter with a
-             * partial value string
-             */
-            *parmobj = childobj;
-        }
-        return NO_ERR;
-    } else if (gotdashes) {
-        /* this profile fits 
-         *   '--<parmname><tab>'
-         * assume that a parameter name is expected
-         * and cause all of them to be listed that
-         * match the partial name string
-         */
-        *tokenstart = (int)(seqstart - line);
-        *expectparm = TRUE;
-    } else {
-        /* this profile fits 
-         *   '[don't know]<parmwhat><tab>'
-         * assume that a parameter name is expected
-         * and cause all of them to be listed that
-         * match the partial name string
-         *
-         * TBD: should check back another token
-         * so see if a value or a name is expected
-         */
-        *tokenstart = (int)(seqstart - line);
-        *expectparm = TRUE;  /****/
-    }
-       
+    yangcli_wordfree(&p);
     return NO_ERR;
-
-} /* find_parm_start */
-
+}
 
 /********************************************************************
  * FUNCTION parse_backwards_parm
@@ -1496,6 +1479,68 @@ static status_t
 
 } /* fill_parm_values */
 
+/********************************************************************
+ * FUNCTION strip_predicate
+ *
+ * INPUTS:
+ *    line == original line containing predicates
+ *
+ * OUTPUTS:
+ *    line_striped == at least equal in size buffer to the original line to contain the result
+ *
+ * EXAMPLE:
+ *    /interfaces/interface[name='ge0']/mtu -> /interfaces/interface/mtu
+ *********************************************************************/
+static void strip_predicate(char* line, char* line_striped)
+{
+    unsigned int i,j;
+    unsigned int len;
+    int predicate_open=0;
+    int double_quote_open=0;
+    int single_quote_open=0;
+    unsigned int predicate_open_j;
+
+    len = strlen(line);
+
+    for(i=0,j=0;i<len;i++) {
+        if(predicate_open) {
+            if(single_quote_open) {
+                if(line[i]=='\'') {
+                    single_quote_open=0;
+                }
+            } else if(double_quote_open) {
+                if(line[i]=='"') {
+                    double_quote_open=0;
+                }
+            } else {
+                if(line[i]==']') {
+                    predicate_open = 0;
+                    j = predicate_open_j;
+                    continue;
+                }
+            }
+        } else {
+            if(single_quote_open) {
+                if(line[i]=='\'') {
+                    single_quote_open=0;
+                }
+            } else if(double_quote_open) {
+                if(line[i]=='"') {
+                    double_quote_open=0;
+                }
+            } else {
+                if(line[i]=='[') {
+                    predicate_open=1;
+                    predicate_open_j = j;
+                }
+            }
+        }
+        line_striped[j++]=line[i];
+    }
+    line_striped[j]=0;
+
+} /* strip_predicate */
+
 
 /********************************************************************
  * FUNCTION fill_completion_commands
@@ -1533,6 +1578,7 @@ static status_t
     int                    word_start, cmdlen;
     uint32                 retlen;
     boolean                done, equaldone;
+    char                   *line_striped;
 
     res = NO_ERR;
     str = line;
@@ -1582,7 +1628,7 @@ static status_t
             /* stopped past the first word
              * so need to skip further
              */
-	  if (isspace((int)*str)) {
+      if (isspace((int)*str)) {
                 /* find equals sign or word_end */
                 while ((str < &line[word_end]) && 
                        isspace((int)*str)) {
@@ -1718,65 +1764,11 @@ static status_t
         comstate->cmdinput = inputobj;
     }
 
-    /* check if any strings entered on the line
-     * stopping forward parse at line[word_start]
-     */
-    cmdend = str;
-    while (cmdend < &line[word_end] &&
-           *cmdend != '"' && 
-           *cmdend != '\'') {
-        cmdend++;
-    }
-
-    if (cmdend < &line[word_end]) {
-        /* found the start of a quoted string
-         * look for the end of the last quoted
-         * string
-         */
-        done = FALSE;
-        while (!done) {
-            /* match == start of quoted string */
-            match = cmdend++;
-            while (cmdend < &line[word_end] &&
-                   *cmdend != *match) {
-                cmdend++;
-            }
-            if (cmdend == &line[word_end]) {
-                /* entering a value inside a string
-                 * so just return, instead of
-                 * guessing the string value
-                 */
-                return res;
-            } else {
-                cmdend++;
-                while (cmdend < &line[word_end] &&
-                       *cmdend != '"' && 
-                       *cmdend != '\'') {
-                    cmdend++;
-                }
-                if (cmdend == &line[word_end]) {
-                    /* did not find the start of
-                     * another string so set the
-                     * new word_start and call
-                     * the parse_backwards_parm fn
-                     */
-                    word_start = (int)(cmdend - line);
-                    done = TRUE;
-                } 
-
-                /* else stopped on another start of 
-                 * quoted string so loop again
-                 */
-            }
-        }
-    }
-
     /* got some edited text past the last 
      * quoted string so figure out the
      * parm in progress and check for completions
      */
     res = parse_backwards_parm(cpl, comstate, line, word_start, word_end);
-
     return res;
 
 } /* fill_completion_commands */

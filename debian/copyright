@@ -1,13 +1,14 @@
 This package was debianized by Andy Bierman <andy@yumaworks.com>
 Thu, 09 Aug 2012 12:20:00 -0800
 
-It was downloaded from <http://www.yumaworks.com>
+It was downloaded from <https://github.com/OpenClovis/OpenYuma>
 
-Upstream Author: Andy Bierman <andy@yumaworks.com>
+Upstream Author: OpenClovis <info@openclovis.com>
 
 Copyright:
     Copyright (C) 2008 - 2012 by Andy Bierman <andy@yumaworks.com>
     Copyright (C) 2012 by YumaWorks, Inc. <support@yumaworks.com>
+    Copyright (C) 2016 by OpenClovis, Inc. <info@openclovis.com>
 
 License: BSD
 
@@ -38,7 +39,7 @@ License: BSD
  used by some Yuma programs.
 
 Packaging:
-    Copyright (C) 2012, YumaWorks, Inc. <support@yumaworks.com>
+    Copyright (C) 2016 by OpenClovis, Inc. <info@openclovis.com>
     released under the BSD license.
 
 

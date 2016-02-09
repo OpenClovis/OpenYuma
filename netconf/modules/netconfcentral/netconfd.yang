@@ -21,6 +21,16 @@ module netconfd {
         This module is not advertised by the server.
         It contains only CLI parameters.";
 
+    revision 2014-10-06 {
+        description
+          "Add ncxserver-sockname allowing multiple netconfd instances per host.";
+    }
+
+    revision 2013-09-11 {
+        description
+          "Add non-advertised-module";
+    }
+
     revision 2012-10-05 {
         description
           "Add uses for YumaHomeParm";
@@ -315,6 +325,45 @@ module netconfd {
 
          type inet:port-number;
       }
+      leaf ncxserver-sockname {
+        description
+          "Overrides the default /tmp/ncxserver.sock UNIX
+           socket name netconfd listens on for incomming connections.
+           You have to add corresponding entry to /etc/ssh/sshd_config e.g.:
+           ...
+           Port 1830
+           Subsystem netconf \"/usr/sbin/netconf-subsystem --ncxserver-sockname=/tmp/ncxserver1.sock\"
+           ...";
+        type string;
+      }
+
+      leaf tcp-direct-address {
+        description 
+          "The server will use this local TCP address to listen for incomming
+           connections instead of the default /tmp/ncxserver.sock UNIX
+           socket. By default if only tcp-direct-port is specified
+           the addressed used is localhost.";
+
+         type inet:host;
+      }
+
+      leaf tcp-direct-port {
+        description 
+          "The server will use this local TCP port to listen for incomming
+           connections instead of the default /tmp/ncxserver.sock UNIX
+           socket. tcp-direct-address controls the server bind address.";
+
+         type inet:port-number;
+      }
+
+      leaf non-advertised-module {
+        description 
+          "Specifying a module as non advertised excludes it from the capabilities
+           list in the <hello> message. For example taking out the RPCs defined
+           in a given module from the list of available commands in a cli.";
+
+         type nt:NcModuleSpec;
+      }
 
       uses ncxapp:ModuleParm;
 
@@ -461,6 +510,13 @@ module netconfd {
            extensive memory resources.";
         type boolean;
         default true;
+      }
+      leaf max-sessions {
+        description
+          "Specifies the maximum number of sessions
+           that can be accepted.";
+        type uint32;
+        default 1024;
       }
     }
 }

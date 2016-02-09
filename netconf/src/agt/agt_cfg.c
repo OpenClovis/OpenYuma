@@ -494,7 +494,7 @@ agt_cfg_transaction_t *
         return NULL;
     }
 
-    memset(txcb, 0x0, sizeof(*txcb));
+    memset(txcb, 0x0, sizeof(agt_cfg_transaction_t));
     dlq_createSQue(&txcb->undoQ);
     dlq_createSQue(&txcb->auditQ);
     dlq_createSQue(&txcb->deadnodeQ);

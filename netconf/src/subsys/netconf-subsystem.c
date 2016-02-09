@@ -34,6 +34,9 @@ date         init     comment
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <netdb.h>
 #include <unistd.h>
 #include <dirent.h>
 #include <errno.h>
@@ -90,7 +93,10 @@ date         init     comment
 *********************************************************************/
 
 static char *client_addr;
-static struct sockaddr_un ncxname;
+static struct sockaddr *ncxname;
+static struct sockaddr_un ncxname_unix;
+static struct sockaddr_in ncxname_inet;
+static int    ncxport_inet;
 static int    ncxsock;
 static char *user;
 static char *port;
@@ -157,6 +163,19 @@ static void configure_logging( int argc, char** argv )
 
 }
 
+static char* ncxserver_sockname(int argc, char** argv, char* port)
+{
+    int i;
+    char match[] = "--ncxserver-sockname=65535@";
+    sprintf(match,"--ncxserver-sockname=%s@",port);
+    for(i=1;i<argc;i++) {
+        if(strlen(argv[i])>strlen(match) && 0==memcmp(argv[i],match,strlen(match))) {
+            return argv[i]+strlen(match);
+        }
+    }
+    return NCXSERVER_SOCKNAME;
+}
+
 /********************************************************************
 * FUNCTION init_subsys
 *
@@ -167,16 +186,25 @@ static void configure_logging( int argc, char** argv )
 *   status
 *********************************************************************/
 static status_t
-    init_subsys (void)
+    init_subsys (int argc, char** argv)
 {
     char *cp, *con;
     int   ret;
+    int name_size;
+    int i;
 
     client_addr = NULL;
     port = NULL;
     user = NULL;
     ncxsock = -1;
     ncxconnect = FALSE;
+    ncxport_inet = -1;
+
+    for(i=1;i<argc;i++) {
+    	if(strlen(argv[i])>strlen("--tcp-direct-port=") && 0==memcmp(argv[i],"--tcp-direct-port=",strlen("--tcp-direct-port="))) {
+            ncxport_inet = atoi(argv[i]+strlen("--tcp-direct-port=")); 
+        }
+    }    
 
     /* get the client address */
     con = getenv("SSH_CONNECTION");
@@ -223,22 +251,52 @@ static status_t
         SUBSYS_TRACE1( "ERROR: init_subsys(): strdup(user) failed\n" );
         return ERR_INTERNAL_MEM;
     }
+    if(ncxport_inet != -1)
+    {
+        struct hostent* hp;
+        int tcp_nodelay_option=1;
 
-    /* make a socket to connect to the NCX server */
-    ncxsock = socket(PF_LOCAL, SOCK_STREAM, 0);
-    if (ncxsock < 0) {
-        SUBSYS_TRACE1( "ERROR: init_subsys(): NCX Socket Creation failed\n" );
-        return ERR_NCX_CONNECT_FAILED;
-    } 
-    ncxname.sun_family = AF_LOCAL;
-    strncpy(ncxname.sun_path, 
-            NCXSERVER_SOCKNAME, 
-            sizeof(ncxname.sun_path));
+        /* make a socket to connect to the NCX server */
+        ncxsock = socket(AF_INET, SOCK_STREAM, 0);
+        if (ncxsock < 0) {
+            SUBSYS_TRACE1( "ERROR: init_subsys(): NCX Socket Creation failed\n" );
+            return ERR_NCX_CONNECT_FAILED;
+        }
+	if (setsockopt(ncxsock, IPPROTO_TCP, TCP_NODELAY, (char*) &tcp_nodelay_option, sizeof(tcp_nodelay_option)) < 0) {
+            SUBSYS_TRACE1( "ERROR: init_subsys(): NCX Socket Creation failed\n" );
+            return ERR_NCX_CONNECT_FAILED;
+        }
+        hp = gethostbyname("localhost");
+        if (hp == NULL) {
+            SUBSYS_TRACE1( "ERROR: init_subsys(): NCX Socket Creation failed\n" );
+            return ERR_NCX_CONNECT_FAILED;
+        }
+        memset((char *) &ncxname_inet, 0, sizeof(ncxname_inet));
+        ncxname_inet.sin_family = AF_INET;
+        ncxname_inet.sin_port = htons((unsigned short)ncxport_inet);
+        memcpy((char *) &ncxname_inet.sin_addr, hp->h_addr, hp->h_length);
+        
+        name_size = sizeof(ncxname_inet);
+        ncxname = (struct sockaddr *) &ncxname_inet;
+    } else {
+        /* make a socket to connect to the NCX server */
+        ncxsock = socket(PF_LOCAL, SOCK_STREAM, 0);
+        if (ncxsock < 0) {
+            SUBSYS_TRACE1( "ERROR: init_subsys(): NCX Socket Creation failed\n" );
+            return ERR_NCX_CONNECT_FAILED;
+        } 
+        ncxname_unix.sun_family = AF_LOCAL;
+        strncpy(ncxname_unix.sun_path, 
+                ncxserver_sockname(argc, argv, port), 
+                sizeof(ncxname_unix.sun_path));
+        name_size = SUN_LEN(&ncxname_unix);
+        ncxname = (struct sockaddr *)&ncxname_unix;
+    }
 
     /* try to connect to the NCX server */
     ret = connect(ncxsock,
-                  (const struct sockaddr *)&ncxname,
-                  SUN_LEN(&ncxname));
+                  ncxname,
+                  name_size);
     if (ret != 0) {
         SUBSYS_TRACE1( "ERROR: init_subsys(): NCX Socket Connect failed\n" );
         return ERR_NCX_OPERATION_FAILED;
@@ -485,7 +543,7 @@ int main (int argc, char **argv)
 
     configure_logging( argc, argv );
 
-    res = init_subsys();
+    res = init_subsys(argc, argv);
     if (res != NO_ERR) {
         msg = "init failed";
     }

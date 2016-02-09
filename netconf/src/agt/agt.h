@@ -264,6 +264,7 @@ typedef struct agt_profile_t_ {
     ncx_withdefaults_t  agt_defaultStyleEnum;
     agt_acmode_t        agt_accesscontrol_enum;
     uint16              agt_ports[AGT_MAX_PORTS];
+    uint32              agt_max_sessions;
 
     /****** state variables; TBD: move out of profile ******/
 

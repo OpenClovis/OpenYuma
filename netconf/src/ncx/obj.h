@@ -406,6 +406,11 @@ typedef struct obj_augment_t_ {
     obj_augtype_t     augtype;
     ncx_status_t      status;
     dlq_hdr_t         datadefQ;         /* Q of obj_template_t */
+#ifdef ENABLE_DIRECT_MUST_AUGMENT_EX
+    dlq_hdr_t         mustQ;              /* Q of xpath_pcb_t */
+    boolean           direct_must_augment_ex;
+#endif
+
 } obj_augment_t;
 
 

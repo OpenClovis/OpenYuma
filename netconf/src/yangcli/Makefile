@@ -39,10 +39,10 @@ else
 LFIRST=
 endif
 
-DLIBS =	-L../../target/lib -lmgr -lncx \
+DLIBS =	-L$(PREFIX)/lib -L../../target/lib -Wl,--start-group -lmgr -lncx -Wl,--end-group \
 	-L../../../libtecla -ltecla \
-	$(LFIRST) -L$(PREFIX)/lib -L/usr/local/lib -lxml2 -lncurses -lssh2 \
-	-L$(PREFIX)/lib -lz -lm
+	$(LFIRST) -L/usr/local/lib -lxml2 -lncurses -lssh2 \
+	-lz -lm
 
 ifndef FREEBSD
 DLIBS += -ldl
@@ -50,7 +50,7 @@ endif
 
 # SLIBS used only if FULL_STATIC=1 is set in build
 # (no used anymore in debian packaging)
-SLIBS = -L../../target/lib -lmgr -lncx \
+SLIBS = -L../../target/lib -lmgr -lncx -lmgr \
 	-L$(PREFIX)/lib -lxml2 \
 	-l:$(PREFIX)/lib/libssh2.a \
 	-L$(PREFIX)/lib -lgpg-error \

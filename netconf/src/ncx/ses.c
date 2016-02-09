@@ -254,7 +254,17 @@ static status_t
                      * save the buffer and make the message ready to parse 
                      * don't let the xmlreader see the EOM string
                      */
-                    buff->bufflen = buff->buffpos - NC_SSH_END_LEN;
+                    if(buff->buffpos > NC_SSH_END_LEN) {
+                        buff->bufflen = buff->buffpos - NC_SSH_END_LEN;
+                    } else {
+                        /* the SSH EOM string is split accross 2 buffers */
+                        unsigned int rem_len;
+                        rem_len = NC_SSH_END_LEN - buff->buffpos;
+                        dlq_remove(buff);
+                        ses_msg_free_buff(scb, buff);
+                        buff = (ses_msg_buff_t *)dlq_lastEntry(&msg->buffQ);
+                        buff->bufflen = buff->bufflen - rem_len;
+                    }
                     buff->buffpos = 0;
                     buff->islast = TRUE;
                     msg->curbuff = NULL;
@@ -683,8 +693,14 @@ static status_t
                     /* reset reader state */
                     scb->instate = SES_INST_IDLE;
                     scb->inendpos = 0;
-                    buff->bufflen = buff->buffpos;
-                    buff->buffpos = 0;
+                    if(buff->buffpos == 0) {
+                        /* remove an empty trailing buffer */
+                        dlq_remove(buff);
+                        ses_msg_free_buff (scb,buff);
+                    } else {
+                        buff->bufflen = buff->buffpos;
+                        buff->buffpos = 0;
+                    }
 
                     if (count < len) {
                         /* need a new message */
@@ -1716,13 +1732,6 @@ int
     done = FALSE;
     while (!done) {
 
-        buffer[retlen++] = (char)buff->buff[buff->buffpos++];
-
-        /* check xmlreader buffer full */
-        if (retlen == len) {
-            done = TRUE;
-            continue;
-        }
 
         /* check current buffer end has been reached */
         if (buff->buffpos == buff->bufflen) {
@@ -1736,6 +1745,18 @@ int
                 handle_prolog_state(msg, buffer, len, buff, 
                                     buff->bufflen, &retlen);
             }
+        }
+
+        if (buff->buffpos == buff->bufflen) {
+            continue; /* an empty buffer! */
+        }
+
+        buffer[retlen++] = (char)buff->buff[buff->buffpos++];
+
+        /* check xmlreader buffer full */
+        if (retlen == len) {
+            done = TRUE;
+            continue;
         }
     }
 

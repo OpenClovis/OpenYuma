@@ -1,0 +1,25 @@
+module helloworld {
+
+    namespace "http://helloworld.com/ns/helloworld";
+
+    prefix "helloworld";
+
+    organization  "helloworld organization";
+
+    description 
+      "helloworld module";
+
+    revision 2013-04-02 {
+        description
+            "Initial revision";
+    }
+
+    container helloworld {
+        description
+           "Helloworld example for creating YANG-netconfd SIL modules";
+        leaf message {
+            config false;
+            type string;
+        }
+    }
+}

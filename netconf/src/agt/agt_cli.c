@@ -317,6 +317,12 @@ static void
         agt_profile->agt_usevalidate = VAL_BOOL(val);
     }
 
+    /* get max-sessions param */
+    val = val_find_child(valset, AGT_CLI_MODULE, NCX_EL_MAX_SESSIONS);
+    if (val && val->res == NO_ERR) {
+        agt_profile->agt_max_sessions = VAL_UINT(val);
+    }
+
 } /* set_server_profile */
 
 

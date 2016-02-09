@@ -130,6 +130,8 @@ date         init     comment
 #include  "xml_wr.h"
 #endif
 
+#include "uptime.h"
+
 /********************************************************************
 *                                                                   *
 *                       C O N S T A N T S                           *
@@ -208,7 +210,7 @@ static void
 
     mscb = mgr_ses_get_mscb(scb);
 
-    (void)time(&req->starttime);
+    (void)uptime(&req->starttime);
 
     dlq_enque(req, &mscb->reqQ);
 
@@ -481,7 +483,7 @@ uint32
 #endif
 
     deletecount = 0;
-    (void)time(&timenow);
+    (void)uptime(&timenow);
 
     for (req = (mgr_rpc_req_t *)dlq_firstEntry(reqQ);
          req != NULL;

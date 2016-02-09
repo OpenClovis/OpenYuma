@@ -715,6 +715,16 @@ void ses_msg_make_inready (ses_cb_t *scb)
 
 } /* ses_msg_make_inready */
 
+void ses_msg_unmake_inready (ses_cb_t *scb)
+{
+    assert( scb && "scb is NULL" );
+
+    if (scb->inready.inq) {
+        dlq_deque(&scb->inready);
+        scb->inready.inq = FALSE;
+    }
+
+}
 
 /********************************************************************
 * FUNCTION ses_msg_make_outready
@@ -738,6 +748,16 @@ void ses_msg_make_outready (ses_cb_t *scb)
 
 } /* ses_msg_make_outready */
 
+void ses_msg_unmake_outready (ses_cb_t *scb)
+{
+    assert( scb && "scb is NULL" );
+
+    if (scb->outready.inq) {
+        dlq_deque(&scb->outready);
+        scb->outready.inq = FALSE;
+    }
+
+}
 
 /********************************************************************
 * FUNCTION ses_msg_finish_outmsg

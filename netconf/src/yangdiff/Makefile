@@ -27,7 +27,7 @@ PROG=yangdiff
 # that contains 'bar'. 
 
 
-LIBS = -lncx -lxml2 -lz -lm
+LIBS = -lncx -lmgr -lxml2 -lz -lm
 
 LIBTARGS= $(LBASE)/libncx.$(LIBNCXSUFFIX)
 

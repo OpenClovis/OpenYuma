@@ -642,6 +642,26 @@ static status_t
             return res;
         }
 
+        if(nextobj->parent != curobj) {
+            res = ERR_NCX_DEFSEG_NOT_FOUND;
+            log_error("\nError: in '%s' the schema node parent of '%s' is '%s' while '%s' is its document node parent. Schema nodes like (case, choice, input or output) are mandatory in schema node identifier expressions: "
+                      "%s on line %u",
+                      target,
+                      obj_get_name(nextobj),
+                      obj_get_name(nextobj->parent),
+                      obj_get_name(curobj),
+                      tkerr->mod->name,
+                      tkerr->linenum);
+            do_errmsg(tkc, mod, tkerr, res);
+            if (prefix) {
+                m__free(prefix);
+            }
+            if (name) {
+                m__free(name);
+            }
+            return res;
+        }
+
         if (nextobj) {
             curobj = nextobj;
         } else {
@@ -916,203 +936,38 @@ static status_t
                    const xmlChar *target,
                    val_value_t **targval)
 {
-    val_value_t    *curval;
-    ncx_module_t   *usemod;
-    const xmlChar  *str;
-    xmlChar        *prefix;
-    xmlChar        *name;
-    uint32          len;
-    status_t        res;
+    xpath_resnode_t *resnode;
+    xpath_pcb_t *xpathpcb;
+    xpath_result_t *result;
+    val_value_t* root_val;
+    status_t res = NO_ERR;
 
-    prefix = NULL;
-    name = NULL;
+    assert(startval!=NULL);
 
-    /* check absolute path starting with root val */
-    if (*target == '/' && !obj_is_root(startval->obj)) {
-        log_error("\nError: Absolute path given but startval is not "
-                  "root in Xpath target %s", target);
-        return ERR_NCX_DEF_NOT_FOUND;
-    }
+    *targval=NULL;
 
-    /* check '/' corner-case */
-    if (!xml_strcmp(target, (const xmlChar *)"/")) {
-        if (targval) {
-            *targval = startval;
-        }
-        return NO_ERR;
-    }
+    for(root_val=startval;!obj_is_root(root_val->obj);root_val=root_val->parent);
 
-    /* skip the first fwd slash, if any */
-    if (*target == '/') {
-        str = ++target;
-    } else {
-        str = target;
-    }
+    xpathpcb = xpath_new_pcb(target, NULL);
 
-    /* get the first QName (prefix, name) */
-    res = next_val_nodeid(str, TRUE, &prefix, &name, &len);
-    if (res != NO_ERR) {
-        if (prefix) {
-            m__free(prefix);
-        }
-        if (name) {
-            m__free(name);
-        }
-        return res;
-    } else {
-        str += len;
-    }
-
-    res = xpath_get_curmod_from_prefix(prefix, mod, &usemod);
-    if (res != NO_ERR) {
-        if (prefix) {
-            log_error("\nError: module not found for prefix %s"
-                      " in Xpath target %s",
-                      prefix, target);
-            m__free(prefix);
-        } else {
-            log_error("\nError: no module prefix specified"
-                          " in Xpath target %s", target);
-        }
-        if (name) {
-            m__free(name);
-        }
-        return ERR_NCX_MOD_NOT_FOUND;
-    }
-
-    /* get the first value node */
-    curval = val_find_child(startval, usemod->name, name);
-    if (!curval) {
-        if (ncx_valid_name2(name)) {
-            res = ERR_NCX_DEF_NOT_FOUND;
-        } else {
-            res = ERR_NCX_INVALID_NAME;
-        }
-        log_error("\nError: value node '%s' not found for module %s"
-                  " in Xpath target %s",
-                  name, usemod->name, target);
-        if (prefix) {
-            m__free(prefix);
-        }
-        if (name) {
-            m__free(name);
-        }
+    result =
+            xpath1_eval_expr(xpathpcb, startval, root_val, FALSE /* logerrors */, FALSE /* non-configonly */, &res);
+    if(res!=NO_ERR) {
+        xpath_free_pcb(xpathpcb);
         return res;
     }
+    assert(result);
 
-    if (prefix) {
-        m__free(prefix);
-        prefix = NULL;
-    }
-    if (name) {
-        m__free(name);
-        name = NULL;
-    }
-
-    /* got the first object; keep parsing node IDs
-     * until the Xpath expression is done or an error occurs
-     */
-    while (*str == '/') {
-        str++;
-        /* get the next QName (prefix, name) */
-        res = next_val_nodeid(str, TRUE, &prefix, &name, &len);
-        if (res != NO_ERR) {
-            if (prefix) {
-                m__free(prefix);
-            }
-            if (name) {
-                m__free(name);
-            }
-            return res;
-        } else {
-            str += len;
-        }
-
-        res = xpath_get_curmod_from_prefix(prefix, mod, &usemod);
-        if (res != NO_ERR) {
-            if (prefix) {
-                log_error("\nError: module not found for prefix %s"
-                          " in Xpath target %s",
-                          prefix, target);
-                m__free(prefix);
-            } else {
-                log_error("\nError: no module prefix specified"
-                          " in Xpath target %s", target);
-            }
-            if (name) {
-                m__free(name);
-            }
-            return ERR_NCX_MOD_NOT_FOUND;
-        }
-
-        /* determine 'nextval' based on [curval, prefix, name] */
-        switch (curval->obj->objtype) {
-        case OBJ_TYP_CONTAINER:
-        case OBJ_TYP_LIST:
-        case OBJ_TYP_CHOICE:
-        case OBJ_TYP_CASE:
-        case OBJ_TYP_RPC:
-        case OBJ_TYP_RPCIO:
-        case OBJ_TYP_NOTIF:
-            curval = val_find_child(curval, usemod->name, name);
-            if (!curval) {
-                if (ncx_valid_name2(name)) {
-                    res = ERR_NCX_DEF_NOT_FOUND;
-                } else {
-                    res = ERR_NCX_INVALID_NAME;
-                }
-                log_error("\nError: value node '%s' not found for module %s"
-                          " in Xpath target %s",
-                          name, usemod->name, target);
-                if (prefix) {
-                    m__free(prefix);
-                }
-                if (name) {
-                    m__free(name);
-                }
-                return res;
-            }
-            break;
-        case OBJ_TYP_LEAF:
-        case OBJ_TYP_LEAF_LIST:
-            res = ERR_NCX_DEFSEG_NOT_FOUND;
-            log_error("\nError: '%s' in Xpath target '%s' invalid: "
-                      "%s is a %s",
-                      name, target, curval->name,
-                      obj_get_typestr(curval->obj));
-            if (prefix) {
-                m__free(prefix);
-            }
-            if (name) {
-                m__free(name);
-            }
-            return res;
-        default:
-            res = SET_ERROR(ERR_INTERNAL_VAL);
-            do_errmsg(NULL, mod, NULL, res);
-            if (prefix) {
-                m__free(prefix);
-            }
-            if (name) {
-                m__free(name);
-            }
-            return res;
-        }
+    /* return the first value even if there are more */
+    for (resnode = (xpath_resnode_t *)dlq_firstEntry(&result->r.nodeQ);
+         resnode != NULL;
+         resnode = (xpath_resnode_t *)dlq_nextEntry(resnode)) {
+        *targval = resnode->node.valptr;
     }
 
-
-    if (prefix) {
-        m__free(prefix);
-    }
-    if (name) {
-        m__free(name);
-    }
-
-    if (targval) {
-        *targval = curval;
-    }
+    free(result);
+    xpath_free_pcb(xpathpcb);
     return NO_ERR;
-
 }  /* find_val_node */
 
 

@@ -46,6 +46,7 @@ date         init     comment
 #include "log.h"
 #include "mgr.h"
 #include "mgr_val_parse.h"
+#include "val_parse.h"
 #include "mgr_xml.h"
 #include "ncx.h"
 #include "ncx_num.h"
@@ -2178,56 +2179,11 @@ static status_t
 *********************************************************************/
 status_t 
     mgr_val_parse (ses_cb_t  *scb,
-                   obj_template_t *obj,
-                   const xml_node_t *startnode,
-                   val_value_t  *retval)
+               obj_template_t *obj,
+               const xml_node_t *startnode,
+               val_value_t  *retval)
 {
-    const xml_node_t  *usenode;
-    status_t  res;
-    xml_node_t  topnode;
-
-#ifdef DEBUG
-    if (scb == NULL || obj == NULL || retval == NULL) {
-        /* non-recoverable error */
-        return SET_ERROR(ERR_INTERNAL_PTR);
-    }
-#endif
-
-#ifdef MGR_VAL_PARSE_DEBUG
-    if (LOGDEBUG3) {
-        log_debug3("\nmgr_val_parse: %s:%s btyp:%s", 
-                   obj_get_mod_prefix(obj),
-                   obj_get_name(obj), 
-                   tk_get_btype_sym(obj_get_basetype(obj)));
-    }
-#endif
-
-    res = NO_ERR;
-    usenode = NULL;
-    xml_init_node(&topnode);
-
-    if (startnode == NULL) {
-        res = get_xml_node(scb, &topnode);
-        if (res == NO_ERR) {
-            val_set_name(retval, 
-                         topnode.elname,
-                         xml_strlen(topnode.elname));
-            val_change_nsid(retval, topnode.nsid);
-            usenode = &topnode;
-        }
-    } else {
-        usenode = startnode;
-    }
-
-    /* get the element values */
-    if (res == NO_ERR) {
-        res = parse_btype(scb, obj, usenode, retval);
-    }
-
-    xml_clean_node(&topnode);
-        
-    return res;
-
+    return val_parse(scb, obj, startnode, retval);
 }  /* mgr_val_parse */
 
 
@@ -2292,7 +2248,7 @@ status_t
     output = (rpc) ? obj_find_child(rpc, NULL, NCX_EL_OUTPUT) : NULL;
 
     /* get the element values */
-    res = parse_btype_split(scb, 
+    res = val_parse_split(scb, 
                             obj, 
                             output, 
                             startnode, 
@@ -2348,7 +2304,7 @@ status_t
 #endif
 
     /* get the element values */
-    res = parse_btype_split(scb, 
+    res = val_parse_split(scb, 
                             notobj, 
                             NULL, 
                             startnode, 

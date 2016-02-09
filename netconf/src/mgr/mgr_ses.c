@@ -567,6 +567,35 @@ static void
 
 }  /* tcp_setup */
 
+/********************************************************************
+* FUNCTION tcp_setup_direct
+*
+* Setup the NETCONF over TCP session
+* Connection MUST already established
+* Sends ssh subsystem session start message
+*
+* INPUTS:
+*   scb == session control block
+*   user == username to connect as
+*
+*********************************************************************/
+static void
+    tcp_setup_direct (ses_cb_t *scb,
+               const xmlChar *user,
+               unsigned short port)
+{
+  //const char *str;
+    char        buffer[1024];
+    sprintf(buffer, 
+            "<ncx-connect xmlns=\"http://netconfcentral.org/ns/yuma-ncx\" version=\"1\" user=\"%s\" address=\"localhost\" magic=\"x56o8937ab17eg922z34rwhobskdbyswfehkpsqq3i55a0an960ccw24a4ek864aOpal1t2p\" transport=\"ssh\" port=\"%u\" />\n]]>]]>",
+            user,
+            (unsigned int)port);
+    ses_putstr(scb, (const xmlChar *)buffer);
+
+    ses_msg_finish_outmsg(scb);
+
+}  /* tcp_setup_direct */
+
 
 /********************************************************************
 * FUNCTION log_ssh2_error
@@ -759,6 +788,12 @@ status_t
     status_t   res;
     struct hostent *hent;
     uint       i, slot;
+    int        tcp_direct_enable = 0;
+
+    if(transport == SES_TRANSPORT_TCP_DIRECT) {
+    	tcp_direct_enable = 1;
+    	transport = SES_TRANSPORT_TCP;
+    }
 
 #ifdef DEBUG
     if (user == NULL || target == NULL || retsid == NULL) {
@@ -892,7 +927,11 @@ status_t
     }
 
     if (res == NO_ERR && transport == SES_TRANSPORT_TCP) {
-        tcp_setup(scb, user);
+    	if(tcp_direct_enable) {
+            tcp_setup_direct(scb, user, port);
+    	} else {
+            tcp_setup(scb, user);
+        }
     }
 
     /* send the manager hello to the server */

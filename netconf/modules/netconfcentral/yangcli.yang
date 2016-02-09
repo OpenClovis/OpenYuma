@@ -601,6 +601,15 @@ module yangcli {
           }
           default ssh;
         }
+        leaf tcp-direct-enable {
+          description
+            "When --transport=tcp enables use of ncx-connect message
+             instead of the default tail-f custom message.
+             Set this parameter to true to establish direct
+             connection to netconfd.";
+          type boolean;
+          default false;
+        }
     }
 
     grouping XPathParms {

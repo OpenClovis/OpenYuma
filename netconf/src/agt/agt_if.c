@@ -68,7 +68,7 @@ date         init     comment
 
 #define interfaces_MOD_REV    NULL
 
-#define interfaces_N_interfaces      (const xmlChar *)"interfaces"
+#define interfaces_N_interfaces      (const xmlChar *)"yuma-interfaces"
 
 #define interfaces_N_interface       (const xmlChar *)"interface"
 

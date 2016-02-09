@@ -4226,7 +4226,7 @@ void
     boolean iserr = (res <= ERR_LAST_USR_ERR) ? TRUE : FALSE;
 
     if (!iserr && !ncx_warning_enabled(res)) {
-         log_debug3("\nSuppressed warning %d %s (%s.%u)", res, 
+         log_debug3("\nSuppressed warning %d (%s.%u)", res, 
                get_error_string(res),
                ( mod ? (const xmlChar*)mod->name : (const xmlChar*)"UNKNOWN" ),
                linenum);

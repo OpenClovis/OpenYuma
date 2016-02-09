@@ -131,6 +131,7 @@ date         init     comment
 #include "yangcli_util.h"
 #endif
 
+#include "uptime.h"
 
 /********************************************************************
 * FUNCTION setup_lock_cbs
@@ -342,7 +343,7 @@ static status_t
             } else {
                 lockcb->lock_state = LOCK_STATE_RELEASE_SENT;
             }
-            (void)time(&lockcb->last_msg_time);
+            (void)uptime(&lockcb->last_msg_time);
             server_cb->locks_cur_cfg = lockcb->config_id;
         }
     }
@@ -585,11 +586,11 @@ status_t
     finddone = FALSE;
     stillwaiting = FALSE;
     lockcb = NULL;
-    (void)time(&timenow);
+    (void)uptime(&timenow);
 
     if (first) {
         /* this is the first try, start the overall timer */
-        (void)time(&server_cb->locks_start_time);
+        (void)uptime(&server_cb->locks_start_time);
     } else if (check_locks_timeout(server_cb)) {
         log_error("\nError: get-locks timeout");
         handle_locks_cleanup(server_cb);
@@ -709,7 +710,7 @@ status_t
 
     if (first) {
         server_cb->command_mode = CMD_MODE_AUTOUNLOCK;
-        (void)time(&server_cb->locks_start_time);
+        (void)uptime(&server_cb->locks_start_time);
     } else if (check_locks_timeout(server_cb)) {
         log_error("\nError: release-locks timeout");
         clear_lock_cbs(server_cb);
@@ -826,7 +827,7 @@ boolean
 
     if (server_cb->locks_timeout) {
         /* check if there is an overall timeout yet */
-        (void)time(&timenow);
+        (void)uptime(&timenow);
         timediff = difftime(timenow,
                             server_cb->locks_start_time);
         if (timediff >= (double)server_cb->locks_timeout) {

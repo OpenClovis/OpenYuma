@@ -635,6 +635,10 @@ extern status_t
 extern status_t
     agt_disable_feature (const xmlChar *modname,
 			 const xmlChar *featurename);
+extern status_t
+    agt_check_feature (const xmlChar *modname,
+		       const xmlChar *featurename,
+                       int* enabled/*output*/);
 
 
 /********************************************************************

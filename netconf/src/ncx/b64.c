@@ -15,6 +15,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 
 #include "log.h"
 
@@ -226,9 +227,11 @@ uint32_t b64_get_encoded_str_len( uint32_t inbufflen, uint32_t linesize )
 {
     uint32_t requiredBufLen = inbufflen%3 ? 4 * ( 1 + inbufflen/3 )  
                                           : 4 * ( inbufflen/3 );
-    requiredBufLen += 2 * ( inbufflen/linesize );  // allow for line breaks
-    requiredBufLen += 3; // allow for final CR-LF and null terminator
-
+    if(linesize != 0) {
+        requiredBufLen += 2 * ( inbufflen/linesize );  // allow for line breaks
+        requiredBufLen += 2; // allow for final CR-LF
+    }
+    requiredBufLen += 1; //null terminator
     return requiredBufLen;
 }
 
@@ -254,7 +257,7 @@ status_t b64_encode ( const uint8_t* inbuff, uint32_t inbufflen,
 {
     assert( inbuff && "b64_decode() inbuff is NULL!" );
     assert( outbuff && "b64_decode() outbuff is NULL!" );
-
+    assert((linesize>4) || (linesize==0));
     if ( b64_get_encoded_str_len( inbufflen, linesize ) > outbufflen )
     {
         return ERR_BUFF_OVFL;
@@ -265,20 +268,33 @@ status_t b64_encode ( const uint8_t* inbuff, uint32_t inbufflen,
     const uint8_t* iter = inbuff;
     uint8_t* outIter = outbuff;
     uint32_t numBlocks=0;
+    int line_index=0;
 
     while( !endReached )
     {
         endReached = encode_3bytes( &iter, endPos, &outIter );
         ++numBlocks;
-        if ( numBlocks*4 >= linesize )
+        if(linesize==0) {
+            continue;
+        }
+        if ( (numBlocks*4) >= ((line_index+1)*linesize) )
         {
-            *outIter++ ='\r';
-            *outIter++ ='\n';
+            int new_lined_bytes;
+            new_lined_bytes = (numBlocks*4)% linesize;
+            
+            if(new_lined_bytes) {
+              memmove((outIter-new_lined_bytes+2), (outIter-new_lined_bytes), new_lined_bytes);
+            }
+            *(outIter-new_lined_bytes+0)='\r';
+            *(outIter-new_lined_bytes+1)='\n';
+            *outIter+=2;
+            line_index++;
         }
     }
-
-    *outIter++ ='\r';
-    *outIter++ ='\n';
+    if(linesize!=0) {
+        *outIter++ ='\r';
+        *outIter++ ='\n';
+    }
 
     *retlen = outIter - outbuff;
     *outIter++ ='\0';

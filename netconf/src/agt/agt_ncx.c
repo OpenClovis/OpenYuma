@@ -46,6 +46,7 @@ date         init     comment
 #include "agt_time_filter.h"
 #include "agt_util.h"
 #include "agt_val.h"
+#include "agt_commit_validate.h"
 #include "cap.h"
 #include "cfg.h"
 #include "ncxmod.h"
@@ -59,6 +60,7 @@ date         init     comment
 #include  "val.h"
 #include  "xml_wr.h"
 #include  "yangconst.h"
+#include  "uptime.h"
 
 /********************************************************************
 *                                                                   *
@@ -2086,7 +2088,14 @@ static status_t
                 msg->rpc_txcb->commitcheck = FALSE;
             }
         }
+        if(res==NO_ERR) {
+            res = agt_commit_validate(scb, &msg->mhdr, candidate->root );
+            if (res != NO_ERR) {
+                errdone = TRUE;
+            }
+        }
     }
+
 
     if (res != NO_ERR && !errdone) {
         agt_record_error(scb, 
@@ -2302,7 +2311,7 @@ static status_t
                 commit_cb.cc_ses_id = SES_MY_SID(scb);
 
                 /* extend the timer */
-                (void)time(&commit_cb.cc_start_time);
+                (void)uptime(&commit_cb.cc_start_time);
                 if (timeoutval != NULL) {
                     commit_cb.cc_cancel_timeout = VAL_UINT(timeoutval);
                 } else {
@@ -2380,7 +2389,7 @@ static status_t
 
             if (res == NO_ERR) {
                 /* set the timer */
-                (void)time(&commit_cb.cc_start_time);
+                (void)uptime(&commit_cb.cc_start_time);
                 if (timeoutval) {
                     commit_cb.cc_cancel_timeout = VAL_UINT(timeoutval);
                 } else {
@@ -3861,7 +3870,7 @@ void
         return;
     }
 
-    (void)time(&timenow);
+    (void)uptime(&timenow);
     timediff = difftime(timenow, commit_cb.cc_start_time);
 
     if (timediff >= (double)commit_cb.cc_cancel_timeout) {

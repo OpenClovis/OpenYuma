@@ -4859,8 +4859,8 @@ static status_t
         ct->testflags = testflags;
         dlq_enque(ct, commit_testQ);
         if (LOGDEBUG4) {
-            log_debug4("\nAdded commit_test record for %s", 
-                       ct->objpcb->exprstr);
+            log_debug4("\nAdded commit_test record for %s testflags=0x%08X",
+                       ct->objpcb->exprstr, testflags);
         }
     }
 
@@ -4947,7 +4947,10 @@ static uint32
      * the root node (on the top-level YANG data nodes, so
      * any instance or mandatory tests on the top-node will
      * always be done     */
-    return 0;
+    //return 0;
+
+    /* xpath tests can depend on any top level container */
+    return (curflags & AGT_TEST_FL_XPATH_TYPE);
 
 } /* check_prune_obj */
 
@@ -5581,7 +5584,7 @@ status_t
         for (; resnode != NULL; resnode = xpath_get_next_resnode(resnode)) {
 
             val_value_t *valnode = xpath_get_resnode_valptr(resnode);
-
+            valnode->res = NO_ERR;
             res = run_obj_commit_tests(profile, scb, msghdr, ct, valnode, 
                                        root, tests);
             if (res != NO_ERR) {
@@ -5753,6 +5756,7 @@ status_t
         /* complete the operation */
         res = handle_callback(AGT_CB_COMMIT, editop, scb, msg, target, 
                               pducfg, target->root, target->root);
+        /*commit_complete?*/
     } else {
         /* rollback the operation */
         status_t res2 = handle_callback(AGT_CB_ROLLBACK, editop, scb, msg, 

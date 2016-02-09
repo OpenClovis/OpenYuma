@@ -43,6 +43,7 @@ extern "C" {
 }
 
 #include "test/support/callbacks/sil-callback-log.h"
+#include "test/support/callbacks/sil-callback-controller.h"
 
 /* module static variables */
 static ncx_module_t *simple_list_test_mod;
@@ -416,6 +417,7 @@ static status_t simple_list_test_simple_list_edit (
     }
 
     YumaTest::SILCallbackLog& cbLog = YumaTest::SILCallbackLog::getInstance();
+    YumaTest::SILCallbackController& cbController = YumaTest::SILCallbackController::getInstance();
     YumaTest::SILCallbackLog::CallbackInfo cbData;
     cbData.cbName = "simple_list_test_simple_list_edit";
     val_value_t* value = (newval) ? newval : curval;
@@ -449,6 +451,9 @@ static status_t simple_list_test_simple_list_edit (
             cbLog.addCallback(module_name, cbData);
             break;
         case OP_EDITOP_CREATE:
+            if(!cbController.createSuccess()) {
+                res = SET_ERROR(ERR_INTERNAL_VAL);
+            }
             cbData.cbPhase = "create";
             cbLog.addCallback(module_name, cbData);
             break;

@@ -15,8 +15,8 @@
 // ---------------------------------------------------------------------------|
 // Boost Includes
 // ---------------------------------------------------------------------------|
-#include <boost/phoenix/core.hpp>
-#include <boost/phoenix/operator.hpp> 
+#include <boost/spirit/include/phoenix_core.hpp>
+#include <boost/spirit/include/phoenix_operator.hpp>
 
 // ---------------------------------------------------------------------------|
 // File wide namespace use and aliases

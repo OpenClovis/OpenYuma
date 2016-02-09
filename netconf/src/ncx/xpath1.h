@@ -385,6 +385,32 @@ extern boolean
 
 
 /********************************************************************
+* FUNCTION xpath1_check_node_child_exists_slow
+* 
+* Check if any child-or-self node is already in the specified Q
+* ONLY FOR VALUE NODES IN THE RESULT
+*
+* This is only done after all the nodes have been processed
+* and the nodeset is complete.  For NETCONF purposes,
+* the entire path to root is added for the context node,
+* and the entire context node contexts are always returned
+*
+* INPUTS:
+*    pcb == parser control block to use
+*    resultQ == Q of xpath_resnode_t structs to check
+*               DOES NOT HAVE TO BE WITHIN A RESULT NODE Q
+*    val   == value node pointer value to find
+*
+* RETURNS:
+*    TRUE if found, FALSE otherwise
+*********************************************************************/
+extern boolean
+    xpath1_check_node_child_exists_slow (xpath_pcb_t *pcb,
+                                   dlq_hdr_t *resultQ,
+                                   const val_value_t *val);
+
+
+/********************************************************************
 * FUNCTION xpath1_stringify_nodeset
 * 
 * Convert a value node pointer to a string node

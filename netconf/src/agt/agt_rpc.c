@@ -63,6 +63,7 @@ date         init     comment
 #include "xml_util.h"
 #include "xml_wr.h"
 #include "yangconst.h"
+#include "uptime.h"
 
 
 /********************************************************************
@@ -1431,7 +1432,7 @@ void
         errdone = FALSE;
 
         /* reset idle timeout */
-        (void)time(&scb->last_rpc_time);
+        (void)uptime(&scb->last_rpc_time);
 
         if (LOGDEBUG) {
             const xmlChar *msgid;

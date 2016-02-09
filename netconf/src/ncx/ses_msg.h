@@ -242,6 +242,9 @@ extern status_t
 extern void
     ses_msg_make_inready (ses_cb_t *scb);
 
+extern void
+    ses_msg_unmake_inready (ses_cb_t *scb);
+
 
 /********************************************************************
 * FUNCTION ses_msg_make_outready
@@ -256,6 +259,8 @@ extern void
 *********************************************************************/
 extern void
     ses_msg_make_outready (ses_cb_t *scb);
+extern void
+    ses_msg_unmake_outready (ses_cb_t *scb);
 
 
 /********************************************************************

@@ -9044,8 +9044,10 @@ xpath_result_t *
         pcb->context.node.valptr->name);
 #endif
 
-    if (configonly ||
-        (pcb->source == XP_SRC_YANG && obj_is_config(val->obj))) {
+    if (configonly) {
+#if 0
+    	|| (pcb->source == XP_SRC_YANG && obj_is_config(val->obj)  && !obj_is_root(val->obj))) {
+#endif
         pcb->flags |= XP_FL_CONFIGONLY;
     }
 
@@ -9152,6 +9154,7 @@ xpath_result_t *
     pcb->val_docroot = docroot;
     pcb->logerrors = logerrors;
     pcb->reader = reader;
+    pcb->valueres = NO_ERR;
 
     if (val) {
         pcb->context.node.valptr = val;
@@ -9428,6 +9431,81 @@ boolean
     return FALSE;
 
 }  /* xpath1_check_node_exists_slow */
+
+/********************************************************************
+* FUNCTION xpath1_check_node_child_exists_slow
+* 
+* Check if any child-or-self node is already in the specified Q
+* ONLY FOR VALUE NODES IN THE RESULT
+*
+* This is only done after all the nodes have been processed
+* and the nodeset is complete.  For NETCONF purposes,
+* the entire path to root is added for the context node,
+* and the entire context node contexts are always returned
+*
+* INPUTS:
+*    pcb == parser control block to use
+*    resultQ == Q of xpath_resnode_t structs to check
+*               DOES NOT HAVE TO BE WITHIN A RESULT NODE Q
+*    val   == value node pointer value to find
+*
+* RETURNS:
+*    TRUE if found, FALSE otherwise
+*********************************************************************/
+boolean
+    xpath1_check_node_child_exists_slow (xpath_pcb_t *pcb,
+                                   dlq_hdr_t *resultQ,
+                                   const val_value_t *val)
+{
+    xpath_resnode_t  *resnode;
+    xmlns_id_t nsid;
+    const xmlChar *name;
+#ifdef DEBUG
+    if (!pcb || !resultQ || !val) {
+        SET_ERROR(ERR_INTERNAL_PTR);
+        return FALSE;
+    }
+#endif
+
+    name = val->name;
+    nsid = val_get_nsid(val);
+    for (resnode = (xpath_resnode_t *)dlq_firstEntry(resultQ);
+         resnode != NULL;
+         resnode = (xpath_resnode_t *)dlq_nextEntry(resnode)) {
+
+        if (pcb->val) {
+            val_value_t *testval;
+
+            for( testval=resnode->node.valptr;
+                 (testval && !obj_is_root(testval->obj));
+                 testval=testval->parent) {
+
+                if (nsid && (nsid != val_get_nsid(testval))) {
+                    continue;
+                }
+                if (!xml_strcmp(name, testval->name)) {
+                    return TRUE;
+                }
+            }
+        } else {
+            obj_template_t *testobj;
+
+            for( testobj=resnode->node.objptr;
+                 (testobj && !obj_is_root(testobj));
+                 testobj=testobj->parent) {
+
+                if (nsid && (nsid != obj_get_nsid(testobj))) {
+                    continue;
+                }
+                if (!xml_strcmp(name, obj_get_name(testobj))) {
+                    return TRUE;
+                }
+            }
+        }
+    }
+    return FALSE;
+
+}  /* xpath1_check_node_child_exists_slow */
 
 
 /********************************************************************

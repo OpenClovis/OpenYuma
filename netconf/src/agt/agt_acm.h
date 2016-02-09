@@ -101,7 +101,6 @@ extern "C" {
 /* 1 group that the user is a member */
 typedef struct agt_acm_group_t_ {
     dlq_hdr_t         qhdr;
-    xmlns_id_t        groupnsid;
     const xmlChar    *groupname;
 } agt_acm_group_t;
 
@@ -128,6 +127,12 @@ typedef struct agt_acm_datarule_t_ {
 } agt_acm_datarule_t;
 
 /* NACM cache control block */
+#define DATA_RULE_QUEUE_READ 0
+#define DATA_RULE_QUEUE_UPDATE 1
+#define DATA_RULE_QUEUE_CREATE 2
+#define DATA_RULE_QUEUE_DELETE 3
+#define DATA_RULE_QUEUE_NUM 4
+
 typedef struct agt_acm_cache_t_ {
     agt_acm_usergroups_t *usergroups;
     val_value_t          *nacmroot;     /* back-ptr */
@@ -136,7 +141,7 @@ typedef struct agt_acm_cache_t_ {
     uint32                flags;
     agt_acmode_t          mode;
     dlq_hdr_t             modruleQ;     /* Q of agt_acm_modrule_t */
-    dlq_hdr_t             dataruleQ;    /* Q of agt_acm_datarule_t */
+    dlq_hdr_t             dataruleQ[4];    /* Q of agt_acm_datarule_t */
 } agt_acm_cache_t;
 
     
@@ -209,7 +214,7 @@ extern boolean
 *
 * Check if the specified user is allowed to receive
 * a notification event
-* 
+* d
 * INPUTS:
 *   user == user name string
 *   notifobj == obj_template_t for the notification event to check

@@ -66,6 +66,7 @@ date         init     comment
 #include "xpath1.h"
 #include "xpath_yang.h"
 #include "yangconst.h"
+#include "uptime.h"
 
 
 /********************************************************************
@@ -1202,7 +1203,7 @@ static val_value_t *
 
     if (val->virtualval != NULL) {
         /* already have a value; check if it is fresh enough */
-        (void)time(&timenow);
+        (void)uptime(&timenow);
         timediff = difftime(timenow, val->cachetime);
 
         disable_cache = FALSE;
@@ -1239,7 +1240,7 @@ static val_value_t *
         return NULL;
     }
     setup_virtual_retval(val, retval);
-    (void)time(&val->cachetime);
+    (void)uptime(&val->cachetime);
 
     *res = (*getcb)(NULL, GETCB_GET_VALUE, val, retval);
     if (*res != NO_ERR) {
@@ -4194,7 +4195,6 @@ status_t
 * 
 * set a string with any typdef
 * Set an initialized val_value_t as a simple type
-* namespace set to 0 !!!
 *
 * Will check if the string is OK for the typdef!
 *
@@ -4234,7 +4234,7 @@ status_t
         val->typdef = typ_get_basetype_typdef(NCX_BT_STRING);
         val->btyp = NCX_BT_STRING;
     }
-    val->nsid = 0;
+    //val->nsid = 0;
 
     switch (val->btyp) {
     case NCX_BT_STRING:
@@ -4271,7 +4271,7 @@ status_t
             temp = xml_strdup(EMPTY_STRING);
         }
         if (temp) {
-            res = val_set_simval(val, typdef, 0, NULL, temp);
+            res = val_set_simval(val, typdef, val->nsid, NULL, temp);
             m__free(temp);
         } else {
             res = ERR_INTERNAL_MEM;
@@ -4535,9 +4535,16 @@ status_t
              * entered at the CLI; use @foo.jpg for
              * raw input of binary files in var_get_script_val
              */
+#if 0
             memcpy(val->v.binary.ustr, valstr, ulen);
             val->v.binary.ubufflen = ulen+1;
             val->v.binary.ustrlen = ulen;
+#else
+          val->v.binary.ubufflen = ulen+1;
+          res = b64_decode(valstr, ulen,
+                          val->v.binary.ustr, val->v.binary.ubufflen,
+                          &val->v.binary.ustrlen);
+#endif
         }
         break;
     case NCX_BT_ANY:
@@ -5178,6 +5185,32 @@ status_t
 
 }  /* val_replace_str */
 
+
+
+/********************************************************************
+* FUNCTION val_add_meta
+*
+*   Add a meta value node to a parent value node
+*   Simply makes a new last meta!!!
+*
+* INPUTS:
+*    child == node to store in the parent
+*    parent == complex value node with a childQ
+*
+*********************************************************************/
+void
+    val_add_meta (val_value_t *meta,
+                   val_value_t *parent)
+{
+#ifdef DEBUG
+    if (meta == NULL || parent == NULL) {
+        SET_ERROR(ERR_INTERNAL_PTR);
+        return;
+    }
+#endif
+    dlq_enque(meta, &parent->metaQ);
+
+}   /* val_add_meta */
 
 /********************************************************************
 * FUNCTION val_add_child
@@ -7879,14 +7912,15 @@ status_t
                  * !!! to send; assume call to this fn
                  * !!! to retrieve the length was done OK
                  */
+
                 res = b64_encode(s, val->v.binary.ustrlen, buff, NCX_MAX_UINT,
-                                 NCX_DEF_LINELEN, len);
+                                 0 /*no newline split*/, len);
             } else {
                 *len = 0;
             }
         } else if (s) {
             *len = b64_get_encoded_str_len( val->v.binary.ustrlen, 
-                                            NCX_DEF_LINELEN );
+                                            0/*no newline split*/ );
         } else {
             *len = 0;
         }

@@ -231,6 +231,7 @@ extern "C" {
 #define YANGCLI_SERVER      (const xmlChar *)"server"
 #define YANGCLI_SESSION     (const xmlChar *)"session"
 #define YANGCLI_SYSTEM      (const xmlChar *)"system"
+#define YANGCLI_TCP_DIRECT_ENABLE  (const xmlChar *)"tcp-direct-enable"
 #define YANGCLI_TEST_OPTION (const xmlChar *)"test-option"
 #define YANGCLI_TIMEOUT     (const xmlChar *)"timeout"
 #define YANGCLI_TIME_RPCS   (const xmlChar *)"time-rpcs"

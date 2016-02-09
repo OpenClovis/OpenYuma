@@ -49,6 +49,7 @@ date         init     comment
 #include "top.h"
 #include "val.h"
 #include "xml_wr.h"
+#include "uptime.h"
 
 
 /********************************************************************
@@ -297,7 +298,7 @@ void
         scb->state = SES_ST_IDLE;
         scb->active = TRUE;
         /* start the timer for the first rpc request */
-        (void)time(&scb->last_rpc_time);
+        (void)uptime(&scb->last_rpc_time);
 
         if (LOGINFO) {
             log_info("\nSession %d for %s@%s now active", 
@@ -356,7 +357,7 @@ status_t
     nc_id = xmlns_nc_id();
 
     /* start the hello timeout */
-    (void)time(&scb->hello_time);
+    (void)uptime(&scb->hello_time);
 
     /* get the server caps */
     mycaps = agt_cap_get_capsval();

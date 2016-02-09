@@ -2037,6 +2037,35 @@ status_t
 
 } /* agt_disable_feature */
 
+status_t
+    agt_check_feature (const xmlChar *modname,
+                         const xmlChar *featurename,
+                         int* enabled)
+{
+    ncx_module_t   *mod;
+    ncx_feature_t  *feature;
+
+#ifdef DEBUG
+    if (!modname || !featurename) {
+        return SET_ERROR(ERR_INTERNAL_PTR);
+    }
+#endif
+
+    mod = ncx_find_module(modname, NULL);
+    if (!mod) {
+        return ERR_NCX_MOD_NOT_FOUND;
+    }
+
+    feature = ncx_find_feature(mod, featurename);
+    if (!feature) {
+        return ERR_NCX_DEF_NOT_FOUND;
+    }
+
+    *enabled = feature->enabled;
+    return NO_ERR;
+
+}
+
 
 /********************************************************************
 * make a val_value_t struct for a specified leaf or leaf-list

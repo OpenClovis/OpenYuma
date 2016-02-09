@@ -539,6 +539,9 @@ extern "C" {
 #define NCX_EL_LEAFREF         (const xmlChar *)"leafref"
 #define NCX_EL_LINESIZE        (const xmlChar *)"linesize"
 #define NCX_EL_LIST            (const xmlChar *)"list"
+#define NCX_EL_TCP_DIRECT_ADDRESS (const xmlChar *)"tcp-direct-address"
+#define NCX_EL_TCP_DIRECT_PORT (const xmlChar *)"tcp-direct-port"
+#define NCX_EL_NCXSERVER_SOCKNAME (const xmlChar *)"ncxserver-sockname"
 #define NCX_EL_LOAD            (const xmlChar *)"load"
 #define NCX_EL_LOAD_CONFIG     (const xmlChar *)"load-config"
 #define NCX_EL_LOCK            (const xmlChar *)"lock"
@@ -571,6 +574,7 @@ extern "C" {
 #define NCX_EL_NODUPLICATES    (const xmlChar *)"no-duplicates"
 #define NCX_EL_NONE            (const xmlChar *)"none"
 #define NCX_EL_NON_UNIQUE      (const xmlChar *)"non-unique"
+#define NCX_EL_NON_ADVERTISED_MODULE (const xmlChar *)"non-advertised-module"
 #define NCX_EL_NO_OP           (const xmlChar *)"no-op"
 #define NCX_EL_NOOP_ELEMENT    (const xmlChar *)"noop-element"
 #define NCX_EL_NOTIFICATION    (const xmlChar *)"notification"
@@ -723,6 +727,7 @@ extern "C" {
 #define NCX_EL_YH              (const xmlChar *)"yh"
 #define NCX_EL_YIN             (const xmlChar *)"yin"
 #define NCX_EL_YUMA_HOME       (const xmlChar *)"yuma-home"
+#define NCX_EL_MAX_SESSIONS    (const xmlChar *)"max-sessions"
 
 /* bit definitions for ncx_lstr_t flags field */
 #define NCX_FL_RANGE_ERR   bit0
@@ -754,9 +759,11 @@ extern "C" {
 #define E_BAD_DATA_CHECK  (const xmlChar *)"check"
 #define E_BAD_DATA_ERROR  (const xmlChar *)"error"
 
-#define COPYRIGHT_STRING \
-    "Copyright (c) 2008-2012, Andy Bierman, All Rights Reserved.\n"
+#define COPYRIGHT_STRING_LINE0 "Copyright (c) 2008-2012, Andy Bierman, All Rights Reserved.\n"
+#define COPYRIGHT_STRING_LINE1 "Copyright (c) 2013-2015, Vladimir Vassilev, All Rights Reserved.\n"
+#define COPYRIGHT_STRING_LINE2 "Copyright (c) 2012-2016, OpenClovis Inc, All Rights Reserved.\n"
 
+#define COPYRIGHT_STRING COPYRIGHT_STRING_LINE0 COPYRIGHT_STRING_LINE1 COPYRIGHT_STRING_LINE2
 
 #define Y_PREFIX         (const xmlChar *)"y_"
 #define U_PREFIX         (const xmlChar *)"u_"

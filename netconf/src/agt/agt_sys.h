@@ -66,6 +66,7 @@ extern "C" {
 *                                                                   *
 *********************************************************************/
 
+#define AGT_IETF_SYS_MODULE     (const xmlChar *)"ietf-system"
 #define AGT_SYS_MODULE     (const xmlChar *)"yuma-system"
 
 

@@ -1696,6 +1696,21 @@ extern status_t
 
 
 /********************************************************************
+* FUNCTION val_add_meta
+*
+*   Add a meta value node to a parent value node
+*   Simply makes a new last meta!!!
+*
+* INPUTS:
+*    child == node to store in the parent
+*    parent == complex value node with a childQ
+*
+*********************************************************************/
+extern void
+    val_add_meta (val_value_t *meta,
+		   val_value_t *parent);
+
+/********************************************************************
 * FUNCTION val_add_child
 * 
 *   Add a child value node to a parent value node

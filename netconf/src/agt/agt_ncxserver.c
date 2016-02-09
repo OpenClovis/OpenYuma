@@ -47,12 +47,14 @@ date         init     comment
 #include "agt.h"
 #include "agt_ncxserver.h"
 #include "agt_not.h"
+#include "agt_cli.h"
 #include "agt_rpc.h"
 #include "agt_ses.h"
 #include "agt_timer.h"
 #include "def_reg.h"
 #include "log.h"
 #include "ncx.h"
+#include "ncxmod.h"
 #include "ncxconst.h"
 #include "ses.h"
 #include "ses_msg.h"
@@ -134,6 +136,65 @@ static status_t
 
 
 /********************************************************************
+ * FUNCTION make_tcp_socket
+ *
+ * Create an AF_INET socket for the ncxserver
+ *
+ * INPUTS:
+ *    port == port
+ *    sock == ptr to return value
+ *
+ * OUTPUTS:
+ *    *sock == the FD for the socket if return ok
+ *
+ * RETURNS:
+ *    status
+ *********************************************************************/
+static status_t
+    make_tcp_socket (const char *server_address, int port, int *sock)
+{
+    int ret;
+    size_t  size;
+    struct sockaddr_in name;
+    int so_reuse_address_option=1;
+    struct hostent* hp;
+
+    *sock = 0;
+
+    /* Create the socket. */
+    *sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (*sock < 0) {
+        perror ("socket");
+        return ERR_NCX_OPERATION_FAILED;
+    }
+
+    if (setsockopt(*sock, SOL_SOCKET, SO_REUSEADDR, (char*) &so_reuse_address_option, sizeof(so_reuse_address_option)) < 0) {
+        perror ("setsockopt");
+        return ERR_NCX_OPERATION_FAILED;
+    }
+
+    hp = gethostbyname(server_address);
+    if (hp == NULL) {
+        perror ("gethostbyname");
+        return ERR_NCX_OPERATION_FAILED;
+    }
+    size = sizeof(name);
+    memset((char *) &name, 0, size);
+    name.sin_family = AF_INET;
+    name.sin_port = htons((unsigned short)port);
+    memcpy((char *) &name.sin_addr, hp->h_addr, hp->h_length);
+
+    ret = bind(*sock, (struct sockaddr *)&name, size);
+    if (ret != 0) {
+        perror ("bind");
+        return ERR_NCX_OPERATION_FAILED;
+    }
+
+    return NO_ERR;
+} /* make_tcp_socket */
+
+
+/********************************************************************
  * FUNCTION send_some_notifications
  * 
  * Send some notifications as needed
@@ -206,16 +267,59 @@ status_t
     socklen_t              size;
     status_t               res;
     boolean                done, done2, stream_output;
+    char*                  tcp_direct_address = NULL;
+    int                    tcp_direct_port = -1;
+    char*                  ncxserver_sockname;
+    val_value_t            *clivalset;
+    val_value_t            *val;
 
     /* Create the socket and set it up to accept connections. */
-    res = make_named_socket(NCXSERVER_SOCKNAME, &ncxsock);
-    if (res != NO_ERR) {
-        log_error("\n*** Cannot connect to ncxserver socket"
-                  "\n*** If no other instances of netconfd are running,"
-                  "\n*** try deleting /tmp/ncxserver.sock\n");
-        return res;
-    }
+    clivalset = agt_cli_get_valset();
+    if (clivalset) {
 
+        val = val_find_child(clivalset,
+                             NCXMOD_NETCONFD,
+                             NCX_EL_TCP_DIRECT_PORT);
+        if(val != NULL) {
+            tcp_direct_port = VAL_INT(val);
+        }
+
+        val = val_find_child(clivalset,
+                             NCXMOD_NETCONFD,
+                             NCX_EL_TCP_DIRECT_ADDRESS);
+        if(val != NULL) {
+            tcp_direct_address = VAL_STR(val);
+            if(tcp_direct_port==-1) tcp_direct_port = 2023;
+        }
+
+        val = val_find_child(clivalset,
+                             NCXMOD_NETCONFD,
+                             NCX_EL_NCXSERVER_SOCKNAME);
+        if(val != NULL) {
+            ncxserver_sockname = VAL_STR(val);
+        } else {
+            ncxserver_sockname = NCXSERVER_SOCKNAME;
+        }
+
+    } else {
+            log_error("\n*** agt_ncxserver_run:agt_cli_get_valset failed.\n");
+            return SET_ERROR(ERR_INTERNAL_VAL);
+    }
+    if(tcp_direct_port!=-1) {
+        res = make_tcp_socket(tcp_direct_address, tcp_direct_port, &ncxsock);
+        if (res != NO_ERR) {
+            log_error("\n*** Cannot connect to ncxserver socket listen tcp port: %d\n",tcp_direct_port);
+            return res;
+        }
+    } else {
+        res = make_named_socket(ncxserver_sockname, &ncxsock);
+        if (res != NO_ERR) {
+            log_error("\n*** Cannot connect to ncxserver socket"
+                      "\n*** If no other instances of netconfd are running,"
+                      "\n*** try deleting %s\n",ncxserver_sockname);
+            return res;
+        }
+    }
     profile = agt_get_profile();
     if (profile == NULL) {
         return SET_ERROR(ERR_INTERNAL_VAL);

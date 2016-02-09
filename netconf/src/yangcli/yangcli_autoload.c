@@ -856,7 +856,7 @@ status_t
                                NCXMOD_IETF_YANG_TYPES)) {
             need_yt = FALSE;
         } else if (!xml_strcmp(searchresult->module, 
-                               NCXMOD_YUMA_NACM)) {
+                               NCXMOD_IETF_NETCONF_ACM)) {
             need_nacm = FALSE;
         } else if (!xml_strcmp(searchresult->module, 
                                NCXMOD_YUMA_NETCONF)) {
@@ -902,7 +902,7 @@ status_t
             }
         }
         if (need_nacm) {
-            testmod = ncx_find_module(NCXMOD_YUMA_NACM, NULL);
+            testmod = ncx_find_module(NCXMOD_IETF_NETCONF_ACM, NULL);
             if (testmod != NULL) {
                 res = copy_module_to_tempdir(mscb,
                                              testmod->name,

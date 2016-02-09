@@ -145,7 +145,8 @@ typedef enum ses_transport_t_ {
     SES_TRANSPORT_SOAP,
     SES_TRANSPORT_SOAPBEEP,
     SES_TRANSPORT_TLS,
-    SES_TRANSPORT_TCP    /* tail-f NETCONF over TCP */
+    SES_TRANSPORT_TCP,    /* tail-f NETCONF over TCP */
+    SES_TRANSPORT_TCP_DIRECT
 } ses_transport_t;
 
 

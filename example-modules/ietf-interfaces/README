@@ -1,0 +1,62 @@
+==Standalone project for netconfd module implementing ietf-interfaces.yang==
+Dependency: installed netconfd run-time binaries and development shared libraries and headers.
+
+Functionality:
+ yangcli vladimir@localhost> xget /interfaces-state
+ 
+ RPC Data Reply 2 for session 1:
+ 
+ rpc-reply {
+   data {
+     interfaces-state {
+       interface lo {
+         name lo
+         statistics {
+           in-octets 4571644
+           in-unicast-pkts 50712
+           in-errors 0
+           in-discards 0
+           in-multicast-pkts 0
+           out-octets 4571644
+           out-unicast-pkts 50712
+           out-errors 0
+           out-discards 0
+         }
+       }
+       interface wlan0 {
+         name wlan0
+         statistics {
+           in-octets 0
+           in-unicast-pkts 0
+           in-errors 0
+           in-discards 0
+           in-multicast-pkts 0
+           out-octets 0
+           out-unicast-pkts 0
+           out-errors 0
+           out-discards 0
+         }
+       }
+       interface eth0 {
+         name eth0
+         statistics {
+           in-octets 633943896
+           in-unicast-pkts 23723378
+           in-errors 0
+           in-discards 0
+           in-multicast-pkts 359508
+           out-octets 702403431
+           out-unicast-pkts 6941930
+           out-errors 0
+           out-discards 0
+         }
+       }
+     }
+   }
+ }
+
+===Build and install===
+ autoreconf -i -f
+ ./configure CFLAGS="-g -O0"  CXXFLAGS="-g -O0" --prefix=/usr
+ make
+ sudo make install

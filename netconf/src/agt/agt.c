@@ -42,6 +42,7 @@ date         init     comment
 #include "agt_cb.h"
 #include "agt_cfg.h"
 #include "agt_commit_complete.h"
+#include "agt_commit_validate.h"
 #include "agt_cli.h"
 #include "agt_connect.h"
 #include "agt_hello.h"
@@ -66,6 +67,7 @@ date         init     comment
 #include "ncxconst.h"
 #include "ncxmod.h"
 #include "status.h"
+#include "agt_not_queue_notification_cb.h"
 
 
 /********************************************************************
@@ -162,6 +164,7 @@ static void
     agt_profile.agt_defaultStyleEnum = NCX_WITHDEF_EXPLICIT;
     agt_profile.agt_accesscontrol_enum = AGT_ACMOD_ENFORCING;
     agt_profile.agt_system_sorted = AGT_DEF_SYSTEM_SORTED;
+    agt_profile.agt_max_sessions = 1024;
 
 } /* init_server_profile */
 
@@ -617,6 +620,8 @@ status_t
     /* init user callback support */
     agt_cb_init();
     agt_commit_complete_init();
+    agt_commit_validate_init();
+    agt_not_queue_notification_cb_init();
 
     /* initial signal handler first to allow clean exit */
     agt_signal_init();
@@ -723,13 +728,13 @@ status_t
     if (res != NO_ERR) {
         return res;
     }
-
+#if 0
     /* load the NETCONF interface monitoring data model module */
     res = agt_if_init();
     if (res != NO_ERR) {
         return res;
     }
-
+#endif
     /* initialize the NCX server core callback functions.
      * the schema (yuma-netconf.yang) for these callbacks was 
      * already loaded in the common ncx_init
@@ -801,33 +806,29 @@ status_t
                 revision = savestr + 1;
             }
 
-            retmod = ncx_find_module(VAL_STR(val), revision);
-            if (retmod == NULL) {
 #ifdef STATIC_SERVER
-                /* load just the module
-                 * SIL initialization is assumed to be
-                 * handled elsewhere
-                 */
+            /* load just the module
+             * SIL initialization is assumed to be
+             * handled elsewhere
+             */
+             res = ncxmod_load_module(VAL_STR(val),
+                                     revision,
+                                     &agt_profile.agt_savedevQ,
+                                     &retmod);
+            }
+            
+#else
+            /* load the SIL and it will load its own module */
+            res = agt_load_sil_code(VAL_STR(val), revision, FALSE);
+            if (res == ERR_NCX_SKIPPED) {
+                log_warn("\nWarning: SIL code for module '%s' not found",
+                         VAL_STR(val));
                 res = ncxmod_load_module(VAL_STR(val),
                                          revision,
                                          &agt_profile.agt_savedevQ,
                                          &retmod);
-#else
-                /* load the SIL and it will load its own module */
-                res = agt_load_sil_code(VAL_STR(val), revision, FALSE);
-                if (res == ERR_NCX_SKIPPED) {
-                    log_warn("\nWarning: SIL code for module '%s' not found",
-                             VAL_STR(val));
-                    res = ncxmod_load_module(VAL_STR(val),
-                                             revision,
-                                             &agt_profile.agt_savedevQ,
-                                             &retmod);
-                }
-#endif
-            } else {
-                log_info("\nCLI: Skipping 'module' parm '%s', already loaded",
-                         VAL_STR(val));
             }
+#endif
 
             if (savestr != NULL) {
                 *savestr = savechar;
@@ -941,13 +942,13 @@ status_t
     if (res != NO_ERR) {
         return res;
     }
-
+#if 0
     /* load the interface monitoring callback functions and data */
     res = agt_if_init2();
     if (res != NO_ERR) {
         return res;
     }
-
+#endif
     /* TBD: load the time filter callbacks
      * this currently does not do anything
      */
@@ -1502,6 +1503,9 @@ status_t
 boolean
     agt_advertise_module_needed (const xmlChar *modname)
 {
+    val_value_t* val;
+    val_value_t* clivalset;
+
     if (!xml_strcmp(modname, NCXMOD_NETCONF)) {
         return FALSE;
     }
@@ -1516,6 +1520,19 @@ boolean
 
     if (!xml_strcmp(modname, NCXMOD_NETCONFD)) {
         return FALSE;
+    }
+
+    clivalset = agt_cli_get_valset();
+    val = val_find_child(clivalset, NCXMOD_NETCONFD, NCX_EL_NON_ADVERTISED_MODULE);
+
+    while (val) {
+        if (!xml_strcmp(modname, VAL_STRING(val))) {
+            return FALSE;
+        }
+        val = val_find_next_child(clivalset,
+                                  NCXMOD_NETCONFD,
+                                  NCX_EL_NON_ADVERTISED_MODULE,
+                                  val);
     }
 
     return TRUE;

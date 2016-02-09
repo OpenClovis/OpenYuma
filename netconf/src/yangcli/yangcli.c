@@ -401,7 +401,11 @@ static void
     }
 
     (*logfn)("\n\n  ");
-    (*logfn)(COPYRIGHT_STRING);
+    (*logfn)(COPYRIGHT_STRING_LINE0);
+    (*logfn)("  ");
+    (*logfn)(COPYRIGHT_STRING_LINE1);
+    (*logfn)("  ");
+    (*logfn)(COPYRIGHT_STRING_LINE2);
 
     if (!imode) {
         return;
@@ -2308,6 +2312,18 @@ static status_t
 
     /* get the --transport parameter */
     parm = val_find_child(mgr_cli_valset, YANGCLI_MOD, YANGCLI_TRANSPORT);
+    if (parm && parm->res == NO_ERR) {
+        /* save to the connect_valset parmset */
+        res = add_clone_parm(parm, connect_valset);
+        if (res != NO_ERR) {
+            return res;
+        }
+    }
+
+    /* get the --tcp-direct-enable parameter */
+    parm = val_find_child(mgr_cli_valset, 
+                          YANGCLI_MOD, 
+                          YANGCLI_TCP_DIRECT_ENABLE);
     if (parm && parm->res == NO_ERR) {
         /* save to the connect_valset parmset */
         res = add_clone_parm(parm, connect_valset);

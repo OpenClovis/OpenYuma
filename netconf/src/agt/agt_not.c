@@ -46,6 +46,7 @@ date         init     comment
 #include  <memory.h>
 #include  <unistd.h>
 #include  <errno.h>
+#include  <assert.h>
 
 #include "procdefs.h"
 #include "agt.h"
@@ -58,6 +59,7 @@ date         init     comment
 #include "agt_tree.h"
 #include "agt_util.h"
 #include "agt_xpath.h"
+#include "agt_not_queue_notification_cb.h"
 #include "cfg.h"
 #include "getcb.h"
 #include "log.h"
@@ -1959,11 +1961,11 @@ void
     agt_profile = agt_get_profile();
 
     if (agt_profile->agt_eventlog_size) {
-        if (notification_count < agt_profile->agt_eventlog_size) {
-            notification_count++;
-        } else {
+    	assert(notification_count<=agt_profile->agt_eventlog_size);
+        if (notification_count == agt_profile->agt_eventlog_size) {
             delete_oldest_notification();
         }
+        notification_count++;
         dlq_enque(notif, &notificationQ);
     } else {
         /* not tracking the event log size 
@@ -1972,6 +1974,7 @@ void
          */
         dlq_enque(notif, &notificationQ);
     }
+    agt_not_queue_notification_cb(notif);
 
 }  /* agt_not_queue_notification */
 

@@ -246,11 +246,11 @@ static status_t
                                         obj_get_mod_name(newobj),
                                         obj_get_name(newobj));
             if (testobj) {
-                log_error("\nError: Object %s on line %s "
+                log_error("\nError: Object %s on line %u "
                           "already defined at line %u",
                           obj_get_name(newobj),
-                          srcobj->tkerr.linenum,
-                          testobj->tkerr.linenum);
+                          (unsigned int)srcobj->tkerr.linenum,
+                          (unsigned int)testobj->tkerr.linenum);
                 obj_free_template(newobj);
             } else {
                 newobj->parent = parent;
@@ -1658,6 +1658,9 @@ static obj_augment_t *
     (void)memset(aug, 0x0, sizeof(obj_augment_t));
 
     dlq_createSQue(&aug->datadefQ);
+#ifdef ENABLE_DIRECT_MUST_AUGMENT_EX
+    dlq_createSQue(&aug->mustQ);
+#endif
 
     if (isreal) {
         aug->status = NCX_STATUS_CURRENT;
@@ -2355,19 +2358,13 @@ static status_t
     const xmlChar *name = obj_get_name(obj);
     uint32 namelen = xml_strlen(name), seplen = 1;
 
-    if (addmodname) {
-        if (bufflen &&
-            ((*retlen + namelen + modnamelen + 2) >= bufflen)) {
-            return ERR_BUFF_OVFL;
-        }
-    } else {
-        if (bufflen && ((*retlen + namelen + 1) >= bufflen)) {
-            return ERR_BUFF_OVFL;
-        }
-    }
-
     if (topnode && stopobj) {
         seplen = 0;
+    }
+
+    if (bufflen &&
+        (((*retlen) + namelen + (addmodname?modnamelen:0) + seplen + 1) > bufflen)) {
+        return ERR_BUFF_OVFL;
     }
 
     /* copy the name string recusively, letting the stack
@@ -6368,6 +6365,13 @@ status_t
             typdef->def.named.typ = testtyp;
             typdef->linenum = testtyp->tkerr.linenum;
             testtyp->used = TRUE;
+            if (testtyp->typdef.tclass == NCX_CL_NAMED &&
+                     testtyp->typdef.def.named.typ==NULL) {
+                obj_set_named_type (tkc, mod, typname,
+                            &testtyp->typdef,
+                            parent,
+                            grp);
+            }
         }
     }
     return NO_ERR;

@@ -35,7 +35,7 @@ PROG=netconfd
 # that contains 'bar'. 
 # The ncx library should be last 'internal' library
 
-LIBS = 	-lagt -lncx -lxml2 -lz -lm
+LIBS = 	-lagt -lncx -lmgr -lxml2 -lz -lm
 
 ifndef FREEBSD
 LIBS += -ldl

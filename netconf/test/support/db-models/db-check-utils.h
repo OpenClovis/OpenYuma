@@ -8,10 +8,9 @@
 #include <boost/foreach.hpp>
 #include <boost/optional.hpp>
 #include <boost/iterator/zip_iterator.hpp>
-#include <boost/phoenix/core.hpp>
-#include <boost/phoenix/bind.hpp>
-#include <boost/phoenix/operator.hpp> 
-#include <boost/phoenix/fusion/at.hpp> 
+#include <boost/spirit/include/phoenix_core.hpp>
+#include <boost/spirit/include/phoenix_bind.hpp>
+#include <boost/spirit/include/phoenix_operator.hpp>
 #include <boost/fusion/include/std_pair.hpp>
 #include <boost/fusion/include/tuple.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -42,9 +41,11 @@ void CheckMaps( const T& lhs, const T& rhs )
     auto endZip = boost::make_zip_iterator( boost::make_tuple( lhs.end(), rhs.end() ) );
 
     typedef typename T::value_type value_type;
+#if 0
     std::for_each( begZip, endZip, 
                    boost::phoenix::bind( &MapZipContainerHelper<value_type>, 
                    boost::phoenix::arg_names::arg1 ) );
+#endif
 }
 
 } // namespace YumaTest

@@ -96,7 +96,7 @@ extern "C" {
 
 #define NCXMOD_NCX        (const xmlChar *)"yuma-ncx"
 
-#define NCXMOD_YUMA_NACM  (const xmlChar *)"yuma-nacm"
+//#define NCXMOD_YUMA_NACM  (const xmlChar *)"yuma-nacm"
 
 #define NCXMOD_WITH_DEFAULTS (const xmlChar *)"ietf-netconf-with-defaults"
 
@@ -110,6 +110,8 @@ extern "C" {
 #define NCXMOD_YUMA_NETCONF   (const xmlChar *)"yuma-netconf"
 
 #define NCXMOD_IETF_NETCONF   (const xmlChar *)"ietf-netconf"
+
+#define NCXMOD_IETF_NETCONF_ACM  (const xmlChar *)"ietf-netconf-acm"
 
 #define NCXMOD_IETF_YANG_TYPES   (const xmlChar *)"ietf-yang-types"
 

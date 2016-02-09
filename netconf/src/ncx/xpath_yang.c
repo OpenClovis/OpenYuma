@@ -399,12 +399,18 @@ static obj_template_t* find_object_from_use_obj( obj_template_t* useobj,
         }
     } else {
         /* get child node of this object */
+        obj_template_t* parentobj;
+        if(useobj->objtype == OBJ_TYP_AUGMENT) {
+            parentobj = useobj->def.augment->targobj;
+        } else {
+            parentobj = useobj;
+        }
         if ( targmod ) {
-            foundobj = obj_find_child( useobj, ncx_get_modname(targmod),
+            foundobj = obj_find_child( parentobj, ncx_get_modname(targmod),
                                        nodename);
         }
         else if ( !foundobj && laxnamespaces ) {
-            foundobj = obj_find_child(useobj, NULL, nodename);
+            foundobj = obj_find_child(parentobj, NULL, nodename);
         }
     }
     return foundobj;
@@ -1056,7 +1062,9 @@ static status_t
                 keynum = get_key_number(pcb->targobj, pcb->varobj);
             }
             if (keynum == -1) {
-                SET_ERROR(ERR_INTERNAL_VAL);
+                ;
+                /* SET_ERROR(ERR_INTERNAL_VAL); */
+                /* not key value but still OK to have as predicate */
             } else if (keynum < MAX_KEYS) {
                 keybit = (uint64)(1 << keynum);
                 if (keyflags & keybit) {
@@ -1183,7 +1191,7 @@ static status_t
     }
 
     if (pcb->obj) {
-        if (loopcount != keytotal) {
+        if (loopcount < keytotal) {
             if (keycount < keytotal) {
                 if (pcb->flags & XP_FL_SCHEMA_INSTANCEID ||
                     pcb->source == XP_SRC_LEAFREF) {
