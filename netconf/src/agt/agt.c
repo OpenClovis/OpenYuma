@@ -632,18 +632,21 @@ status_t
     /* initialize the RPC server callback structures */
     res = agt_rpc_init();
     if (res != NO_ERR) {
+        log_debug3("\nError in rpc_init");
         return res;
     }
 
     /* initialize the NCX connect handler */
     res = agt_connect_init();
     if (res != NO_ERR) {
+        log_debug3("\nError in agt_connect_init");
         return res;
     }
 
     /* initialize the NCX hello handler */
     res = agt_hello_init();
     if (res != NO_ERR) {
+        log_debug3("\nError in agt_hello_init");
         return res;
     }
 
@@ -728,7 +731,7 @@ status_t
     if (res != NO_ERR) {
         return res;
     }
-#if 0
+#if 0  // OpenClovis: we do not want this by default
     /* load the NETCONF interface monitoring data model module */
     res = agt_if_init();
     if (res != NO_ERR) {

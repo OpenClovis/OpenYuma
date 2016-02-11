@@ -5769,6 +5769,7 @@ val_value_t *
 
 #ifdef DEBUG
     if (!parent || !childname) {
+      log_error("Parameter error: modname [%s], childname [%s]", (modname ? (const char*) modname:"NULL"),(childname ? (const char*)childname : "NULL"));
         SET_ERROR(ERR_INTERNAL_PTR);
         return NULL;
     }

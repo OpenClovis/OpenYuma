@@ -762,6 +762,7 @@ status_t
     /* add /system-state/yuma/sysNetconfServerCLI */
     tempval = val_clone(agt_cli_get_valset());
     if (tempval == NULL) {
+        log_error("\nError: command line parameter agent is not set up");
         return ERR_INTERNAL_MEM;
     }
     val_change_nsid(tempval, yuma_system_val->nsid);
