@@ -25,10 +25,24 @@ include ../platform/platform.profile
 
 include ../platform/platform.profile.depend
 
+ifdef FREEBSD
+REAL_INST=$(DESTDIR)$(PREFIX)/lib
+else
+ifdef LIB64
+REAL_INST=$(DESTDIR)$(PREFIX)/lib64
+else
+REAL_INST=$(DESTDIR)$(PREFIX)/lib
+endif
+endif
+
+LIB_INST=$(TBASE)/lib
 
 test:
 
-install:
+install: $(BLD_INCLUDES)
+# install static or dynamic libmgr file
+	mkdir -p $(REAL_INST)
+	install -m 644 $(LIB_INST)/lib$(SUBDIR_NM).$(LIBNCXSUFFIX) $(REAL_INST)
 
 uninstall:
 
