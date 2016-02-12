@@ -9,6 +9,18 @@ SUBDIR_CPP=
 ############### TARGET PROFILE ##############################
 TARGET=$(TBASE)/$(SUBDIR_NM)
 BIN_INST=$(TBASE)/bin
+LIB_INST=$(TBASE)/lib
+
+ifdef FREEBSD
+REAL_INST=$(DESTDIR)$(PREFIX)/lib
+else
+ifdef LIB64
+REAL_INST=$(DESTDIR)$(PREFIX)/lib64
+else
+REAL_INST=$(DESTDIR)$(PREFIX)/lib
+endif
+endif
+REAL_INC_INST=$(DESTDIR)$(PREFIX)/include/yuma
 
 ####################### MAKE RULES #########################
 ifdef DEVELOPER
@@ -25,28 +37,44 @@ include ../platform/platform.profile
 
 include ../platform/platform.profile.depend
 
-ifdef FREEBSD
-REAL_INST=$(DESTDIR)$(PREFIX)/lib
+ifdef DEBIAN
+BLD_INCLUDES=
 else
-ifdef LIB64
-REAL_INST=$(DESTDIR)$(PREFIX)/lib64
-else
-REAL_INST=$(DESTDIR)$(PREFIX)/lib
+BLD_INCLUDES=includes
 endif
-endif
-
-LIB_INST=$(TBASE)/lib
 
 test:
 
+ifdef DEVELOPER
+# just install the H files
+install: includes
+else
+ifdef CROSS_TARGET
+# don't install anything
+install:
+else
 install: $(BLD_INCLUDES)
 # install static or dynamic libmgr file
 	mkdir -p $(REAL_INST)
 	install -m 644 $(LIB_INST)/lib$(SUBDIR_NM).$(LIBNCXSUFFIX) $(REAL_INST)
 
-uninstall:
+endif
+endif
 
-mgrlib: dependencies $(LBASE)/lib$(SUBDIR_NM).a
+uninstall:
+	rm -f $(REAL_INST)/lib$(SUBDIR_NM).$(LIBSUFFIX)*
+
+ifdef DEVELOPER
+mgrlib:
+else
+mgrlib: $(LBASE)/lib$(SUBDIR_NM).$(LIBNCXSUFFIX)
+ifndef STATIC
+ifndef MAC
+	(cd $(LBASE); ln -f -s lib$(SUBDIR_NM).$(LIBNCXSUFFIX) \
+	lib$(SUBDIR_NM).$(LIBSUFFIX))
+endif  # MAC
+endif  # STATIC
+endif  # DEVELOPER
 
 
 # this dummy rule keeps make from deleting the $(OBJS) as
@@ -62,6 +90,38 @@ superclean:
 	$(LBASE)/lib$(SUBDIR_NM).*
 
 distclean: superclean
+
+
+ifdef WINDOWS
+RDYNAMIC=
+LC=
+else
+RDYNAMIC=-rdynamic
+LC=-lc
+endif
+
+# this rule is ignored if STATIC=1; used only in linux
+$(LBASE)/libmgr.so.$(SOVERSION): $(OBJS)
+ifdef FREEBSD
+	$(CC) $(CFLAGS) -shared $(RDYNAMIC) -Wl,-soname,libmgr.so.$(SOVERSION) 
+	-o $@ $(OBJS) -L/usr/local/lib -L$(PREFIX)/lib $(LC) -lxml2 -lssh2
+else
+	$(CC) $(CFLAGS) -shared $(RDYNAMIC) -Wl,-soname,libmgr.so.$(SOVERSION) \
+	-o $@ $(OBJS) -L$(PREFIX)/lib $(LC) -lxml2 -lssh2
+endif
+
+# this rule is ignored if STATIC=1; used only on MacOSX
+$(LBASE)/libmgr.dylib: $(OBJS)
+	$(CC) $(CFLAGS) -shared -dynamiclib -std=gnu99 -current_version \
+	$(SOVERSION) \
+	-undefined dynamic_lookup \
+	-o $@ -install_name libmgr.dylib $(OBJS) -lxml2
+
+
+# install the H files into $DESTDIR/usr/include
+includes:
+	mkdir -p $(REAL_INC_INST)/mgr
+	cp *.h $(REAL_INC_INST)/mgr
 
 .PHONY: mgrlib mgrdummy
 
