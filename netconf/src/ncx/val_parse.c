@@ -123,7 +123,7 @@ static status_t
 {
     status_t   res;
 
-    res = mgr_xml_consume_node(scb->reader, xmlnode);
+    res = xml_consume_node(scb->reader, xmlnode, TRUE, TRUE);
     return res;
 
 }   /* get_xml_node */
@@ -245,7 +245,7 @@ static status_t
         /* at this point have either a simple type or a complex type
          * get the next node which could be any type 
          */
-        res = mgr_xml_consume_node_nons(scb->reader, &nextnode);
+        res = xml_consume_node(scb->reader, &nextnode, FALSE, TRUE);
     }
 
     if (res == NO_ERR) {
@@ -297,7 +297,7 @@ static status_t
     if (getstrend) {
         /* need to get the endnode for startnode then exit */
         xml_clean_node(&nextnode);
-        res2 = mgr_xml_consume_node_nons(scb->reader, &nextnode);
+        res2 = xml_consume_node(scb->reader, &nextnode, FALSE, TRUE);
         if (res2 == NO_ERR) {
 #ifdef MGR_VAL_PARSE_DEBUG
             if (LOGDEBUG4) {
@@ -367,7 +367,7 @@ static status_t
         }
 
         /* get the next node */
-        res = mgr_xml_consume_node_nons(scb->reader, &nextnode);
+        res = xml_consume_node(scb->reader, &nextnode, FALSE, TRUE);
         if (res == NO_ERR) {
 #ifdef MGR_VAL_PARSE_DEBUG
             if (LOGDEBUG4) {
@@ -1593,7 +1593,7 @@ static status_t
                 done = TRUE;
             } else {
                 /* skip the entire value subtree */
-                (void)mgr_xml_skip_subtree(scb->reader, startnode);
+                (void)xml_skip_subtree(scb->reader, startnode);
             }
             continue;
         }

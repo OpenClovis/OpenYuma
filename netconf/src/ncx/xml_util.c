@@ -2595,6 +2595,126 @@ status_t
 
 }  /* xml_consume_node */
 
+/********************************************************************
+* FUNCTION xml_skip_subtree (from mgr_xml_skip_subtree)
+* 
+* Already encountered an error, so advance nodes until the
+* matching start-node is reached or a terminating error occurs
+*   - end of input
+*   - start depth level reached
+*
+* INPUTS:
+*   reader == XmlReader already initialized from File, Memory,
+*             or whatever
+*   startnode  == xml_node_t of the start node of the sub-tree to skip
+* RETURNS:
+*   status of the operation
+* SIDE EFFECTS:
+*   the xmlreader state is advanced until the current node is the
+*   end node of the specified start node or a fatal error occurs
+*********************************************************************/
+status_t xml_skip_subtree (xmlTextReaderPtr reader, const xml_node_t *startnode)
+{
+    xml_node_t       node;
+    const xmlChar   *qname, *badns;
+    uint32           len;
+    int              ret, depth, nodetyp;
+    xmlns_id_t       nsid;
+    boolean          done, justone;
+    status_t         res;
+
+#ifdef DEBUG
+    if (!reader || !startnode) {
+        return SET_ERROR(ERR_INTERNAL_PTR);
+    }
+#endif
+
+    justone = FALSE;
+
+    switch (startnode->nodetyp) {
+    case XML_NT_START:
+        break;
+    case XML_NT_EMPTY:
+        return NO_ERR;
+    case XML_NT_STRING:
+        justone = TRUE;
+        break;
+    case XML_NT_END:
+        return NO_ERR;
+    default:
+        return SET_ERROR(ERR_INTERNAL_VAL);
+    }
+    xml_init_node(&node);
+    res = xml_consume_node(reader, &node, TRUE, FALSE);
+    if (res == NO_ERR) {
+        res = xml_endnode_match(startnode, &node);
+        if (res == NO_ERR) {
+            xml_clean_node(&node);
+            return NO_ERR;
+        }
+    }
+
+    xml_clean_node(&node);
+    if (justone) {
+        return NO_ERR;
+    }
+
+    done = FALSE;
+    while (!done) {
+
+        /* advance the node pointer */
+        ret = xmlTextReaderRead(reader);
+        if (ret != 1) {
+            /* fatal error */
+            return ERR_XML_READER_EOF;
+        }
+
+        /* get the node depth to match the end node correctly */
+        depth = xmlTextReaderDepth(reader);
+        if (depth == -1) {
+            /* not sure if this can happen, treat as fatal error */
+            return ERR_XML_READER_INTERNAL;
+        } else if (depth <= startnode->depth) {
+            /* this depth override will cause errors to be ignored
+             *   - wrong namespace in matching end node
+             *   - unknown namespace in matching end node
+             *   - wrong name in 'matching' end node
+             */
+            done = TRUE;
+        }
+
+        /* get the internal nodetype, check it and convert it */
+        nodetyp = xmlTextReaderNodeType(reader);
+
+        /* get the element QName */
+        qname = xmlTextReaderConstName(reader);
+        if (qname) {
+            /* check for namespace prefix in the name 
+             * only error is 'unregistered namespace ID'
+             * which doesn't matter in this case
+             */
+            nsid = 0;
+            (void)xml_check_ns(reader, qname, &nsid, &len, &badns);
+        } else {
+            qname = (const xmlChar *)"";
+        }
+
+        /* check the normal case to see if the search is done */
+        if (depth == startnode->depth &&
+            !xml_strcmp(qname, startnode->qname) &&
+            nodetyp == XML_ELEMENT_DECL) {
+            done = TRUE;
+        }
+
+#ifdef XML_UTIL_DEBUG
+        log_debug3("\nxml_skip: %s L:%d T:%s",
+               qname, depth, xml_get_node_name(nodetyp));
+#endif
+    }
+
+    return NO_ERR;
+
+}  /* xml_skip_subtree */
 
 /* END xml_util.c */
 

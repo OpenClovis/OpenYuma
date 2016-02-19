@@ -25,7 +25,7 @@ PROG=netconf-subsystem
 # Then put the library that contains foo BEFORE the one
 # that contains bar. 
 
-LIBS = -lncx -lmgr -lxml2 -lz -lm
+LIBS = -lncx -lxml2 -lz -lm
 
 ############## MAKE RULES #################################
 ifdef DEVELOPER

@@ -19,7 +19,7 @@ DIRS = mgr ydump $(APPS)
 else
 ifdef SERVER
 APPS = subsys netconfd
-DIRS = mgr agt $(APPS)
+DIRS = agt $(APPS)
 else
 ifdef DEVELOPER
 APPS = 

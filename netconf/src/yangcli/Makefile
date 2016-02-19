@@ -39,7 +39,7 @@ else
 LFIRST=
 endif
 
-DLIBS =	-L$(PREFIX)/lib -L../../target/lib -Wl,--start-group -lmgr -lncx -Wl,--end-group \
+DLIBS =	-L$(PREFIX)/lib -L../../target/lib -lmgr -lncx \
 	-L../../../libtecla -ltecla \
 	$(LFIRST) -L/usr/local/lib -lxml2 -lncurses -lssh2 \
 	-lz -lm
@@ -50,7 +50,7 @@ endif
 
 # SLIBS used only if FULL_STATIC=1 is set in build
 # (no used anymore in debian packaging)
-SLIBS = -L../../target/lib -lmgr -lncx -lmgr \
+SLIBS = -L../../target/lib -lmgr -lncx  \
 	-L$(PREFIX)/lib -lxml2 \
 	-l:$(PREFIX)/lib/libssh2.a \
 	-L$(PREFIX)/lib -lgpg-error \
