@@ -1,0 +1,13 @@
+language: python # support for pip, used to install ncclient
+sudo: required
+services:
+  - docker
+before_install:
+  - pip install ncclient
+script:
+  - docker build -t openyuma .
+  - docker run -d -p 8300:830 -p 2200:22 --name openyuma openyuma
+  - while ! docker logs openyuma | grep 'Running netconfd server'; do sleep 1; done
+  - sleep 5
+  - python -c "from ncclient import manager; m = manager.connect(host='127.0.0.1', port=8300, username='admin', password='admin', hostkey_verify=False); print(m.get_config(source='running'))"
+  - docker stop openyuma
