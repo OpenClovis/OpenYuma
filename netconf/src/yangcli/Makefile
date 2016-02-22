@@ -42,7 +42,7 @@ endif
 DLIBS =	-L$(PREFIX)/lib -L../../target/lib -lmgr -lncx \
 	-L../../../libtecla -ltecla \
 	$(LFIRST) -L/usr/local/lib -lxml2 -lncurses -lssh2 \
-	-lz -lm
+	-lrt -lz -lm
 
 ifndef FREEBSD
 DLIBS += -ldl
@@ -55,7 +55,7 @@ SLIBS = -L../../target/lib -lmgr -lncx  \
 	-l:$(PREFIX)/lib/libssh2.a \
 	-L$(PREFIX)/lib -lgpg-error \
 	-l:../../../libtecla/libtecla.a \
-	-L$(PREFIX)/lib -lncurses -lz -lm
+	-L$(PREFIX)/lib -lncurses -lrt -lz -lm
 
 ifdef DEBIAN
 SLIBS += -L$(PREFIX)/lib -lgcrypt

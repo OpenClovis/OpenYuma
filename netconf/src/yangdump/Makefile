@@ -27,7 +27,7 @@ REAL_INST=$(DESTDIR)$(PREFIX)/bin
 # that contains 'bar'. 
 
 
-LIBS = -lydump -lncx -lxml2 -lz -lm
+LIBS = -lydump -lncx -lxml2 -lrt -lz -lm
 
 LIBTARGS= $(LBASE)/libncx.$(LIBNCXSUFFIX) $(LBASE)/libydump.a
 
