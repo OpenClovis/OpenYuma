@@ -25,7 +25,7 @@ PROG=netconf-subsystem
 # Then put the library that contains foo BEFORE the one
 # that contains bar. 
 
-LIBS = -lncx -lxml2 -lrt -lz -lm
+LIBS = -lxml2 -lrt -lz -lm
 
 ############## MAKE RULES #################################
 ifdef DEVELOPER
@@ -65,8 +65,10 @@ distclean: superclean
 
 # this real rule keeps make from deleting the $(OBJS) as
 # intermediate files
+# I am deliberately including send_buff.o and not libncx so that this binary has no dependencies on nonstandard libraries because
+# it is started by sshd so is inconvenient to set up the LD_LIBRARY_PATH
 subsys: $(OBJS)
-	$(LINK) $(CFLAGS) $(LFLAGS) $(OBJS) -o $(BIN_INST)/$(PROG) -L$(PREFIX)/lib $(LPATH) $(FPATH) $(LIBS)
+	$(LINK) $(CFLAGS) $(LFLAGS) $(OBJS) ../../target/ncx/send_buff.o -o $(BIN_INST)/$(PROG) -L$(PREFIX)/lib $(LPATH) $(FPATH) $(LIBS)
 
 
 .PHONY: subsys

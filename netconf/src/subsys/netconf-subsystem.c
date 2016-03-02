@@ -125,6 +125,43 @@ static FILE *errfile;
 static boolean ncxconnect;
 static char msgbuff[BUFFLEN];
 
+/********************************************************************
+* FUNCTION errno_to_status
+*
+* Get the errno variable and convert it to a status_t
+*
+* INPUTS:
+*   none; must be called just after error occurred to prevent
+*        the errno variable from being overwritten by a new operation
+*
+* RETURNS:
+*     status_t for the errno enum
+*********************************************************************/
+status_t
+    errno_to_status (void)
+{
+    switch (errno) {
+    case EACCES:
+        return ERR_NCX_ACCESS_DENIED;
+    case EAFNOSUPPORT:
+    case EPROTONOSUPPORT:
+        return ERR_NCX_OPERATION_NOT_SUPPORTED;
+    case EINVAL:
+        return ERR_NCX_INVALID_VALUE;
+    case EMFILE:
+        return ERR_NCX_OPERATION_FAILED;
+    case ENFILE:
+        return ERR_NCX_RESOURCE_DENIED;
+    case ENOBUFS:
+    case ENOMEM:
+        return ERR_INTERNAL_MEM;
+    default:
+        return ERR_NCX_OPERATION_FAILED;
+    }
+
+} /* errno_to_status */
+
+
 /******************************************************************
  * FUNCTION configure_logging
  *
@@ -163,11 +200,11 @@ static void configure_logging( int argc, char** argv )
 
 }
 
-static char* ncxserver_sockname(int argc, char** argv, char* port)
+static const char* ncxserver_sockname(int argc, char** argv, char* pport)
 {
     int i;
     char match[] = "--ncxserver-sockname=65535@";
-    sprintf(match,"--ncxserver-sockname=%s@",port);
+    sprintf(match,"--ncxserver-sockname=%s@",pport);
     for(i=1;i<argc;i++) {
         if(strlen(argv[i])>strlen(match) && 0==memcmp(argv[i],match,strlen(match))) {
             return argv[i]+strlen(match);
@@ -329,10 +366,10 @@ static void
     cleanup_subsys (void)
 {
     if (client_addr) {
-        m__free(client_addr);
+        free(client_addr);
     }
     if (user) {
-        m__free(user);
+       free(user);
     }
     if (ncxconnect) {
         close(ncxsock);
