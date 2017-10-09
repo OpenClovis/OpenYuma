@@ -115,6 +115,7 @@ date         init     comment
 *                                                                   *
 *********************************************************************/
 
+const int MAX_PATH = 512;//define maximum length of the path
 
 /********************************************************************
 *                                                                   *
@@ -710,6 +711,189 @@ static status_t
 
 } /* process_val */
 
+/********************************************************************
+* FUNCTION check_matching
+*
+* Evaluate the subtree and absolute path
+*
+*
+* The filval is a NCX_BT_CONTAINER, and already matched
+* to the 'path'.  This function evaluates the child nodes
+* recursively as more container nodes are matched to the path
+*
+* INPUTS:
+*    filval == filter node
+*    path == current updated path
+*    headpos == index head position to check in path
+*    tailpos == index tail position to check in path
+*    len == length of input path
+*
+* OUTPUTS:
+* RETURNS:
+*     true: matching,false: not matching
+*********************************************************************/
+boolean check_matching(val_value_t *filval,char *path,int headpos,int tailpos,int len)
+{
+  val_value_t*curchild;
+  char temppath[MAX_PATH];
+  boolean lastfound = false;
+  if((NULL == path)||(len ==0 )||(headpos == len))
+  {
+     return true;
+  }
+  memset(temppath,0,MAX_PATH);
+  for(;tailpos < len;tailpos++)
+  {
+    if(('/'== path[tailpos])&&(tailpos > 0)) break;
+  }
+  strncpy(temppath,&path[headpos],tailpos-headpos);
+  headpos = ++tailpos;
+  if(strcmp(filval->name,temppath) != 0) return false;
+  else if (tailpos >= len) return true;
+  else lastfound = true;
+  for (curchild = val_get_first_child(filval);
+       curchild != NULL;
+       curchild = val_get_next_child(curchild)) {
+       if(check_matching(curchild,path,headpos,tailpos,len)) return true;
+       lastfound = false;
+  }//for
+  if(lastfound)
+  {
+     return true;
+  }
+  return false;
+}
+/********************************************************************
+* FUNCTION make_path_and_check
+*
+* Evaluate the subtree and absolute path
+*
+*
+* The filval is a NCX_BT_CONTAINER, and already matched
+* to the 'path'.  This function evaluates the child nodes
+* recursively as more container nodes are matched to the path
+*
+* INPUTS:
+*    filval == filter node
+*    pathoriginal == current updated path example:/myService:myService/myService:config/myService:port
+*
+* OUTPUTS:
+* RETURNS:
+*     true: matching,false: not matching
+*********************************************************************/
+boolean make_path_and_check(val_value_t *filval,char*pathoriginal)
+{
+   char path[MAX_PATH];
+   int headpos,tailpos,pos,posin,len;
+   //create a path with format:/myService:myService/myService:config/myService:port =>become /myService/config/port
+   len = strlen(pathoriginal);
+   memset(path,0,MAX_PATH);
+   strcat(path,"/filter");
+   headpos = tailpos = 0;
+   for(pos = 0; pos <= len;pos++)
+      {
+         if(pathoriginal[pos]=='/' || pos == len)
+         {
+            if(tailpos < pos)
+            {
+              tailpos = pos;
+              for(posin = headpos;posin < tailpos;posin++)
+                 {
+                   if(pathoriginal[posin]==':')
+                   {
+                     strcat(path,"/");
+                     strncat(path,(char*)&pathoriginal[posin+1],tailpos-posin-1);
+                     headpos = tailpos;
+                     break;
+                   }//if
+                  }//for
+             }//if
+         }//if
+       }//for
+  //default length path > 1
+  len = strlen(path);
+  if(len <= 1) return false;
+  if(check_matching(filval,path,1,1,len)) return true;
+  return false;
+}
+/********************************************************************
+* FUNCTION process_filter_sub_tree
+*
+* Evaluate the subtree and remove nodes
+* which are not in the result set
+*
+* The filval is a NCX_BT_CONTAINER, and already matched
+* to the 'curnode'.  This function evaluates the child nodes
+* recursively as more container nodes are matched to the target
+*
+* INPUTS:
+*    msg == incoming or outgoing message header in progress
+*    scb == session control block
+*        == NULL if no read access control is desired
+*    getop  == TRUE if this is a <get> and not a <get-config>
+*              The target is expected to be the <running>
+*              config, and all state data will be available for the
+*              filter output.
+*              FALSE if this is a <get-config> and only the
+*              specified target in available for filter output
+*   isnotif == TRUE if this is for a notification
+*              FALSE if for <get> or <get-config>
+*    filval == filter node
+*    curval == current database node
+*    result == filptr tree result to fill in
+*    keepempty == address of return keepempty flag
+*
+* OUTPUTS:
+*    *result is filled in as needed
+*     only 'true' result filter nodes should be remaining
+*    *keepempty is set to TRUE if a select node is tested
+*      and needs to be kept because all descendants are selected
+*      == FALSE if select node needs to be deleted (no match)
+*
+* RETURNS:
+*     status, NO_ERR or ERR_INTERNAL_VAL
+*********************************************************************/
+static status_t
+    process_filter_sub_tree (xml_msg_hdr_t *msg,
+                 ses_cb_t *scb,
+                 boolean getop,
+                 boolean isnotif,
+                 val_value_t *filval,
+                 val_value_t *curval,
+                 ncx_filptr_t *result,
+                 boolean *keepempty)
+{
+  val_value_t      *curchild, *useval,*curchild1;
+  boolean finalresult = true;
+  char pathoriginal[MAX_PATH];
+  useval = curval;
+  for (curchild = val_first_child_qname(useval,
+                                        0,
+                                        "edit");
+       curchild != NULL;
+       curchild = val_next_child_qname(useval,
+                                       0,
+                                       "edit",
+                                       curchild))
+  {
+       for (curchild1 = val_first_child_qname(curchild,
+                                              0,
+                                              "target");
+            curchild1 != NULL;
+            curchild1 = val_next_child_qname(curchild,
+                                             0,
+                                             "target",
+                                             curchild1))
+       {
+          //get path
+          memset(pathoriginal,0,MAX_PATH);
+          strcat(pathoriginal,curchild1->xpathpcb->exprstr);
+          finalresult &= make_path_and_check(filval,pathoriginal);
+       }//for
+  }//for
+  if(finalresult) return NO_ERR;
+  else return ERR_INTERNAL_VAL;
+} /* process_val */
 
 /********************************************************************
 * FUNCTION output_node
@@ -1044,7 +1228,7 @@ boolean
 {
     ncx_filptr_t      *top;
     status_t           res;
-    boolean            keepempty, retval;
+    boolean            retval;
 
 #ifdef DEBUG
     if (!msghdr || !scb || !filter || !topval) {
@@ -1070,35 +1254,21 @@ boolean
          */
         break;
     case NCX_BT_CONTAINER:
+        if(0 == strcmp((char*)topval->name,(char*)"sysConfigChange"))
+        {
         /* This is the normal case - a container node
          * Go through the child nodes.
          */
-        top = ncx_new_filptr();
-        if (!top) {
-            /* dropping ERR_INTERNAL_MEM error */
-            return FALSE;
-        }
-        top->node = topval;
-
-        keepempty = FALSE;        
-        res = process_val(msghdr,
+          res = process_filter_sub_tree(msghdr,
                           scb, 
                           TRUE, 
                           TRUE,
                           filter, 
-                          topval, 
-                          top, 
-                          &keepempty);
-        if (res != NO_ERR || dlq_empty(&top->childQ)) {
-            /* ignore keepempty because the result will
-             * be the same w/NULL return, just faster
-             */
-            ;
-        } else {
+                          topval);
+          if (res == NO_ERR) {
             retval = TRUE;
-        }
-
-        ncx_free_filptr(top);
+          }
+        }//other event is not notified
         break;
     default:
         SET_ERROR(ERR_INTERNAL_VAL);
