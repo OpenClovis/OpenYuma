@@ -330,7 +330,6 @@ static status_t
     tstamp_datetime(tstampbuff);
     futurestop = FALSE;
     isnegative = FALSE;
-
     /* get the stream parameter */
     valstream = 
         val_find_child(msg->rpc_input, 

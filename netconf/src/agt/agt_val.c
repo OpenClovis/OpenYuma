@@ -74,7 +74,7 @@ date         init     comment
 *                                                                   *
 *********************************************************************/
 
-/* recursive callback function foward decls */
+/* recursive callback function forward decls */
 static status_t
     invoke_btype_cb (agt_cbtyp_t cbtyp,
                      op_editop_t editop,
