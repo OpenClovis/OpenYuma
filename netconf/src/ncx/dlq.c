@@ -314,7 +314,9 @@ void  *dlq_deque (dlq_hdrT *  listP)
     /*** dlq_remove (listP->next); *** copied inline below ***/
 
     /* relink the queue chain */
-    ((dlq_hdrT *) nodeP)->prev->next = ((dlq_hdrT *) nodeP)->next;
+    if(((dlq_hdrT *) nodeP)->prev)
+    	((dlq_hdrT *) nodeP)->prev->next = ((dlq_hdrT *) nodeP)->next;
+    if(((dlq_hdrT *) nodeP)->next)
     ((dlq_hdrT *) nodeP)->next->prev = ((dlq_hdrT *) nodeP)->prev;
 
     /* remove the node from the linked list */
@@ -486,8 +488,12 @@ void dlq_insertAfter (void *newP, void *nodeP)
     ((dlq_hdrT *) newP)->hdr_typ            = DLQ_DATA_NODE;
     ((dlq_hdrT *) newP)->prev       = nodeP;
     ((dlq_hdrT *) newP)->next       = ((dlq_hdrT *) nodeP)->next;
+    if(((dlq_hdrT *) newP)->next!=NULL)
+    {
     ((dlq_hdrT *) newP)->next->prev  = newP;
-    ((dlq_hdrT *) newP)->prev->next  = newP;
+    }
+    if(((dlq_hdrT *) newP)->prev)
+    	((dlq_hdrT *) newP)->prev->next  = newP;
     EXIT_CRIT;
     
 }    /* END function dlq_insertAfter */
@@ -521,9 +527,14 @@ void dlq_remove (void *nodeP)
 
     ENTER_CRIT;
     /* relink the queue chain */
-    ((dlq_hdrT *) nodeP)->prev->next = ((dlq_hdrT *) nodeP)->next;
-    ((dlq_hdrT *) nodeP)->next->prev = ((dlq_hdrT *) nodeP)->prev;
-
+    if(((dlq_hdrT *) nodeP)->prev!=NULL)
+    {
+    	((dlq_hdrT *) nodeP)->prev->next = ((dlq_hdrT *) nodeP)->next;
+    }
+    if(((dlq_hdrT *) nodeP)->next)
+    {
+    	((dlq_hdrT *) nodeP)->next->prev = ((dlq_hdrT *) nodeP)->prev;
+    } 
     /* remove the node from the linked list */
     ((dlq_hdrT *) nodeP)->hdr_typ = DLQ_DEL_NODE;
     ((dlq_hdrT *) nodeP)->prev   = NULL;
