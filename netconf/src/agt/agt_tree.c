@@ -748,7 +748,7 @@ boolean check_matching(val_value_t *filval,char *path,int headpos,int tailpos,in
   }
   strncpy(temppath,&path[headpos],tailpos-headpos);
   headpos = ++tailpos;
-  if(strcmp(filval->name,temppath) != 0) return false;
+  if(strcmp((const char*)filval->name,temppath) != 0) return false;
   else if (tailpos >= len) return true;
   else lastfound = true;
   for (curchild = val_get_first_child(filval);
@@ -827,41 +827,16 @@ boolean make_path_and_check(val_value_t *filval,char*pathoriginal)
 * recursively as more container nodes are matched to the target
 *
 * INPUTS:
-*    msg == incoming or outgoing message header in progress
-*    scb == session control block
-*        == NULL if no read access control is desired
-*    getop  == TRUE if this is a <get> and not a <get-config>
-*              The target is expected to be the <running>
-*              config, and all state data will be available for the
-*              filter output.
-*              FALSE if this is a <get-config> and only the
-*              specified target in available for filter output
-*   isnotif == TRUE if this is for a notification
-*              FALSE if for <get> or <get-config>
 *    filval == filter node
 *    curval == current database node
-*    result == filptr tree result to fill in
-*    keepempty == address of return keepempty flag
 *
 * OUTPUTS:
-*    *result is filled in as needed
-*     only 'true' result filter nodes should be remaining
-*    *keepempty is set to TRUE if a select node is tested
-*      and needs to be kept because all descendants are selected
-*      == FALSE if select node needs to be deleted (no match)
-*
+*    none
 * RETURNS:
 *     status, NO_ERR or ERR_INTERNAL_VAL
 *********************************************************************/
 static status_t
-    process_filter_sub_tree (xml_msg_hdr_t *msg,
-                 ses_cb_t *scb,
-                 boolean getop,
-                 boolean isnotif,
-                 val_value_t *filval,
-                 val_value_t *curval,
-                 ncx_filptr_t *result,
-                 boolean *keepempty)
+    process_filter_sub_tree (val_value_t *filval, val_value_t *curval)
 {
   val_value_t      *curchild, *useval,*curchild1;
   boolean finalresult = true;
@@ -869,25 +844,25 @@ static status_t
   useval = curval;
   for (curchild = val_first_child_qname(useval,
                                         0,
-                                        "edit");
+                                        (const xmlChar *)"edit");
        curchild != NULL;
        curchild = val_next_child_qname(useval,
                                        0,
-                                       "edit",
+                                       (const xmlChar *)"edit",
                                        curchild))
   {
        for (curchild1 = val_first_child_qname(curchild,
                                               0,
-                                              "target");
+                                              (const xmlChar *)"target");
             curchild1 != NULL;
             curchild1 = val_next_child_qname(curchild,
                                              0,
-                                             "target",
+                                             (const xmlChar *)"target",
                                              curchild1))
        {
           //get path
           memset(pathoriginal,0,MAX_PATH);
-          strcat(pathoriginal,curchild1->xpathpcb->exprstr);
+          strcat(pathoriginal,(char*)curchild1->xpathpcb->exprstr);
           finalresult &= make_path_and_check(filval,pathoriginal);
        }//for
   }//for
@@ -1226,7 +1201,7 @@ boolean
                           val_value_t *filter,
                           val_value_t *topval)
 {
-    ncx_filptr_t      *top;
+ //   ncx_filptr_t      *top;
     status_t           res;
     boolean            retval;
 
@@ -1254,17 +1229,12 @@ boolean
          */
         break;
     case NCX_BT_CONTAINER:
-        if(0 == strcmp((char*)topval->name,(char*)"sysConfigChange"))
+        if(0 == strcmp((const char*)topval->name,(const char*)"sysConfigChange"))
         {
         /* This is the normal case - a container node
          * Go through the child nodes.
          */
-          res = process_filter_sub_tree(msghdr,
-                          scb, 
-                          TRUE, 
-                          TRUE,
-                          filter, 
-                          topval);
+          res = process_filter_sub_tree(filter,topval);
           if (res == NO_ERR) {
             retval = TRUE;
           }
