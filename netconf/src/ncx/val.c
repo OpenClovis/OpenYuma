@@ -1658,7 +1658,11 @@ void val_free_value (val_value_t *val)
 #endif
 
     clean_value(val, TRUE);
-    m__free(val);
+    if(val->dname)
+    {
+	m__free(val);
+	val = NULL;
+    }
 }  /* val_free_value */
 
 
