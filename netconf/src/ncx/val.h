@@ -249,6 +249,7 @@ extern "C" {
 
 #define VAL_UNMARK_DELETED(V) (V)->flags &= ~VAL_FL_DELETED
 
+#define MAX_PATH 512 //define maximum length of the path
 
 /********************************************************************
 *								    *

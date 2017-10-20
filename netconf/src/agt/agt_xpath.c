@@ -523,9 +523,12 @@ boolean
 
 {
     xpath_result_t    *result;
+    char pathoriginal[MAX_PATH];
     status_t           res;
-    boolean            retval, getop, readallowed;
+    boolean            retval, getop, readallowed,finalresult;
 
+    finalresult = false;
+val_value_t *curchild,*curchild1,*curval;
 #ifdef DEBUG
     if (!msghdr || !scb || !selectval || !val) {
         SET_ERROR(ERR_INTERNAL_PTR);
@@ -533,6 +536,58 @@ boolean
     }
 #endif
 
+    for (curchild = val_first_child_qname(val,0,(const xmlChar *)"edit");
+         curchild != NULL;
+         curchild = val_next_child_qname(val,0,(const xmlChar *)"edit",curchild)) {
+         finalresult = true;
+         for (curchild1 = val_first_child_qname(curchild,0,(const xmlChar *)"target");
+              curchild1 != NULL;
+              curchild1 = val_next_child_qname(curchild,0,(const xmlChar *)"target",curchild1))
+              {
+                 /* make sure the <eventType> is allowed to be
+                  * viewed by the specified session
+                  */
+                 readallowed = agt_acm_val_read_allowed(msghdr,
+                                                        scb->username,
+                                                        val);
+                 if (!readallowed) {
+                     return FALSE;
+                 }
+
+                 res = NO_ERR;
+                 getop = TRUE;   /* do not skip config=fale nodes */
+                 //printf("agt_xpath_test_filter:val->name:%s\n",val->name);
+                 /* evaluate the XPath expression
+                  * any nodeset result that is non-empty
+                  * will pass the filter test
+                  */
+                 memset(pathoriginal,0,MAX_PATH);
+                 strcat(pathoriginal,(char*)curchild1->xpathpcb->exprstr);
+                 if(make_path_to_list(&curval,pathoriginal,val->obj))
+                 {
+
+                    result = xpath1_eval_xmlexpr(scb->reader,
+                                                 selectval->xpathpcb,
+                                                 curval,
+                                                 curval,
+                                                 FALSE,
+                                                 !getop,
+                                                 &res);
+
+                    if (result && (res == NO_ERR) &&
+                       (result->restype == XP_RT_NODESET)) {
+                        retval = xpath_cvt_boolean(result);
+                    } else {
+                        retval = FALSE;
+                    }
+
+                    if (result) {
+                        xpath_free_result(result);
+                    }
+                    finalresult &=retval;
+                  }
+                }
+    }
     /* make sure the <eventType> is allowed to be
      * viewed by the specified session
      */
@@ -551,26 +606,7 @@ boolean
      * any nodeset result that is non-empty
      * will pass the filter test
      */
-    result = xpath1_eval_xmlexpr(scb->reader,
-                                 selectval->xpathpcb,
-                                 val,
-                                 val,
-                                 FALSE,
-                                 !getop,
-                                 &res);
-
-    if (result && (res == NO_ERR) && 
-        (result->restype == XP_RT_NODESET)) {
-        retval = xpath_cvt_boolean(result);
-    } else {
-        retval = FALSE;
-    }
-
-    if (result) {
-        xpath_free_result(result);
-    }
-
-    return retval;
+    return finalresult;
 
 } /* agt_xpath_test_filter */
 

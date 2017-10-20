@@ -88,6 +88,72 @@ static val_index_t *
 
 
 /********************************************************************
+ * FUNCTION make_path_to_list
+ *
+ * convert from path to list of nodes
+ *
+ * INPUTS:
+ *   pathoriginal == original path format like /myService:myService/myService:config/myService:port
+ *   templateobj == object template
+ *
+ * OUTPUTS:
+ *   retval get list of nodes
+ *
+ * RETURNS:
+ *   true: success
+ *   false:failed
+ *********************************************************************/
+boolean make_path_to_list(val_value_t **retval,char*pathoriginal,struct obj_template_t_ *templateobj)
+{
+   int headpos,tailpos,pos,posin,len;
+   val_value_t *tempval,*currentval;
+   char path[MAX_PATH];
+   len = strlen(pathoriginal);
+   headpos = tailpos = 0;
+   *retval = val_new_value();
+   if (!retval)
+   {
+     log_error("\nError: malloc failed: retval");
+     return false;
+   }
+   val_init_from_template(*retval,templateobj);
+   val_set_qname (*retval,0,(const xmlChar *)"filter",strlen("filter"));
+   currentval = *retval;
+   for(pos = 0; pos <= len;pos++)
+      {
+         if(pathoriginal[pos]=='/' || pos == len)
+         {
+            if(tailpos < pos)
+            {
+              tailpos = pos;
+              for(posin = headpos;posin < tailpos;posin++)
+                 {
+                   if(pathoriginal[posin]==':')
+                   {
+                     memset(path,0,MAX_PATH);
+                     strncat(path,(char*)&pathoriginal[posin+1],tailpos-posin-1);
+                     headpos = tailpos;
+                     tempval = val_new_value();
+                     if(!tempval)
+                     {
+                       val_free_value(*retval);
+                       return false;
+                     }
+                     val_init_from_template(tempval,templateobj);
+                     if(pos==len) tempval->btyp = NCX_BT_STRING;
+                     else tempval->btyp = NCX_BT_CONTAINER;
+                     val_set_qname (tempval,0,(const xmlChar *)path,strlen(path));
+                     val_add_child(tempval, currentval);
+                     currentval = tempval;
+                     break;
+                   }
+                  }
+             }
+         }
+       }
+  return true;
+}
+/********************************************************************
 * FUNCTION choice_check
 * 
 * Check a val_value_t struct against its expected OBJ

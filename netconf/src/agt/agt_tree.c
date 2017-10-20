@@ -115,7 +115,6 @@ date         init     comment
 *                                                                   *
 *********************************************************************/
 
-const int MAX_PATH = 512;//define maximum length of the path
 
 /********************************************************************
 *                                                                   *
@@ -547,7 +546,7 @@ static status_t
             /* check access control for notifications only */
             if (isnotif && scb &&
                 !agt_acm_val_read_allowed(msg,
-                                          scb->username, 
+                                          scb->username,
                                           curchild)) {
                 /* treat an access-failed on a content match
                  * test as a termination trigger
@@ -555,9 +554,10 @@ static status_t
                 return NO_ERR;
             }
 
-            test = content_match_test(scb, 
+            test = content_match_test(scb,
                                       VAL_STR(filchild), 
                                       curchild);
+            if(isnotif && !test) return ERR_INTERNAL_VAL;
         }
 
         if (!test) {
@@ -601,109 +601,105 @@ static status_t
         /* go through all the actual instances of 'filchild'
          * within the child nodes of 'curval'
          */
-        for (curchild = val_first_child_qname(useval, 
-                                              filchild->nsid,
-                                              filchild->name);
-             curchild != NULL;
-             curchild = val_next_child_qname(useval,
-                                             filchild->nsid,
-                                             filchild->name,
-                                             curchild)) {
-            
-            filptr = NULL;
+        curchild = val_first_child_qname(useval,filchild->nsid,filchild->name);
+        if(curchild == NULL)
+        {
+          if(isnotif) return ERR_INTERNAL_VAL;
+          else return NO_ERR;//keep old algorithm
+        }
+        while(true)
+        {
+           filptr = NULL;
+           /* check access control if scb is non-NULL */
+           if (isnotif && scb &&
+               !agt_acm_val_read_allowed(msg,
+                                         scb->username,
+                                         curchild)) {
+               continue;
+           }
+           /* check any attr-match tests */
+           if (!attr_test(filchild, curchild)) {
+               /* failed an attr-match test so skip it */
+               continue;
+           }
+           /* process the filter child node based on its type */
+           switch (filchild->btyp) {
+           case NCX_BT_STRING:
+               /* This is a content select node */
+               test = content_match_test(scb,
+                                         VAL_STR(filchild),
+                                         curchild);
+               if (!test) {
+                   break;
+               } /* else fall through and add node */
+           case NCX_BT_EMPTY:
+               /* this is a select node  matched to the
+                * current node, so save it
+                */
+               filptr = save_filptr(result, curchild);
+               if (!filptr) {
+                   return ERR_INTERNAL_MEM;
+               }
+               break;
+           case NCX_BT_CONTAINER:
+               /* this is a container node, so the current node
+                * in the target must be a complex type; not a leaf node
+                */
+               if (!typ_has_children(curchild->btyp)) {
+                   break;
+               }
+               /* save this node for now */
+               filptr = save_filptr(result, curchild);
+               if (!filptr) {
+                   return ERR_INTERNAL_MEM;
+               }
+               /* go through the child nodes of the filter
+                * and compare to the complex target
+                */
+               res = process_val(msg,
+                                 scb,
+                                 getop,
+                                 isnotif,
+                                 filchild,
+                                 curchild,
+                                 filptr,
+                                 &mykeepempty);
+               if (res != NO_ERR) {
+                   return res;
+               }
+               if (!mykeepempty && dlq_empty(&filptr->childQ)) {
+                   dlq_remove(filptr);
+                   ncx_free_filptr(filptr);
+                   filptr = NULL;
+               }
+               break;
+           default:
+             return SET_ERROR(ERR_INTERNAL_VAL);
+           }
+           if (filptr &&
+               filptr->node->btyp == NCX_BT_LIST &&
+               !dlq_empty(&filptr->childQ)) {
 
-            /* check access control if scb is non-NULL */
-            if (isnotif && scb && 
-                !agt_acm_val_read_allowed(msg,
-                                          scb->username, 
-                                          curchild)) {
-                continue;
-            }
+               /* make sure all the list keys (if any)
+                * are present, since specific nodes
+                * are requested, and the keys could
+                * get filtered out
+                */
+               for (valindex = val_get_first_index(filptr->node);
+                    valindex != NULL;
+                    valindex = val_get_next_index(valindex)) {
 
-            /* check any attr-match tests */
-            if (!attr_test(filchild, curchild)) {
-                /* failed an attr-match test so skip it */
-                continue;
-            }
-
-            /* process the filter child node based on its type */
-            switch (filchild->btyp) {
-            case NCX_BT_STRING:
-                /* This is a content select node */
-                test = content_match_test(scb, 
-                                          VAL_STR(filchild), 
-                                          curchild);
-                if (!test) {
-                    break;
-                } /* else fall through and add node */
-            case NCX_BT_EMPTY:
-                /* this is a select node  matched to the 
-                 * current node, so save it
-                 */
-                filptr = save_filptr(result, curchild);
-                if (!filptr) {
-                    return ERR_INTERNAL_MEM;
-                }
-                break;
-            case NCX_BT_CONTAINER:
-                /* this is a container node, so the current node
-                 * in the target must be a complex type; not a leaf node
-                 */
-                if (!typ_has_children(curchild->btyp)) {
-                    break;
-                }
-
-                /* save this node for now */
-                filptr = save_filptr(result, curchild);
-                if (!filptr) {
-                    return ERR_INTERNAL_MEM;
-                }
-
-                /* go through the child nodes of the filter
-                 * and compare to the complex target 
-                 */
-                res = process_val(msg,
-                                  scb, 
-                                  getop, 
-                                  isnotif,
-                                  filchild,
-                                  curchild, 
-                                  filptr, 
-                                  &mykeepempty);
-                if (res != NO_ERR) {
-                    return res;
-                }
-
-                if (!mykeepempty && dlq_empty(&filptr->childQ)) {
-                    dlq_remove(filptr);
-                    ncx_free_filptr(filptr);
-                    filptr = NULL;
-                }
-                break;
-            default:
-                return SET_ERROR(ERR_INTERNAL_VAL);
-            }
-
-            if (filptr && 
-                filptr->node->btyp == NCX_BT_LIST &&
-                !dlq_empty(&filptr->childQ)) {
-
-                /* make sure all the list keys (if any)
-                 * are present, since specific nodes
-                 * are requested, and the keys could
-                 * get filtered out
-                 */
-                for (valindex = val_get_first_index(filptr->node);
-                     valindex != NULL;
-                     valindex = val_get_next_index(valindex)) {
-                    
                     if (!find_filptr(filptr, valindex->val)) {
-                        if (!save_filptr(filptr, valindex->val)) {
-                            return ERR_INTERNAL_MEM;
-                        }
-                    }
-                }
-            }
+                       if (!save_filptr(filptr, valindex->val)) {
+                           return ERR_INTERNAL_MEM;
+                       }
+                   }
+               }
+           }
+           curchild = val_next_child_qname(useval,filchild->nsid,filchild->name,curchild);
+           if(curchild == NULL) {
+              break;
+           }
         }
     }
 
@@ -711,111 +707,8 @@ static status_t
 
 } /* process_val */
 
-/********************************************************************
-* FUNCTION check_matching
-*
-* Evaluate the subtree and absolute path
-*
-*
-* The filval is a NCX_BT_CONTAINER, and already matched
-* to the 'path'.  This function evaluates the child nodes
-* recursively as more container nodes are matched to the path
-*
-* INPUTS:
-*    filval == filter node
-*    path == current updated path
-*    headpos == index head position to check in path
-*    tailpos == index tail position to check in path
-*    len == length of input path
-*
-* OUTPUTS:
-* RETURNS:
-*     true: matching,false: not matching
-*********************************************************************/
-boolean check_matching(val_value_t *filval,char *path,int headpos,int tailpos,int len)
-{
-  val_value_t*curchild;
-  char temppath[MAX_PATH];
-  boolean lastfound = false;
-  if((NULL == path)||(len ==0 )||(headpos == len))
-  {
-     return true;
-  }
-  memset(temppath,0,MAX_PATH);
-  for(;tailpos < len;tailpos++)
-  {
-    if(('/'== path[tailpos])&&(tailpos > 0)) break;
-  }
-  strncpy(temppath,&path[headpos],tailpos-headpos);
-  headpos = ++tailpos;
-  if(strcmp((const char*)filval->name,temppath) != 0) return false;
-  else if (tailpos >= len) return true;
-  else lastfound = true;
-  for (curchild = val_get_first_child(filval);
-       curchild != NULL;
-       curchild = val_get_next_child(curchild)) {
-       if(check_matching(curchild,path,headpos,tailpos,len)) return true;
-       lastfound = false;
-  }//for
-  if(lastfound)
-  {
-     return true;
-  }
-  return false;
-}
-/********************************************************************
-* FUNCTION make_path_and_check
-*
-* Evaluate the subtree and absolute path
-*
-*
-* The filval is a NCX_BT_CONTAINER, and already matched
-* to the 'path'.  This function evaluates the child nodes
-* recursively as more container nodes are matched to the path
-*
-* INPUTS:
-*    filval == filter node
-*    pathoriginal == current updated path example:/myService:myService/myService:config/myService:port
-*
-* OUTPUTS:
-* RETURNS:
-*     true: matching,false: not matching
-*********************************************************************/
-boolean make_path_and_check(val_value_t *filval,char*pathoriginal)
-{
-   char path[MAX_PATH];
-   int headpos,tailpos,pos,posin,len;
-   //create a path with format:/myService:myService/myService:config/myService:port =>become /myService/config/port
-   len = strlen(pathoriginal);
-   memset(path,0,MAX_PATH);
-   strcat(path,"/filter");
-   headpos = tailpos = 0;
-   for(pos = 0; pos <= len;pos++)
-      {
-         if(pathoriginal[pos]=='/' || pos == len)
-         {
-            if(tailpos < pos)
-            {
-              tailpos = pos;
-              for(posin = headpos;posin < tailpos;posin++)
-                 {
-                   if(pathoriginal[posin]==':')
-                   {
-                     strcat(path,"/");
-                     strncat(path,(char*)&pathoriginal[posin+1],tailpos-posin-1);
-                     headpos = tailpos;
-                     break;
-                   }//if
-                  }//for
-             }//if
-         }//if
-       }//for
-  //default length path > 1
-  len = strlen(path);
-  if(len <= 1) return false;
-  if(check_matching(filval,path,1,1,len)) return true;
-  return false;
-}
+
+
 /********************************************************************
 * FUNCTION process_filter_sub_tree
 *
@@ -827,7 +720,10 @@ boolean make_path_and_check(val_value_t *filval,char*pathoriginal)
 * recursively as more container nodes are matched to the target
 *
 * INPUTS:
-*    filval == filter node
+*    msg == incoming or outgoing message header in progress
+*    scb == session control block
+*        == NULL if no read access control is desired
+*    filter == filter node
 *    curval == current database node
 *
 * OUTPUTS:
@@ -836,40 +732,44 @@ boolean make_path_and_check(val_value_t *filval,char*pathoriginal)
 *     status, NO_ERR or ERR_INTERNAL_VAL
 *********************************************************************/
 static status_t
-    process_filter_sub_tree (val_value_t *filval, val_value_t *curval)
+    process_filter_sub_tree (xml_msg_hdr_t *msg, ses_cb_t *scb, val_value_t *filter, val_value_t *curval)
 {
-  val_value_t      *curchild, *useval,*curchild1;
+  val_value_t      *curchild, *useval,*curchild1,*usevalchild;
+  ncx_filptr_t      *top;
   boolean finalresult = true;
+  boolean keepempty = false;
   char pathoriginal[MAX_PATH];
-  useval = curval;
-  for (curchild = val_first_child_qname(useval,
-                                        0,
-                                        (const xmlChar *)"edit");
+  status_t res;
+  for (curchild = val_first_child_qname(curval,0,(const xmlChar *)"edit");
        curchild != NULL;
-       curchild = val_next_child_qname(useval,
-                                       0,
-                                       (const xmlChar *)"edit",
-                                       curchild))
+       curchild = val_next_child_qname(curval,0,(const xmlChar *)"edit",curchild))
   {
-       for (curchild1 = val_first_child_qname(curchild,
-                                              0,
-                                              (const xmlChar *)"target");
-            curchild1 != NULL;
-            curchild1 = val_next_child_qname(curchild,
-                                             0,
-                                             (const xmlChar *)"target",
-                                             curchild1))
-       {
-          //get path
-          memset(pathoriginal,0,MAX_PATH);
-          strcat(pathoriginal,(char*)curchild1->xpathpcb->exprstr);
-          finalresult &= make_path_and_check(filval,pathoriginal);
-       }//for
-  }//for
+     for (curchild1 = val_first_child_qname(curchild,0,(const xmlChar *)"target");
+          curchild1 != NULL;
+          curchild1 = val_next_child_qname(curchild,0,(const xmlChar *)"target",curchild1))
+     {
+        //get path
+        memset(pathoriginal,0,MAX_PATH);
+        strcat(pathoriginal,(char*)curchild1->xpathpcb->exprstr);
+        if(make_path_to_list(&useval,pathoriginal,curval->obj))
+        {
+          /* This is the normal case - a container node
+           * Go through the child nodes.
+           */
+            top = ncx_new_filptr();
+            if (!top) {
+                return ERR_INTERNAL_VAL;
+            }
+            top->node = useval;
+            res = process_val (msg,scb,TRUE,TRUE,filter,useval,top,&keepempty);
+            finalresult &=(NO_ERR ==res);
+            ncx_free_filptr(top);
+        }
+     }
+  }
   if(finalresult) return NO_ERR;
   else return ERR_INTERNAL_VAL;
 } /* process_val */
-
 /********************************************************************
 * FUNCTION output_node
 *
@@ -1201,10 +1101,9 @@ boolean
                           val_value_t *filter,
                           val_value_t *topval)
 {
- //   ncx_filptr_t      *top;
     status_t           res;
     boolean            retval;
-
+    val_value_t *curchild;
 #ifdef DEBUG
     if (!msghdr || !scb || !filter || !topval) {
         SET_ERROR(ERR_INTERNAL_PTR);
@@ -1234,9 +1133,9 @@ boolean
         /* This is the normal case - a container node
          * Go through the child nodes.
          */
-          res = process_filter_sub_tree(filter,topval);
+          res = process_filter_sub_tree(msghdr,scb,filter,topval);
           if (res == NO_ERR) {
-            retval = TRUE;
+              retval = TRUE;
           }
         }//other event is not notified
         break;

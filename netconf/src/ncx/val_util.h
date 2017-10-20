@@ -160,8 +160,25 @@ typedef boolean
  *********************************************************************/
 extern void
     val_set_canonical_order (val_value_t *val);
+/********************************************************************
+ * FUNCTION make_path_to_list
+ *
+ * convert from path to list of nodes
+ *
+ * INPUTS:
+ *   pathoriginal == original path format
+ *   templateobj == object template
+ *
+ * OUTPUTS:
+ *   retval get list of nodes
+ *
+ * RETURNS:
+ *   true: success
+ *   false:failed
+ *********************************************************************/
 
 
+boolean make_path_to_list(val_value_t **retval,char *pathoriginal,struct obj_template_t_ *templateobj);
 /********************************************************************
  * FUNCTION val_gen_index_comp
  * 
