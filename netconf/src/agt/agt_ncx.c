@@ -464,6 +464,23 @@ static status_t
 
 } /* get_config_validate */
 
+void val_remove_cadidate_getcb(val_value_t  *val)
+{
+    if(val->name)
+    {
+        log_debug("\nremove getcb for node [%s]",val->name);
+    }
+    val->getcb=NULL;
+    val_value_t  *candidate_val;
+    for (candidate_val = val_get_first_child(val);
+         candidate_val != NULL;
+         candidate_val = val_get_next_child(candidate_val)) 
+    {
+
+        val_remove_cadidate_getcb(candidate_val);
+    }
+}
+
 
 /********************************************************************
 * FUNCTION edit_config_validate
@@ -666,6 +683,14 @@ static status_t
             res = val->res;
         }
     }
+    if(target->cfg_id == NCX_CFGID_CANDIDATE)
+    {
+        log_info("\ncandidate database remove getcb for all node ");
+        if(target->root!=NULL)
+        {
+            val_remove_cadidate_getcb(target->root);
+        }
+    }
 
     /* save the edit options in 'user1' */
     if (res == NO_ERR) {
@@ -699,6 +724,8 @@ static status_t
         m__free(urlspec);
     }
 
+
+
     if (target->cfg_id==NCX_CFGID_CANDIDATE && (target->flags&CFG_FL_DISCARD_CHANGES) && res==NO_ERR)
     {
        ses_cb_t *dummyscb = agt_ses_new_dummy_session();
@@ -713,7 +740,6 @@ static status_t
           agt_ses_free_dummy_session(scb);
           return ERR_INTERNAL_MEM;
        }
-
        boolean malloced = FALSE;
        status_t ret = NO_ERR;
        val_value_t* out = val_get_value(dummyscb,&dummymsg->mhdr,target->root,NULL,FALSE,&malloced,&ret);
@@ -725,7 +751,6 @@ static status_t
           {
              chval->getcb = NULL;
           }
-
           if (malloced)
           {
              val_free_value(out);
@@ -735,13 +760,11 @@ static status_t
        {
           log_error("\nedit_config_validate: val_get_value error\n");
        }
-
        agt_cfg_free_transaction(dummymsg->rpc_txcb);
        rpc_free_msg(dummymsg);
        agt_ses_free_dummy_session(dummyscb);
        target->flags &= ~CFG_FL_DISCARD_CHANGES;
     }
-
     return res;
 
 } /* edit_config_validate */
