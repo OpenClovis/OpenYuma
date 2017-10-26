@@ -719,17 +719,23 @@ static status_t
        val_value_t* out = val_get_value(dummyscb,&dummymsg->mhdr,target->root,NULL,FALSE,&malloced,&ret);
        if (ret==NO_ERR && out!=NULL)
        {
-          log_debug("\ndiscard_changes_invoke: fetch chidren by val_get_value\n");
+          log_debug("\nedit_config_validate: fetch chidren by val_get_value\n");
           val_value_t *chval;
           for(chval=val_get_first_child(out);chval!=NULL;chval=val_get_next_child(chval))
           {
              chval->getcb = NULL;
           }
+
+          if (malloced)
+          {
+             val_free_value(out);
+          }
        }
        else
        {
-          log_error("\ndiscard_changes_invoke: val_get_value error\n");
+          log_error("\nedit_config_validate: val_get_value error\n");
        }
+
        agt_cfg_free_transaction(dummymsg->rpc_txcb);
        rpc_free_msg(dummymsg);
        agt_ses_free_dummy_session(dummyscb);
