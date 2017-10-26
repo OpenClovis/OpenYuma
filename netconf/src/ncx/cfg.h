@@ -126,6 +126,7 @@ extern "C" {
 /* bit definitions for the cfg_template->flags field */
 #define CFG_FL_TARGET       bit0
 #define CFG_FL_DIRTY        bit1
+#define CFG_FL_DISCARD_CHANGES bit2
 
 #define CFG_INITIAL_TXID (cfg_transaction_id_t)0
 

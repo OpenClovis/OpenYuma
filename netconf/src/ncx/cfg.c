@@ -620,6 +620,10 @@ status_t
     res = NO_ERR;
     candidate->root = val_clone_config_data(running->root, &res);
     candidate->flags &= ~CFG_FL_DIRTY;
+    if (candidate->cfg_state == CFG_ST_READY)
+    {
+      candidate->flags |= CFG_FL_DISCARD_CHANGES;
+    }
     candidate->last_txid = running->last_txid;
     candidate->cur_txid = 0;
     return res;
