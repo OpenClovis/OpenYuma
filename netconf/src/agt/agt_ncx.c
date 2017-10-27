@@ -699,6 +699,18 @@ static status_t
         m__free(urlspec);
     }
 
+    if (target->cfg_id==NCX_CFGID_CANDIDATE && (target->flags&CFG_FL_DISCARD_CHANGES) && res==NO_ERR)
+    {
+       val_value_t* out = target->root;
+       log_debug("\nedit_config_invoke: fetch chidren by val_get_value\n");
+       val_value_t *chval;
+       for(chval=val_get_first_child(out);chval!=NULL;chval=val_get_next_child(chval))
+       {
+          chval->getcb = NULL;
+       }
+       target->flags &= ~CFG_FL_DISCARD_CHANGES;
+    }
+
     return res;
 
 } /* edit_config_validate */
