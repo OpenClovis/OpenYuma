@@ -701,44 +701,13 @@ static status_t
 
     if (target->cfg_id==NCX_CFGID_CANDIDATE && (target->flags&CFG_FL_DISCARD_CHANGES) && res==NO_ERR)
     {
-       ses_cb_t *dummyscb = agt_ses_new_dummy_session();
-       if (!scb)
+       val_value_t* out = target->root;
+       log_debug("\nedit_config_invoke: fetch chidren by val_get_value\n");
+       val_value_t *chval;
+       for(chval=val_get_first_child(out);chval!=NULL;chval=val_get_next_child(chval))
        {
-          return ERR_INTERNAL_MEM;
+          chval->getcb = NULL;
        }
-       /* create a dummy RPC msg */
-       rpc_msg_t *dummymsg = rpc_new_msg();
-       if (!msg)
-       {
-          agt_ses_free_dummy_session(scb);
-          return ERR_INTERNAL_MEM;
-       }
-
-       boolean malloced = FALSE;
-       status_t ret = NO_ERR;
-       val_value_t* out = val_get_value(dummyscb,&dummymsg->mhdr,target->root,NULL,FALSE,&malloced,&ret);
-       if (ret==NO_ERR && out!=NULL)
-       {
-          log_debug("\nedit_config_validate: fetch chidren by val_get_value\n");
-          val_value_t *chval;
-          for(chval=val_get_first_child(out);chval!=NULL;chval=val_get_next_child(chval))
-          {
-             chval->getcb = NULL;
-          }
-
-          if (malloced)
-          {
-             val_free_value(out);
-          }
-       }
-       else
-       {
-          log_error("\nedit_config_validate: val_get_value error\n");
-       }
-
-       agt_cfg_free_transaction(dummymsg->rpc_txcb);
-       rpc_free_msg(dummymsg);
-       agt_ses_free_dummy_session(dummyscb);
        target->flags &= ~CFG_FL_DISCARD_CHANGES;
     }
 
