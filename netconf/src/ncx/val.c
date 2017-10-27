@@ -4886,6 +4886,7 @@ status_t
         case NCX_BT_BINARY:
         case NCX_BT_INSTANCE_ID:
         case NCX_BT_LEAFREF:
+        case NCX_BT_IDREF:
             res = merge_simple(btyp, src, dest);
             break;
         case NCX_BT_UNION:

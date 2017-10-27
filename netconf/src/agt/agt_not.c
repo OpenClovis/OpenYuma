@@ -812,16 +812,17 @@ static status_t
                        agt_not_msg_t *notif,
                        boolean checkfilter)
 {
-    val_value_t        *topval, *eventTime;
+    val_value_t        *topval, *eventTime, *useval,*curchild,*curchild1;
     val_value_t        *eventType, *payloadval, *sequenceid;
     ses_total_stats_t  *totalstats;
     xml_msg_hdr_t       msghdr;
     status_t            res;
-    boolean             filterpassed;
+    boolean             filterpassed,haspath;
     xmlChar             numbuff[NCX_MAX_NUMLEN];
-
+    char pathoriginal[MAX_PATH];
     filterpassed = TRUE;
-
+    haspath = false;
+    useval = NULL;
     totalstats = ses_get_total_stats();
 
     if (!notif->msg) {
@@ -882,20 +883,41 @@ static status_t
 
     /* check if any filtering is needed */
     if (checkfilter && sub->filterval) {
+       if(0 == strcmp((const char*)notif->event->name,(const char*)"sysConfigChange"))
+       {
+         for (curchild = val_first_child_qname(notif->event,0,(const xmlChar *)"edit");
+              curchild != NULL;
+              curchild = val_next_child_qname(notif->event,0,(const xmlChar *)"edit",curchild))
+              {
+                for (curchild1 = val_first_child_qname(curchild,0,(const xmlChar *)"target");
+                     curchild1 != NULL;
+                     curchild1 = val_next_child_qname(curchild,0,(const xmlChar *)"target",curchild1))
+                     {
+                        //get path
+                        memset(pathoriginal,0,MAX_PATH);
+                        strcat(pathoriginal,(char*)curchild1->xpathpcb->exprstr);
+                        haspath |= make_path_to_list(&useval,pathoriginal);
+                     }
+              }
+        }
+        if(!haspath)
+        {
+          useval = notif->event;
+        }
         switch (sub->filtertyp) {
         case OP_FILTER_SUBTREE:
             filterpassed = 
                 agt_tree_test_filter(&msghdr,
                                      sub->scb,
                                      sub->filterval,
-                                     notif->event);
+                                     useval);
             break;
         case OP_FILTER_XPATH:
             filterpassed = 
                 agt_xpath_test_filter(&msghdr,
                                       sub->scb,
                                       sub->selectval,
-                                      notif->event);
+                                      useval);
             break;
         case OP_FILTER_NONE:
         default:
@@ -913,7 +935,11 @@ static status_t
             }
         }
     }
-
+    if(haspath)
+    {
+      val_free_value(useval);
+      useval = NULL;
+    }
     if (filterpassed) {
         /* send the notification */
         res = ses_start_msg(sub->scb);

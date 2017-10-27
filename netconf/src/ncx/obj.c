@@ -10615,7 +10615,7 @@ boolean obj_is_hidden (const obj_template_t *obj)
  *********************************************************************/
 boolean obj_is_root (const obj_template_t *obj)
 {
-    //assert(obj && "obj is NULL" );
+    assert(obj && "obj is NULL" );
     return (obj->flags & OBJ_FL_ROOT) ? TRUE : FALSE;
 }   /* obj_is_root */
 

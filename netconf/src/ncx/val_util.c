@@ -103,22 +103,25 @@ static val_index_t *
  *   true: success
  *   false:failed
  *********************************************************************/
-boolean make_path_to_list(val_value_t **retval,char*pathoriginal,struct obj_template_t_ *templateobj)
+boolean make_path_to_list(val_value_t **retval,char *pathoriginal)
 {
    int headpos,tailpos,pos,posin,len;
-   val_value_t *tempval,*currentval;
+   val_value_t *tempval, *parentval, *curchild;
    char path[MAX_PATH];
    len = strlen(pathoriginal);
    headpos = tailpos = 0;
-   *retval = val_new_value();
-   if (!retval)
+   if(*retval == NULL)
    {
-     log_error("\nError: malloc failed: retval");
-     return false;
+      *retval = val_new_value();
+      if (!retval)
+      {
+         log_error("\nError: malloc failed: retval");
+         return false;
+      }
+      val_init_from_template(*retval,ncx_get_gen_container());
+      val_set_qname (*retval,0,(const xmlChar *)"filter",strlen("filter"));
    }
-   val_init_from_template(*retval,templateobj);
-   val_set_qname (*retval,0,(const xmlChar *)"filter",strlen("filter"));
-   currentval = *retval;
+   parentval = *retval;
    for(pos = 0; pos <= len;pos++)
       {
          if(pathoriginal[pos]=='/' || pos == len)
@@ -130,22 +133,31 @@ boolean make_path_to_list(val_value_t **retval,char*pathoriginal,struct obj_temp
                  {
                    if(pathoriginal[posin]==':')
                    {
-                     memset(path,0,MAX_PATH);
-                     strncat(path,(char*)&pathoriginal[posin+1],tailpos-posin-1);
-                     headpos = tailpos;
-                     tempval = val_new_value();
-                     if(!tempval)
-                     {
-                       val_free_value(*retval);
-                       return false;
+                      memset(path,0,MAX_PATH);
+                      strncat(path,(char*)&pathoriginal[posin+1],tailpos-posin-1);
+                      headpos = tailpos;
+                      curchild = val_first_child_qname(parentval,0,(const xmlChar *)path);
+                      if(NULL == curchild)
+                      {
+                        tempval = val_new_value();
+                        if(!tempval)
+                        {
+                           val_free_value(*retval);
+                           return false;
+                        }
+                        if(pos < len)
+                        {
+                           val_init_from_template(tempval,ncx_get_gen_container());
+                        }else{
+                           val_init_from_template(tempval,ncx_get_gen_empty());
+                        }
+                        val_set_qname (tempval,0,(const xmlChar *)path,strlen(path));
+                        val_add_child(tempval, parentval);
+                        parentval = tempval;
+                     }else{
+                       parentval = curchild;
                      }
-                     val_init_from_template(tempval,templateobj);
-                     if(pos==len) tempval->btyp = NCX_BT_STRING;
-                     else tempval->btyp = NCX_BT_CONTAINER;
-                     val_set_qname (tempval,0,(const xmlChar *)path,strlen(path));
-                     val_add_child(tempval, currentval);
-                     currentval = tempval;
-                     break;
+                       break;
                    }
                   }
              }

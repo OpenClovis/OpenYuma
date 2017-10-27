@@ -178,7 +178,7 @@ extern void
  *********************************************************************/
 
 
-boolean make_path_to_list(val_value_t **retval,char *pathoriginal,struct obj_template_t_ *templateobj);
+boolean make_path_to_list(val_value_t **retval,char *pathoriginal);
 /********************************************************************
  * FUNCTION val_gen_index_comp
  * 

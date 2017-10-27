@@ -1543,6 +1543,12 @@ static boolean
         return TRUE;
     }
 
+    /* super user is allowed to access anything except user-write blocked */
+    if (is_superuser(user)) {
+        (*logfn)("\nagt_acm: PERMIT (superuser)");
+        return TRUE;
+    }
+
     /* ncx:user-write blocking has highest priority */
     if(iswrite) {
         switch (editop) {
@@ -2594,7 +2600,7 @@ boolean
                               const val_value_t *val)
 {
     assert( msg && "msg is NULL!" );
-    assert( msg->acm_cache && "cache is NULL!" );
+//  assert( msg->acm_cache && "cache is NULL!" );
     assert( user && "user is NULL!" );
     assert( val && "val is NULL!" );
 

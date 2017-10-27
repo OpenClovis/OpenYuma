@@ -732,41 +732,24 @@ static status_t
 *     status, NO_ERR or ERR_INTERNAL_VAL
 *********************************************************************/
 static status_t
-    process_filter_sub_tree (xml_msg_hdr_t *msg, ses_cb_t *scb, val_value_t *filter, val_value_t *curval)
+    process_filter_sub_tree (xml_msg_hdr_t *msg, ses_cb_t *scb, val_value_t *filter, val_value_t *useval)
 {
-  val_value_t      *curchild, *useval,*curchild1,*usevalchild;
   ncx_filptr_t      *top;
   boolean finalresult = true;
   boolean keepempty = false;
-  char pathoriginal[MAX_PATH];
   status_t res;
-  for (curchild = val_first_child_qname(curval,0,(const xmlChar *)"edit");
-       curchild != NULL;
-       curchild = val_next_child_qname(curval,0,(const xmlChar *)"edit",curchild))
-  {
-     for (curchild1 = val_first_child_qname(curchild,0,(const xmlChar *)"target");
-          curchild1 != NULL;
-          curchild1 = val_next_child_qname(curchild,0,(const xmlChar *)"target",curchild1))
-     {
-        //get path
-        memset(pathoriginal,0,MAX_PATH);
-        strcat(pathoriginal,(char*)curchild1->xpathpcb->exprstr);
-        if(make_path_to_list(&useval,pathoriginal,curval->obj))
-        {
-          /* This is the normal case - a container node
-           * Go through the child nodes.
-           */
-            top = ncx_new_filptr();
-            if (!top) {
-                return ERR_INTERNAL_VAL;
-            }
-            top->node = useval;
-            res = process_val (msg,scb,TRUE,TRUE,filter,useval,top,&keepempty);
-            finalresult &=(NO_ERR ==res);
-            ncx_free_filptr(top);
-        }
-     }
+ /* This is the normal case - a container node
+  * Go through the child nodes.
+  */
+  top = ncx_new_filptr();
+  if (!top) {
+
+      return ERR_INTERNAL_VAL;
   }
+  top->node = useval;
+  res = process_val (msg,scb,TRUE,TRUE,filter,useval,top,&keepempty);
+  finalresult =(NO_ERR == res);
+  ncx_free_filptr(top);
   if(finalresult) return NO_ERR;
   else return ERR_INTERNAL_VAL;
 } /* process_val */
@@ -1103,7 +1086,9 @@ boolean
 {
     status_t           res;
     boolean            retval;
-    val_value_t *curchild;
+    ncx_filptr_t       *top;
+    boolean keepempty = false;
+
 #ifdef DEBUG
     if (!msghdr || !scb || !filter || !topval) {
         SET_ERROR(ERR_INTERNAL_PTR);
@@ -1128,16 +1113,22 @@ boolean
          */
         break;
     case NCX_BT_CONTAINER:
-        if(0 == strcmp((const char*)topval->name,(const char*)"sysConfigChange"))
-        {
-        /* This is the normal case - a container node
-         * Go through the child nodes.
-         */
-          res = process_filter_sub_tree(msghdr,scb,filter,topval);
-          if (res == NO_ERR) {
+         /* This is the normal case - a container node
+          * Go through the child nodes.
+          */
+         /* This is the normal case - a container node
+          * Go through the child nodes.
+          */
+           top = ncx_new_filptr();
+           if (!top) {
+               return ERR_INTERNAL_VAL;
+           }
+           top->node = topval;
+           res = process_val (msghdr,scb,TRUE,TRUE,filter,topval,top,&keepempty);
+           ncx_free_filptr(top);
+           if (res == NO_ERR) {
               retval = TRUE;
           }
-        }//other event is not notified
         break;
     default:
         SET_ERROR(ERR_INTERNAL_VAL);
