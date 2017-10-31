@@ -735,7 +735,6 @@ static status_t
     process_filter_sub_tree (xml_msg_hdr_t *msg, ses_cb_t *scb, val_value_t *filter, val_value_t *useval)
 {
   ncx_filptr_t      *top;
-  boolean finalresult = true;
   boolean keepempty = false;
   status_t res;
  /* This is the normal case - a container node
@@ -748,10 +747,8 @@ static status_t
   }
   top->node = useval;
   res = process_val (msg,scb,TRUE,TRUE,filter,useval,top,&keepempty);
-  finalresult =(NO_ERR == res);
   ncx_free_filptr(top);
-  if(finalresult) return NO_ERR;
-  else return ERR_INTERNAL_VAL;
+  return res;
 } /* process_val */
 /********************************************************************
 * FUNCTION output_node
