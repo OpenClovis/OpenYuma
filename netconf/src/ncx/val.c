@@ -1202,6 +1202,7 @@ static val_value_t *
     getcb = (getcb_fn_t)val->getcb;
 
     if (val->virtualval != NULL) {
+        log_debug4("\n Debug : virtual_val is not null");
         /* already have a value; check if it is fresh enough */
         (void)uptime(&timenow);
         timediff = difftime(timenow, val->cachetime);
@@ -1242,11 +1243,13 @@ static val_value_t *
     setup_virtual_retval(val, retval);
     (void)uptime(&val->cachetime);
 
+    log_info("\n Debug : call getcb ... ");
     *res = (*getcb)(NULL, GETCB_GET_VALUE, val, retval);
     if (*res != NO_ERR) {
         val_free_value(retval);
         retval = NULL;
     } else {
+        log_info("\n Debug : set virtual_val ... ");
         val->virtualval = retval;
         val->virtualval->parent = val->parent;
     }
@@ -1281,7 +1284,7 @@ static val_value_t *
                 boolean with_editvars,
                 status_t *res)
 {
-    const val_value_t *ch;
+    const val_value_t *ch, *use_val, *v_val;
     val_value_t       *copy, *copych;
     boolean            testres;
     uint32             i;
@@ -1305,6 +1308,7 @@ static val_value_t *
         *res = val->res;
         return NULL;
     }
+
 
     copy = val_new_value();
     if (!copy) {
@@ -1390,7 +1394,16 @@ static val_value_t *
 
     /* assume OK return for now */
     *res = NO_ERR;
-
+    if (val_is_virtual(val)) 
+    {
+        //log_info("\n Debug : fill virtual val [%s]",val->name);
+        v_val = val_get_virtual_value(NULL, val, res);
+        if (v_val) 
+        {
+            //log_info("fill virtual val");
+            val=v_val;//->virtualval;
+        }
+    }
     /* v_ union: copy the actual value or children for complex types */
     switch (val->btyp) {
     case NCX_BT_ENUM:

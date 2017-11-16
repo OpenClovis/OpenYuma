@@ -103,6 +103,7 @@ typedef struct xml_msg_hdr_t_ {
      * callback function: xml_msg_authfn_t
      */
     void                    *acm_cbfn;
+    boolean                 is_candidate;
 
 } xml_msg_hdr_t;
 

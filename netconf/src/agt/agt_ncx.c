@@ -706,7 +706,7 @@ static status_t
        val_value_t *chval;
        for(chval=val_get_first_child(out);chval!=NULL;chval=val_get_next_child(chval))
        {
-          chval->getcb = NULL;
+          //chval->getcb = NULL;
        }
        target->flags &= ~CFG_FL_DISCARD_CHANGES;
     }
@@ -2193,6 +2193,33 @@ static void
 
 } /* clear_commit_cb */
 
+void dump_node_database(val_value_t  *val)
+{
+    if(val->name)
+    {
+        log_debug("\nprint node [%s]",val->name);
+        if(val->getcb!=NULL)
+        {
+            log_debug(" with getcb");
+        }
+        else
+        {
+            log_debug(" with non getcb");
+        }
+        if(!xml_strcmp(val->name, "port") ||!xml_strcmp(val->name, "port1"))
+        {
+            log_debug(" with value %d",val->v.num);
+        }     
+    }
+    val_value_t  *candidate_val;
+    for (candidate_val = val_get_first_child(val);
+         candidate_val != NULL;
+         candidate_val = val_get_next_child(candidate_val))
+    {
+
+        dump_node_database(candidate_val);
+    }
+}
 
 /********************************************************************
 * FUNCTION commit_invoke
@@ -2220,7 +2247,7 @@ static status_t
     errdone = FALSE;
     timeout_extended = FALSE;
     errval = NULL;
-
+    log_info("\n DEBUG : ha ha ha ha");
     candidate = cfg_get_config_id(NCX_CFGID_CANDIDATE);
     running = cfg_get_config_id(NCX_CFGID_RUNNING);
     if (candidate == NULL || running == NULL) {
@@ -2464,8 +2491,19 @@ static status_t
     if (res == NO_ERR && timeout_extended == FALSE) {
         res = write_config(commit_cb.cc_backup_source, running);
     }
+    
 
+    log_info("\n DEBUG : start commit");
+    
     if (res == NO_ERR) {
+/*
+        log_info("\n DEBUG : Dump data before start");
+        log_info("\n DEBUG : Dump candidate");
+        dump_node_database(candidate->root);
+        log_info("\n DEBUG : Dump running");
+        dump_node_database(running->root);
+        
+        log_info("\n DEBUG : call agt_val_apply_commit");*/
         res = agt_val_apply_commit(scb, msg, candidate, running, save_nvstore);
         if (res != NO_ERR) {
             errdone = TRUE;
@@ -2486,6 +2524,12 @@ static status_t
                 }
             }
         } else {
+ /*         log_info("\n DEBUG : Dump data after start");
+            log_info("\n DEBUG : Dump candidate");
+            dump_node_database(candidate->root);
+            log_info("\n DEBUG : Dump running");
+            dump_node_database(running->root);
+*/
             res = cfg_fill_candidate_from_running();
         }
     }

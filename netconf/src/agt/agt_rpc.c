@@ -494,6 +494,12 @@ static status_t
             return NO_ERR;
         }
         cfg = (cfg_template_t *)msg->rpc_user1;
+        if(cfg->cfg_id == NCX_CFGID_CANDIDATE)
+        {
+            //log_info("get-config candidate");
+            msg->mhdr.is_candidate=TRUE;
+        }
+        
 
         /* check if this attr already present in rpc_in_attrs */
         attr = xml_find_attr_q(msg->rpc_in_attrs, 0, NCX_EL_LAST_MODIFIED);

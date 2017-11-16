@@ -3470,12 +3470,19 @@ val_value_t *
             return NULL;
         }
     }
-                                   
+                           
+    if(msg->is_candidate)
+    {
+        log_info("get candidate data");
+    }
+    else
+    {        
     if (val_is_virtual(val)) {
         v_val = val_get_virtual_value(scb, val, res);
         if (!v_val) {
             return NULL;
         }
+    }
     }
 
     useval = (v_val) ? v_val : val;
