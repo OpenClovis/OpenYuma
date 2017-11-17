@@ -1394,13 +1394,12 @@ static val_value_t *
 
     /* assume OK return for now */
     *res = NO_ERR;
+    /*Fix issue get/commit in cadidate mode*/
     if (val_is_virtual(val)) 
     {
-        //log_info("\n Debug : fill virtual val [%s]",val->name);
         v_val = val_get_virtual_value(NULL, val, res);
         if (v_val) 
         {
-            //log_info("fill virtual val");
             val=v_val;//->virtualval;
         }
     }
