@@ -400,7 +400,7 @@ typedef struct val_value_t_ {
     } v;
 } val_value_t;
 
-
+void dump_node_database(val_value_t  *val);
 /* Struct marking the parsing of an instance identifier
  * The position of this record in the val_value_t indexQ
  * represents the order the identifers were parsed

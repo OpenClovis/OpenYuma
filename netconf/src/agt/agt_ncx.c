@@ -698,19 +698,6 @@ static status_t
     if (urlspec != NULL) {
         m__free(urlspec);
     }
-
-    if (target->cfg_id==NCX_CFGID_CANDIDATE && (target->flags&CFG_FL_DISCARD_CHANGES) && res==NO_ERR)
-    {
-       val_value_t* out = target->root;
-       log_debug("\nedit_config_invoke: fetch chidren by val_get_value\n");
-       val_value_t *chval;
-       for(chval=val_get_first_child(out);chval!=NULL;chval=val_get_next_child(chval))
-       {
-          //chval->getcb = NULL;
-       }
-       target->flags &= ~CFG_FL_DISCARD_CHANGES;
-    }
-
     return res;
 
 } /* edit_config_validate */
@@ -2193,33 +2180,6 @@ static void
 
 } /* clear_commit_cb */
 
-void dump_node_database(val_value_t  *val)
-{
-    if(val->name)
-    {
-        log_debug("\nprint node [%s]",val->name);
-        if(val->getcb!=NULL)
-        {
-            log_debug(" with getcb");
-        }
-        else
-        {
-            log_debug(" with non getcb");
-        }
-        if(!xml_strcmp(val->name, "port") ||!xml_strcmp(val->name, "port1"))
-        {
-            log_debug(" with value %d",val->v.num);
-        }     
-    }
-    val_value_t  *candidate_val;
-    for (candidate_val = val_get_first_child(val);
-         candidate_val != NULL;
-         candidate_val = val_get_next_child(candidate_val))
-    {
-
-        dump_node_database(candidate_val);
-    }
-}
 
 /********************************************************************
 * FUNCTION commit_invoke
@@ -2496,14 +2456,14 @@ static status_t
     log_info("\n DEBUG : start commit");
     
     if (res == NO_ERR) {
-/*
+
         log_info("\n DEBUG : Dump data before start");
         log_info("\n DEBUG : Dump candidate");
         dump_node_database(candidate->root);
         log_info("\n DEBUG : Dump running");
         dump_node_database(running->root);
         
-        log_info("\n DEBUG : call agt_val_apply_commit");*/
+        log_info("\n DEBUG : calling agt_val_apply_commit\n");
         res = agt_val_apply_commit(scb, msg, candidate, running, save_nvstore);
         if (res != NO_ERR) {
             errdone = TRUE;
@@ -2524,13 +2484,18 @@ static status_t
                 }
             }
         } else {
- /*         log_info("\n DEBUG : Dump data after start");
-            log_info("\n DEBUG : Dump candidate");
+            /*log_info("\n DEBUG : Dump data after start");
+            log_info("\n DEBUG : Dump candidate1");
             dump_node_database(candidate->root);
-            log_info("\n DEBUG : Dump running");
-            dump_node_database(running->root);
-*/
+            log_info("\n DEBUG : Dump running1");
+            dump_node_database(running->root);*/
+
             res = cfg_fill_candidate_from_running();
+            log_info("\n DEBUG :DANGLE:co goi hay la khong: Dump data after start2:res:%d",res);
+            log_info("\n DEBUG : Dump candidate2");
+            dump_node_database(candidate->root);
+            log_info("\n DEBUG : Dump running2");
+            dump_node_database(running->root);
         }
     }
 

@@ -161,6 +161,7 @@ static op_editop_t cvt_editop( op_editop_t editop,
             retop = OP_EDITOP_REPLACE;  // error: both NULL!!
         }
     }
+    log_debug("cvt_editop:in:%s out:%s",op_editop_name(editop),op_editop_name(retop));
     return retop;
 
 }  /* cvt_editop */
@@ -606,7 +607,7 @@ static status_t
     }
 
     if (LOGDEBUG4) {
-        log_debug4("\nChecking for %s user callback for %s edit on %s:%s",
+        log_debug4("\nDANGLE:Checking for %s user callback for %s edit on %s:%s",
                    agt_cbtype_name(cbtyp),
                    op_editop_name(editop),
                    val_get_mod_name(val),
@@ -1642,6 +1643,9 @@ static status_t
              * Also there is no corresponding callback
              * to cleanup the candidate if <discard-changes>
              * is invoked by the client or the server */
+            log_debug("\nDANGLE:1:apply_write_val: apply %s on %s",
+                                        op_editop_name(editop), name);
+
             res = handle_user_callback(AGT_CB_APPLY, editop, scb, msg, 
                                        newval, curval, TRUE, FALSE);
             if (res != NO_ERR) {
@@ -5816,7 +5820,7 @@ status_t
 
     agt_profile_t    *profile = agt_get_profile();
     status_t          res = NO_ERR;
-
+    log_debug("agt_val_apply_commit:DANGLE:begin\n");
 #ifdef ALLOW_SKIP_EMPTY_COMMIT
     /* usually only save if the source config was touched */
     if (!cfg_get_dirty_flag(source)) {
@@ -5862,31 +5866,42 @@ status_t
 
     /* check any top-level deletes */
     //res = apply_commit_deletes(scb, msg, target, source->root, target->root);
+    log_debug("agt_val_apply_commit:DANGLE:3\n");
     if (res == NO_ERR) {
         /* apply all the new and modified nodes */
-        res = handle_callback(AGT_CB_APPLY, OP_EDITOP_COMMIT, scb, msg, 
+        res = handle_callback(AGT_CB_APPLY, OP_EDITOP_COMMIT, scb, msg,
                               target, source->root, target->root, target->root);
     }
 
     if (res==NO_ERR) {
-        /* complete the transaction */
-        res = handle_callback(AGT_CB_COMMIT, OP_EDITOP_COMMIT, scb, msg, 
+        log_debug("agt_val_apply_commit:DANGLE:4\n");
+        /*res = cfg_fill_candidate_from_running();
+        // complete the transaction
+        log_debug("agt_val_apply_commit:database:source:begin\n");
+        dump_node_database(source->root);
+        log_debug("agt_val_apply_commit:database:target:begin\n");
+        dump_node_database(target->root);
+        log_debug("agt_val_apply_commit:database:target:end\n");*/
+        res = handle_callback(AGT_CB_COMMIT, OP_EDITOP_COMMIT, scb, msg,
                               target, source->root, target->root, target->root);
-
+        log_debug("agt_val_apply_commit:DANGLE:41\n");
         if ( NO_ERR == res ) {
             res = agt_commit_complete();
         }
+        log_debug("agt_val_apply_commit:DANGLE:42\n");
     } else {
-        /* rollback the transaction */
+      log_debug("agt_val_apply_commit:DANGLE:5\n");
+        // rollback the transaction
         status_t res2 = handle_callback(AGT_CB_ROLLBACK, OP_EDITOP_COMMIT,
                                         scb, msg, target, source->root,
                                         target->root, target->root);
+        log_debug("agt_val_apply_commit:DANGLE:51\n");
         if (res2 != NO_ERR) {
             log_error("\nError: rollback failed (%s)", 
                       get_error_string(res2));
         }
     }
-
+    log_debug("agt_val_apply_commit:DANGLE:6\n");
     if (res == NO_ERR && !profile->agt_has_startup) {
         if (save_nvstore) {
             res = agt_ncx_cfg_save(target, FALSE);
@@ -5905,7 +5920,7 @@ status_t
                        "until confirmed");
         }
     }
-
+    log_debug("\nagt_val_apply_commit:DANGLE:end\n");
     return res;
 
 }  /* agt_val_apply_commit */

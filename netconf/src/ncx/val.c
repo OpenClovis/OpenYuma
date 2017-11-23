@@ -103,6 +103,33 @@ static uint32 editvars_malloc = 0;
 static uint32 editvars_free = 0;
 #endif
 
+void dump_node_database(val_value_t  *val)
+{
+    if(val->name)
+    {
+        log_debug("\nprint node [%s]",val->name);
+        if(val->getcb!=NULL)
+        {
+            log_debug(" with getcb");
+        }
+        else
+        {
+            log_debug(" with non getcb");
+        }
+        if(!xml_strcmp(val->name, "port") ||!xml_strcmp(val->name, "port1"))
+        {
+            log_debug(" with value %d",val->v.num);
+        }
+    }
+    val_value_t  *candidate_val;
+    for (candidate_val = val_get_first_child(val);
+         candidate_val != NULL;
+         candidate_val = val_get_next_child(candidate_val))
+    {
+
+        dump_node_database(candidate_val);
+    }
+}
 
 /********************************************************************
 * FUNCTION stdout_num
@@ -1252,6 +1279,8 @@ static val_value_t *
         log_info("\n Debug : set virtual_val ... ");
         val->virtualval = retval;
         val->virtualval->parent = val->parent;
+        log_debug("DANGLE:RETVAL\n");
+        dump_node_database(retval);
     }
     return retval;
 
@@ -1394,14 +1423,15 @@ static val_value_t *
 
     /* assume OK return for now */
     *res = NO_ERR;
+    /*Fix issue get/commit in cadidate mode*/
     if (val_is_virtual(val)) 
     {
-        //log_info("\n Debug : fill virtual val [%s]",val->name);
         v_val = val_get_virtual_value(NULL, val, res);
         if (v_val) 
         {
-            //log_info("fill virtual val");
             val=v_val;//->virtualval;
+            log_debug("DANGLE:VAL\n");
+            dump_node_database(val);
         }
     }
     /* v_ union: copy the actual value or children for complex types */
