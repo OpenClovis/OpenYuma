@@ -388,7 +388,8 @@ static status_t
                                        val_get_mod_name(chval),
                                        chval->name);
                         }
-                        chval->flags |= VAL_FL_DEFSET;
+                        if(val->editop == OP_EDITOP_CREATE)  chval->flags &= ~VAL_FL_DEFSET;
+                        else  chval->flags |= VAL_FL_DEFSET;
                     }
                 }
             }
