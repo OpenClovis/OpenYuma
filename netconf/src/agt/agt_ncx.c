@@ -703,6 +703,19 @@ static status_t
 } /* edit_config_validate */
 
 
+void val_remove_cadidate_getcb(val_value_t  *val)
+{
+    val->getcb=NULL;
+    val_value_t  *candidate_val;
+    for (candidate_val = val_get_first_child(val);
+         candidate_val != NULL;
+         candidate_val = val_get_next_child(candidate_val)) 
+    {
+        candidate_val->getcb=NULL;
+    }
+}
+
+
 /********************************************************************
 * FUNCTION edit_config_invoke
 *
@@ -756,6 +769,14 @@ static status_t
         if (res != NO_ERR) {
             log_error("\nError: Save <running> to NV-storage failed (%s)",
                       get_error_string(res));
+        }
+    }
+    if(target->cfg_id == NCX_CFGID_CANDIDATE)
+    {
+        log_info("\ncandidate database remove getcb for all node ");
+        if(target->root!=NULL)
+        {
+            val_remove_cadidate_getcb(target->root);
         }
     }
 
