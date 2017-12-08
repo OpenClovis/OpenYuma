@@ -33,6 +33,7 @@ date	     init     comment
 
 #include <math.h>
 #include <xmlstring.h>
+#include <assert.h>
 
 #include "xmlns.h"
 #include "status.h"
@@ -170,6 +171,9 @@ extern "C" {
  */
 static inline boolean terminate_parse( status_t res )
 {
+    if(res!=NO_ERR) {
+        printf("%s %d\n",__FUNCTION__, res);
+    }
     return ( res != NO_ERR && ( res < ERR_LAST_SYS_ERR || res==ERR_NCX_EOF ));
 }
 

@@ -1814,7 +1814,10 @@ static status_t
              }
 
              if (curval->parent) {
-                 val_set_dirty_flag(curval->parent);
+               if((curval->btyp !=NCX_BT_LIST)&&(curval->btyp !=OBJ_TYP_LEAF_LIST))
+               {
+                  val_set_dirty_flag(curval->parent);
+               }
              }
 
              /* check if this is a leaf with a default */
@@ -3281,6 +3284,10 @@ static status_t
                 /* deleted in the source, so delete in the target */
                 res = handle_callback(AGT_CB_APPLY, OP_EDITOP_DELETE, 
                                       scb, msg, target, NULL, curval, runval);
+                assert(res==NO_ERR);
+            } else {
+                res = apply_commit_deletes(scb, msg, target, matchval, curval);
+                assert(res==NO_ERR);
             }
         }  /* else skip non-config database node */
     }
@@ -4267,7 +4274,9 @@ static status_t must_stmt_check ( ses_cb_t *scb,
         }
         xpath_free_result(result);
     }
-
+    if(res == NO_ERR && curval->res != NO_ERR) {
+        return curval->res;
+    }
     return res;
 }  /* must_stmt_check */
 

@@ -711,7 +711,8 @@ void val_remove_cadidate_getcb(val_value_t  *val)
          candidate_val != NULL;
          candidate_val = val_get_next_child(candidate_val)) 
     {
-        candidate_val->getcb=NULL;
+
+        val_remove_cadidate_getcb(candidate_val);
     }
 }
 

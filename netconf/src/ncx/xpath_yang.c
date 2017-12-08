@@ -56,6 +56,7 @@ date         init     comment
 #include "tk.h"
 #include "typ.h"
 #include "val.h"
+#include "val_util.h"
 #include "xmlns.h"
 #include "xpath.h"
 #include "xpath_yang.h"
@@ -470,8 +471,13 @@ static status_t set_next_objnode( xpath_pcb_t *pcb,
         /* setting object for the first time, get child node of the current 
          * context object */
         if ( pcb->targobj && targmod ) {
-            foundobj = obj_find_child( pcb->targobj, ncx_get_modname(targmod), 
-                                       nodename );
+            if(pcb->targobj->objtype != OBJ_TYP_LEAF_LIST) {
+                foundobj = obj_find_child( pcb->targobj, ncx_get_modname(targmod),
+                                           nodename );
+            } else {
+                assert(0==strcmp(obj_get_name(pcb->targobj),nodename));
+                foundobj = pcb->targobj;
+            }
         }
     } else if ( ( pcb->flags & XP_FL_ABSPATH ) ) {
         /* setting object for the first time get top-level object from 
@@ -565,18 +571,28 @@ static status_t move_up_obj (xpath_pcb_t *pcb)
  * pcb token.
  *
  * \param pcb the parser control block in progress|
+ * \param prefix the prefix
+ * \param nsid the nsid
  * \param res the result status
  * \return the associated node name
  *********************************************************************/
 static const xmlChar* parse_node_identifier_tk_tt_period( xpath_pcb_t* pcb,
+                                                          const xmlChar** prefix,
+                                                          xmlns_id_t* nsid,
                                                           status_t* res )
 {
     if (pcb->flags & XP_FL_INSTANCEID) {
-        if ( !targ_obj_is_leaflist( pcb ) ) {
-            *res = ERR_NCX_INVALID_VALUE;
-        } else {
+        if(pcb->obj==NULL) {
+            /* parsing wo schema "." can't be interpreted */
             *res = NO_ERR;
+            return NULL;
+        } else if(targ_obj_is_leaflist( pcb )) {
+            *res = NO_ERR;
+            *nsid = obj_get_nsid(pcb->targobj);
+            *prefix = obj_get_mod_prefix(pcb->targobj);
             return obj_get_name(pcb->targobj);
+        } else {
+            *res = ERR_NCX_INVALID_VALUE;
         }
     } else {
        *res = pcb_log_error_msg( pcb, NULL, ERR_NCX_WRONG_TKTYPE,
@@ -672,7 +688,8 @@ static status_t parse_node_identifier (xpath_pcb_t *pcb)
 
     switch (TK_CUR_TYP(pcb->tkc)) {
     case TK_TT_PERIOD:
-        nodename = parse_node_identifier_tk_tt_period( pcb, &res );
+        nodename = parse_node_identifier_tk_tt_period( pcb, &prefix, &nsid, &res );
+
         break;
 
     case TK_TT_MSTRING:
@@ -2418,6 +2435,10 @@ val_value_t *
             default:
                 res = SET_ERROR(ERR_INTERNAL_VAL);
             }
+        }
+
+        if(curtop->obj->objtype == OBJ_TYP_LIST) {
+            res = val_gen_index_chain(curtop->obj, curtop);
         }
     }
 
