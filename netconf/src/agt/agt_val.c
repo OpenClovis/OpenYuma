@@ -1814,10 +1814,13 @@ static status_t
              }
 
              if (curval->parent) {
-               if((curval->btyp !=NCX_BT_LIST)&&(curval->btyp !=OBJ_TYP_LEAF_LIST))
-               {
-                  val_set_dirty_flag(curval->parent);
-               }
+                if(curval->obj)
+                {
+                   if((curval->obj->objtype != OBJ_TYP_LIST)&&(curval->obj->objtype != OBJ_TYP_LEAF_LIST))
+                   {
+                      val_set_dirty_flag(curval->parent);
+                   }
+                }
              }
 
              /* check if this is a leaf with a default */
