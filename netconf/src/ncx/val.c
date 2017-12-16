@@ -1190,7 +1190,7 @@ static val_value_t *
     val_value_t *retval;
     getcb_fn_t   getcb;
     time_t       timenow;
-    double       timediff, timerval;
+    time_t       timediff, timerval;
     uint32       deftimeout;
     boolean      disable_cache;
 
@@ -1209,20 +1209,20 @@ static val_value_t *
 
         disable_cache = FALSE;
         if (scb != NULL) {
-            timerval = (double)scb->cache_timeout;
+            timerval = (time_t)scb->cache_timeout;
             if (scb->cache_timeout == 0) {
                 disable_cache = TRUE;
             }
         } else {
             deftimeout = ncx_get_vtimeout_value();
-            timerval = (double)deftimeout;
+            timerval = (time_t)deftimeout;
         }
 
         if (LOGDEBUG4) {
             log_debug4("\nval: virtual val timer %e", timediff);
         }
 
-        if (disable_cache || timediff > timerval) {
+        if (disable_cache || timediff >= timerval) {
             if (LOGDEBUG4) {
                 log_debug4("\nval: refresh virtual val %s",
                            val->name);

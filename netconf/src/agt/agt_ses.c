@@ -403,6 +403,25 @@ ses_cb_t *
     return scb;
 
 }  /* agt_ses_new_dummy_session */
+/********************************************************************
+* FUNCTION agt_ses_get_dummy_session
+*
+* get a dummy session control block
+*
+* INPUTS:
+*   none
+* RETURNS:
+*   pointer a dummy SCB, or NULL if it is not malloc
+*********************************************************************/
+ses_cb_t *
+    agt_ses_get_dummy_session (void)
+{
+    /* check if dummy session already cached */
+    if (agtses[0]) {
+        return agtses[0];
+    }
+    return NULL;
+}  /* agt_ses_get_dummy_session */
 
 /********************************************************************
 * FUNCTION agt_ses_set_dummy_session_acm

@@ -108,6 +108,18 @@ extern void
 
 
 /********************************************************************
+* FUNCTION agt_ses_get_dummy_session
+*
+* get a dummy session control block
+*
+* INPUTS:
+*   none
+* RETURNS:
+*   pointer to a dummy SCB, or NULL if it is not malloc
+*********************************************************************/
+extern ses_cb_t *
+    agt_ses_get_dummy_session (void);
+/********************************************************************
 * FUNCTION agt_ses_new_dummy_session
 *
 * Create a dummy session control block
