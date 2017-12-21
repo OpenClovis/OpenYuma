@@ -11,3 +11,13 @@ time_t uptime(time_t *t)
     return *t;
 }
 
+
+time_t reset_time(time_t *t)
+{
+    int ret;
+    struct timespec tp;
+    tp.tv_sec=0;
+    *t = tp.tv_sec;
+    return *t;
+}
+
