@@ -3929,7 +3929,17 @@ void
 
 } /* agt_ncx_check_cc_timeout */
 
-
+void val_reset_cache_time (val_value_t  *val)
+{
+    val->cachetime=(time_t)0;
+    val_value_t  *candidate_val;
+    for (candidate_val = val_get_first_child(val);
+         candidate_val != NULL;
+         candidate_val = val_get_next_child(candidate_val))
+    {
+        val_reset_cache_time(candidate_val);
+    }
+}
 /********************************************************************
 * FUNCTION agt_ncx_cancel_confirmed_commit
 *
@@ -3969,6 +3979,13 @@ void
     }
 
     if (res == NO_ERR) {
+        cfg_template_t  *running;
+
+        running = cfg_get_config_id(NCX_CFGID_RUNNING);
+        if (!running->root) {
+           return ERR_NCX_DATA_MISSING;
+        }
+        val_reset_cache_time(running->root);
         res = cfg_fill_candidate_from_running();
         if (res != NO_ERR) {
             log_error("\nError: resynch candidate after restore "
