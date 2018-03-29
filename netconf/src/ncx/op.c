@@ -105,6 +105,12 @@ const xmlChar *
         return NCX_EL_VALIDATE;
     case OP_CANCEL_COMMIT:
         return NCX_EL_CANCEL_COMMIT;
+    case OP_TRANS_START:
+        return NCX_EL_TRANS_START;
+    case OP_TRANS_COMMIT:
+        return NCX_EL_TRANS_COMMIT;
+    case OP_TRANS_ROLLBACK:
+        return NCX_EL_TRANS_ROLLBACK;
     default:
         return NCX_EL_ILLEGAL;
     }

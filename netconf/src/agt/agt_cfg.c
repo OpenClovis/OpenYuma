@@ -213,7 +213,7 @@ date         init     comment
 static cfg_transaction_id_t agt_cfg_txid;
 
 static const xmlChar *agt_cfg_txid_filespec;
-
+agt_cfg_transaction_t* gTxcb = NULL;
 
 /********************************************************************
 * FUNCTION allocate_txid
@@ -938,6 +938,22 @@ status_t
 
 }  /* agt_cfg_update_txid */
 
+cfg_transaction_id_t agt_trans_id_get(rpc_msg_t *msg)
+{
+    val_value_t* chval, *val = msg->rpc_input;
+    //ncx_btype_t btyp;
+    for (chval = (val_value_t *)dlq_firstEntry(&val->v.childQ);
+             chval != NULL;
+             chval = (val_value_t *)dlq_nextEntry(chval)) 
+    {
+        if (!xml_strcmp(chval->name, "trans-id"))
+          if (chval->btyp == NCX_BT_UINT64)
+          {
+              return (cfg_transaction_id_t)chval->v.num.ul;
+          }
+    }
+    return 0;
+}
 
 /* END file agt_cfg.c */
 

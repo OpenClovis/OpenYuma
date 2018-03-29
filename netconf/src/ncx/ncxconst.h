@@ -486,6 +486,9 @@ extern "C" {
 #define NCX_EL_EXTEND          (const xmlChar *)"extend"
 #define NCX_EL_EXTERN          (const xmlChar *)"extern"
 #define NCX_EL_FALSE           (const xmlChar *)"false"
+#define NCX_EL_TRANS_START     (const xmlChar *)"trans-start"
+#define NCX_EL_TRANS_COMMIT    (const xmlChar *)"trans-commit"
+#define NCX_EL_TRANS_ROLLBACK  (const xmlChar *)"trans-rollback"
 #define NCX_EL_FEATURE_CODE_DEFAULT \
     (const xmlChar *)"feature-code-default"
 #define NCX_EL_FEATURE_ENABLE_DEFAULT \

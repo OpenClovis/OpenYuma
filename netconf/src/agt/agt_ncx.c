@@ -121,6 +121,22 @@ static boolean          agt_ncx_init_done = FALSE;
 static commit_cb_t      commit_cb;
 
 
+
+static status_t
+    transaction_start_invoke (ses_cb_t *scb,
+                        rpc_msg_t *msg,
+                        xml_node_t *methnode);
+
+static status_t
+    transaction_commit_invoke (ses_cb_t *scb,
+                        rpc_msg_t *msg,
+                        xml_node_t *methnode);
+static status_t
+    transaction_rollback_invoke (ses_cb_t *scb,
+                        rpc_msg_t *msg,
+                        xml_node_t *methnode);
+
+
 /********************************************************************
 * FUNCTION new_copyparms
 *
@@ -628,23 +644,47 @@ static status_t
     }
 
     if (res == NO_ERR) {
-        /* allocate a new transaction control block */
-        msg->rpc_txcb = 
-            agt_cfg_new_transaction(target->cfg_id, AGT_CFG_EDIT_TYPE_PARTIAL,
-                                    rootcheck, FALSE, &res);
-        if (msg->rpc_txcb == NULL || res != NO_ERR) {
-            if (res == NO_ERR) {
-                res = ERR_NCX_OPERATION_FAILED;
+        cfg_transaction_id_t transId = agt_trans_id_get(msg);
+        if (transId && gTxcb && gTxcb->txid != transId)
+        {
+            log_error("\n[%s]: invalid transaction id [%u]",__FUNCTION__,transId);
+            return SET_ERROR(ERR_INTERNAL_VAL);
+        }
+        else if (!transId) // not applied transaction for this action
+        {
+            /* allocate a new transaction control block */
+            msg->rpc_txcb = 
+                agt_cfg_new_transaction(target->cfg_id, AGT_CFG_EDIT_TYPE_PARTIAL,
+                                        rootcheck, FALSE, &res);
+            if (msg->rpc_txcb == NULL || res != NO_ERR) {
+                if (res == NO_ERR) {
+                    res = ERR_NCX_OPERATION_FAILED;
+                }
+                agt_record_error(scb, 
+                                 &msg->mhdr, 
+                                 NCX_LAYER_OPERATION, 
+                                 res,
+                                 methnode, 
+                                 NCX_NT_NONE, 
+                                 NULL, 
+                                 NCX_NT_NONE, 
+                                 NULL);
             }
-            agt_record_error(scb, 
-                             &msg->mhdr, 
-                             NCX_LAYER_OPERATION, 
-                             res,
-                             methnode, 
-                             NCX_NT_NONE, 
-                             NULL, 
-                             NCX_NT_NONE, 
-                             NULL);
+        }
+        else if (transId && gTxcb && gTxcb->sid != scb->sid)
+        {
+            log_error("\n[%s]: mismatched session id applied for transaction [%u]",__FUNCTION__,transId);
+            return ERR_NCX_OPERATION_FAILED;
+        }
+        else if (transId && !gTxcb)
+        {
+            log_error("\n[%s]: transaction id [%u] is invalid because it is not intialized with trans_start",__FUNCTION__,transId);
+            return ERR_NCX_OPERATION_FAILED;
+        }
+        else
+        {
+            gTxcb->rootcheck = rootcheck;
+            msg->rpc_txcb=gTxcb;
         }
     }
 
@@ -3239,6 +3279,29 @@ static status_t
         return SET_ERROR(res);
     }
 
+    res = agt_rpc_register_method(NC_MODULE,
+                                  op_method_name(OP_TRANS_START),
+                                  AGT_RPC_PH_INVOKE,
+                                  transaction_start_invoke);
+    if (res != NO_ERR) {
+        return SET_ERROR(res);
+    }
+
+    res = agt_rpc_register_method(NC_MODULE,
+                                  op_method_name(OP_TRANS_COMMIT),
+                                  AGT_RPC_PH_INVOKE,
+                                  transaction_commit_invoke);
+    if (res != NO_ERR) {
+        return SET_ERROR(res);
+    }
+
+    res = agt_rpc_register_method(NC_MODULE,
+                                  op_method_name(OP_TRANS_ROLLBACK),
+                                  AGT_RPC_PH_INVOKE,
+                                  transaction_rollback_invoke);
+    if (res != NO_ERR) {
+        return SET_ERROR(res);
+    }
 
     /* copy-config */
     res = agt_rpc_register_method(NC_MODULE,
@@ -4000,6 +4063,144 @@ void
 
 } /* agt_ncx_cancel_confirmed_commit */
 
+static status_t
+    transaction_start_invoke (ses_cb_t *scb,
+                        rpc_msg_t *msg,
+                        xml_node_t *methnode)
+{
+    
+    log_debug("\nenter %s",__FUNCTION__);
+    cfg_template_t       *target = NULL;
+    status_t res = agt_get_cfg_from_parm(NCX_EL_TARGET, msg, methnode, &target);
+    if (res != NO_ERR) 
+    {
+        return res;  /* error already recorded */
+    }
+#if 0
+    if (!cfg_is_global_locked(target))
+    {
+     
+    }
+#endif
+    res = lock_validate(scb,msg,methnode);
+    if (res != NO_ERR) 
+    {
+        return res;  /* error already recorded */
+    }
+    res = lock_invoke(scb,msg,methnode);
+    if (res != NO_ERR) 
+    {
+        return res;  /* error already recorded */
+    }
+    msg->rpc_txcb = 
+            agt_cfg_new_transaction(target->cfg_id, AGT_CFG_EDIT_TYPE_PARTIAL,
+                                    FALSE, FALSE, &res);    
+    if (msg->rpc_txcb == NULL || res != NO_ERR) 
+    {
+        if (res == NO_ERR) 
+        {
+            res = ERR_NCX_OPERATION_FAILED;
+        }
+        agt_record_error(scb, 
+                         &msg->mhdr, 
+                         NCX_LAYER_OPERATION, 
+                         res,
+                         methnode, 
+                         NCX_NT_NONE, 
+                         NULL, 
+                         NCX_NT_NONE, 
+                         NULL);
+    }
+    else
+    {
+        msg->rpc_txcb->sid = scb->sid;
+        gTxcb = msg->rpc_txcb;
+        val_value_t     *transIdValOutput;
+        xmlChar          numbuff[NCX_MAX_NUMLEN];
+        snprintf((char *)numbuff, sizeof(numbuff), "%u", (uint64) gTxcb->txid);
+        transIdValOutput = val_make_string(val_get_nsid(target->root),
+                                    (const xmlChar*)"trans-id",
+                                    numbuff);
+        dlq_enque(transIdValOutput, &msg->rpc_dataQ);
+        msg->rpc_data_type = RPC_DATA_STD;
+    }
+    return res;
+}
 
+static status_t
+    transaction_commit_invoke (ses_cb_t *scb,
+                        rpc_msg_t *msg,
+                        xml_node_t *methnode)
+{
+    log_debug("\nenter %s",__FUNCTION__);
+    status_t res;
+    cfg_transaction_id_t transId = agt_trans_id_get(msg);
+    if (!transId || !gTxcb || (gTxcb && (gTxcb->txid != transId || gTxcb->sid != scb->sid))) // invalid transaction
+        {
+            res = ERR_INTERNAL_VAL;
+            log_error("\n trans-id [%u] is invalid", transId);
+            agt_record_error(scb, 
+                             &msg->mhdr, 
+                             NCX_LAYER_OPERATION, 
+                             res,
+                             methnode, 
+                             NCX_NT_NONE, 
+                             NULL, 
+                             NCX_NT_NONE, 
+                             NULL);       
+            return SET_ERROR(ERR_INTERNAL_VAL);
+        }
+    
+    agt_cfg_free_transaction(gTxcb);
+    gTxcb = NULL;
+    msg->rpc_txcb = NULL;
+    return NO_ERR;
+}
+
+static status_t
+    transaction_rollback_invoke (ses_cb_t *scb,
+                        rpc_msg_t *msg,
+                        xml_node_t *methnode)
+{
+    log_debug("\nenter %s",__FUNCTION__);
+    status_t res;
+    cfg_transaction_id_t transId = agt_trans_id_get(msg);
+    if (!transId || !gTxcb || (gTxcb && (gTxcb->txid != transId || gTxcb->sid != scb->sid))) // invalid transaction
+        {
+            log_error("\n trans-id [%u] is invalid", transId);
+            res = ERR_INTERNAL_VAL;
+            agt_record_error(scb, 
+                             &msg->mhdr, 
+                             NCX_LAYER_OPERATION, 
+                             res,
+                             methnode, 
+                             NCX_NT_NONE, 
+                             NULL, 
+                             NCX_NT_NONE, 
+                             NULL);       
+            return SET_ERROR(ERR_NCX_OPERATION_FAILED);
+        }
+    cfg_template_t       *target = NULL;
+    //res = agt_get_cfg_from_parm(NCX_EL_TARGET, msg, methnode, &target);
+    target = cfg_get_config_id(gTxcb->cfg_id);
+    if (!target) 
+    {
+        log_error("\n%s: getting target from config_id [%d] failed",__FUNCTION__,gTxcb->cfg_id);
+        return SET_ERROR(ERR_NCX_OPERATION_FAILED);
+    }
+    msg->rpc_txcb = gTxcb;
+    res = attempt_rollback (scb,msg,target);
+    if (res == NO_ERR)
+    {
+        agt_cfg_free_transaction(gTxcb);
+        gTxcb = NULL;
+        msg->rpc_txcb = NULL;
+    }
+    else
+    {
+        log_error("\n%s: attempting rollback for config_id [%d], transaction [%u] failed",__FUNCTION__,gTxcb->cfg_id,(uint64)transId);
+    }
+    return res;
+}
 
 /* END file agt_ncx.c */

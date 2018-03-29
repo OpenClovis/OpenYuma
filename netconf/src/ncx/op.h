@@ -67,7 +67,10 @@ typedef enum op_method_t_ {
     OP_COMMIT,                   /* #candidate capability */
     OP_DISCARD_CHANGES,          /* #candidate capability */
     OP_VALIDATE,                  /* #validate capability */
-    OP_CANCEL_COMMIT            /* base:1.1 + conf-commit */
+    OP_CANCEL_COMMIT,            /* base:1.1 + conf-commit */
+    OP_TRANS_START,
+    OP_TRANS_COMMIT,
+    OP_TRANS_ROLLBACK
 } op_method_t;
 
 

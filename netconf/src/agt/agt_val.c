@@ -3069,10 +3069,9 @@ static status_t
 * RETURNS:
 *   status
 *********************************************************************/
-static status_t
-    attempt_rollback (ses_cb_t  *scb,
-                      rpc_msg_t  *msg,
-                      cfg_template_t *target)
+status_t attempt_rollback (ses_cb_t  *scb,
+                           rpc_msg_t  *msg,
+                           cfg_template_t *target)
 {
 
     status_t res = NO_ERR;

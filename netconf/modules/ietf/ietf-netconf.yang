@@ -417,6 +417,53 @@
      }
    }
 
+   rpc trans-start {
+     input {
+       container target {
+          description
+            "Particular configuration to edit.";
+
+          choice config-target {
+            mandatory true;
+
+            leaf candidate {
+              if-feature candidate;
+              type empty;
+            }
+            leaf running {
+              if-feature writable-running;
+              type empty;
+            }
+          }
+        }
+      }
+      output {
+        leaf trans-id {
+          description "new created transaction id returned";
+          type uint64;
+        }
+      }
+   }
+
+   rpc trans-commit {
+     input {
+       leaf trans-id {
+          description "transaction id for the previous edit operation";
+          type uint64;
+       }
+     }
+   }
+
+   rpc trans-rollback {
+     input {
+       leaf trans-id {
+          description "transaction id for the previous edit operation";
+          type uint64;
+       }
+     }
+   }
+
+
    rpc edit-config {
      description
        "The 'edit-config' operation loads all or part of a specified
@@ -424,6 +471,10 @@
      reference "RFC XXXX, section 7.2.";
 
      input {
+       leaf trans-id {
+         description "transaction id for the edit operation";
+         type uint64;
+       }
        container target {
          description
            "Particular configuration to edit.";

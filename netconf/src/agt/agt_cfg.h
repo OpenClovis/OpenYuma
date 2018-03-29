@@ -150,6 +150,7 @@ typedef struct agt_cfg_transaction_t_ {
 
     /* contains nodes marked as deleted by the delete_dead_nodes test */
     dlq_hdr_t            deadnodeQ;   /* Q of agt_cfg_nodeptr_t */
+    ses_id_t             sid;
 } agt_cfg_transaction_t;
 
 
@@ -206,6 +207,8 @@ typedef struct agt_cfg_commit_test_t_ {
     uint32             testflags;  /* AGT_TEST_FL_FOO bits */
 } agt_cfg_commit_test_t;
 
+
+extern agt_cfg_transaction_t* gTxcb;
 
 
 /********************************************************************
@@ -438,6 +441,9 @@ extern void
 *********************************************************************/
 extern status_t 
     agt_cfg_update_txid (void);
+
+extern cfg_transaction_id_t agt_trans_id_get(rpc_msg_t *msg);
+
 
 #ifdef __cplusplus
 }  /* end extern 'C' */

@@ -99,10 +99,23 @@ static boolean agt_rpc_init_done = FALSE;
 * INPUTS:
 *   msg == rpc_msg_t to delete
 *********************************************************************/
+#if 0
 static void
     free_msg (rpc_msg_t *msg)
 {
     agt_cfg_free_transaction(msg->rpc_txcb);
+    rpc_free_msg(msg);
+}  /* free_msg */
+#endif
+
+static void
+    free_msg (rpc_msg_t *msg, boolean freeTxb)
+{
+    if (freeTxb && msg->rpc_txcb)
+    {
+        agt_cfg_free_transaction(msg->rpc_txcb);
+        msg->rpc_txcb = NULL;
+    }
     rpc_free_msg(msg);
 }  /* free_msg */
 
@@ -912,7 +925,7 @@ static status_t
     /* setup the config file as the xmlTextReader input */
     res = xml_get_reader_from_filespec((const char *)filespec, &scb->reader);
     if (res != NO_ERR) {
-        free_msg(msg);
+        free_msg(msg,TRUE);
         agt_ses_free_dummy_session(scb);
         return res;
     }
@@ -928,7 +941,7 @@ static status_t
 
     method.qname = xml_strdup(NCX_EL_LOAD_CONFIG);
     if (method.qname == NULL) {
-        free_msg(msg);
+        free_msg(msg,TRUE);
         agt_ses_free_dummy_session(scb);
         return ERR_INTERNAL_MEM;
     }
@@ -1037,7 +1050,7 @@ static status_t
 
     /* cleanup and exit */
     xml_clean_node(&method);
-    free_msg(msg);
+    free_msg(msg,TRUE);
     agt_ses_free_dummy_session(scb);
 
     return retres;
@@ -1355,7 +1368,7 @@ void
                      get_error_string(res));
         }
         agt_ses_request_close(scb, scb->sid, SES_TR_OTHER);
-        free_msg(msg);
+        free_msg(msg,TRUE);
         return;
     }
 
@@ -1425,7 +1438,7 @@ void
     if (res != NO_ERR || res2 != NO_ERR) {
         send_rpc_reply(scb, msg);
         agt_acm_clear_msg_cache(&msg->mhdr);
-        free_msg(msg);
+        free_msg(msg,TRUE);
         return;
     }
     
@@ -1518,7 +1531,7 @@ void
         }
         send_rpc_reply(scb, msg);
         agt_acm_clear_msg_cache(&msg->mhdr);
-        free_msg(msg);
+        free_msg(msg,TRUE);
         xml_clean_node(&method);
         return;
     }
@@ -1680,7 +1693,7 @@ void
     /* cleanup and exit */
     xml_clean_node(&method);
     agt_acm_clear_msg_cache(&msg->mhdr);
-    free_msg(msg);
+    free_msg(msg,(gTxcb==NULL));
 
     print_errors();
     clear_errors();

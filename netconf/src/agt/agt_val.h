@@ -481,6 +481,10 @@ extern status_t
     agt_val_init_commit_tests (void);
 
 
+extern status_t attempt_rollback (ses_cb_t  *scb,
+                                  rpc_msg_t  *msg,
+                                  cfg_template_t *target);
+
 #ifdef __cplusplus
 }  /* end extern 'C' */
 #endif
