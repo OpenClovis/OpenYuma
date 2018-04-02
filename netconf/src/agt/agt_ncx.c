@@ -4150,7 +4150,21 @@ static status_t
                              NULL);       
             return SET_ERROR(ERR_INTERNAL_VAL);
         }
-    
+
+    cfg_template_t       *target = NULL;
+    target = cfg_get_config_id(gTxcb->cfg_id);
+    if (!target) 
+    {
+        log_error("\n%s: getting target from config_id [%d] failed",__FUNCTION__,gTxcb->cfg_id);
+        return SET_ERROR(ERR_NCX_OPERATION_FAILED);
+    }
+    msg->rpc_user1 = target;
+    res = unlock_invoke(scb,msg,methnode);
+    if (res != NO_ERR) 
+    {
+        log_error("\n%s: trans-id [%u]; sid [%d] unlock failed", __FUNCTION__,transId,(int)scb->sid);
+        return res;
+    }
     agt_cfg_free_transaction(gTxcb);
     gTxcb = NULL;
     msg->rpc_txcb = NULL;
@@ -4192,6 +4206,13 @@ static status_t
     res = attempt_rollback (scb,msg,target);
     if (res == NO_ERR)
     {
+        msg->rpc_user1 = target;
+        res = unlock_invoke(scb,msg,methnode);
+        if (res != NO_ERR) 
+        {
+            log_error("\n%s: trans-id [%u]; sid [%d] unlock failed", __FUNCTION__,transId,(int)scb->sid);
+            return res;
+        }
         agt_cfg_free_transaction(gTxcb);
         gTxcb = NULL;
         msg->rpc_txcb = NULL;
