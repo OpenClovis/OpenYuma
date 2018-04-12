@@ -880,6 +880,7 @@ static status_t
 
     /* create an RPC message header struct */
     xml_msg_init_hdr(&msghdr);
+    msghdr.acm_cache = sub->scb->acm_cache;
 
     /* check if any filtering is needed */
     if (checkfilter && sub->filterval) {

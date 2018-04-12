@@ -511,8 +511,24 @@ static status_t
             anysel = TRUE;
             continue;
         case NCX_BT_CONTAINER:
-            anycon = TRUE;
-            continue;
+            if (!isnotif)
+            {
+              anycon = TRUE;
+              continue;
+            }
+            else
+            {
+              res = process_val(msg,
+                                 scb,
+                                 getop,
+                                 isnotif,
+                                 filchild,
+                                 useval,
+                                 filptr,
+                                 &mykeepempty);
+              return res;
+            }
+
         default:
             return SET_ERROR(ERR_INTERNAL_VAL);
         }
