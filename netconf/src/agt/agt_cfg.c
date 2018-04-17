@@ -572,6 +572,15 @@ void
 
 }  /* agt_cfg_free_transaction */
 
+void agt_cfg_release_trans (ses_cb_t *scb)
+{
+    if (gTxcb && gTxcb->sid == scb->sid)
+    {
+        agt_cfg_free_transaction(gTxcb);
+        gTxcb = NULL;
+    }
+}
+
 
 /********************************************************************
 * FUNCTION agt_cfg_init_transactions

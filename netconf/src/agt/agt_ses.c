@@ -812,6 +812,7 @@ void
                                killedby);
 
     /* clear all resources and delete the session control block */
+    agt_cfg_release_trans(scb);
     agt_ses_free_session(scb);
 
 } /* agt_ses_kill_session */
