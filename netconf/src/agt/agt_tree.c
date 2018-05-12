@@ -511,24 +511,8 @@ static status_t
             anysel = TRUE;
             continue;
         case NCX_BT_CONTAINER:
-            if (!isnotif)
-            {
-              anycon = TRUE;
-              continue;
-            }
-            else
-            {
-              res = process_val(msg,
-                                 scb,
-                                 getop,
-                                 isnotif,
-                                 filchild,
-                                 useval,
-                                 filptr,
-                                 &mykeepempty);
-              return res;
-            }
-
+            anycon = TRUE;
+            continue;
         default:
             return SET_ERROR(ERR_INTERNAL_VAL);
         }
@@ -551,11 +535,11 @@ static status_t
         test = FALSE;
         for (curchild = 
                  val_first_child_qname(useval, 
-                                       filchild->nsid,
+                                       0,
                                        filchild->name);
              curchild != NULL && !test;
              curchild = val_next_child_qname(useval,
-                                             filchild->nsid,
+                                             0,
                                              filchild->name,
                                              curchild)) {
 
@@ -577,10 +561,13 @@ static status_t
         }
 
         if (!test) {
-            log_debug2("\nagt_tree_process_val: %s "
-                       "sibling set pruned; CM not found for '%s'", 
-                       filval->name, filchild->name);
-            return NO_ERR;
+            if(isnotif) return ERR_INTERNAL_VAL;
+            else {
+              log_debug2("\nagt_tree_process_val: %s "
+                         "sibling set pruned; CM not found for '%s'",
+                         filval->name, filchild->name);
+              return NO_ERR;
+            }
         }
     }
 
@@ -617,7 +604,7 @@ static status_t
         /* go through all the actual instances of 'filchild'
          * within the child nodes of 'curval'
          */
-        curchild = val_first_child_qname(useval,filchild->nsid,filchild->name);
+        curchild = val_first_child_qname(useval,0,filchild->name);
         if(curchild == NULL)
         {
           if(isnotif) return ERR_INTERNAL_VAL;
@@ -712,7 +699,7 @@ static status_t
                    }
                }
            }
-           curchild = val_next_child_qname(useval,filchild->nsid,filchild->name,curchild);
+           curchild = val_next_child_qname(useval,0,filchild->name,curchild);
            if(curchild == NULL) {
               break;
            }

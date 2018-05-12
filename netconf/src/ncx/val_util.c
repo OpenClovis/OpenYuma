@@ -110,7 +110,10 @@ boolean make_path_to_list(val_value_t **retval, char *pathoriginal)
   char path[MAX_PATH];
   char value[MAX_PATH];
   char temppath[MAX_PATH];
+  char *arraytoken[MAX_PATH];
   char* pch;
+  int numtoken = 0;
+  int lengthtoken, index;
   boolean iscontinue = true;
   len = strlen(pathoriginal);
   headpos = tailpos = 0;
@@ -191,28 +194,50 @@ boolean make_path_to_list(val_value_t **retval, char *pathoriginal)
                 iscontinue = false;
               }
               if (value == NULL) break;
-              curchild = val_first_child_qname(parentval, 0, (const xmlChar *) value);
-              if (NULL == curchild)
+              else
               {
-                tempval = val_new_value();
-                if (!tempval)
-                {
-                  val_free_value(*retval);
-                  return false;
-                }
-                val_init_from_template(tempval, ncx_get_gen_container());
-                val_set_qname(tempval, 0, (const xmlChar *) value, strlen(value));
-                val_add_child(tempval, parentval);
-                parentval = tempval;
-              } else
-              {
-                parentval = curchild;
+                lengthtoken = strlen(value);
+                arraytoken[numtoken] = (char*) malloc(lengthtoken + 1);
+                memset(arraytoken[numtoken],0,lengthtoken + 1);
+                strcpy(arraytoken[numtoken], value);
+                numtoken++;
               }
             }
             posin = tailpos;
           }
         }
       }
+    }
+  }
+  if (numtoken > 0)
+  {
+    index = 0;
+    while (index < numtoken)
+    {
+      curchild = val_first_child_qname(parentval, 0, (const xmlChar *) arraytoken[index]);
+      if (NULL == curchild)
+      {
+        tempval = val_new_value();
+        if (!tempval)
+        {
+          val_free_value(*retval);
+          return false;
+        }
+        val_init_from_template(tempval, ncx_get_gen_container());
+        val_set_qname(tempval, 0, (const xmlChar *) arraytoken[index], strlen(arraytoken[index]));
+        val_add_child(tempval, parentval);
+        parentval = tempval;
+      } else
+      {
+        parentval = curchild;
+      }
+      index++;
+    }
+    index = 0;
+    while(index < numtoken)
+    {
+      free(arraytoken[index]);
+      arraytoken[index++] = NULL;
     }
   }
   return true;

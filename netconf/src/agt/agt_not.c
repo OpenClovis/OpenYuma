@@ -901,10 +901,23 @@ static status_t
                      }
               }
         }
-        if(!haspath)
-        {
-          useval = notif->event;
-        }
+    if (!haspath)
+    {
+       useval = notif->event;
+       if (strcmp((const char*)useval->name,(const char*) "filter") != 0)
+       {
+          val_value_t*tempval = val_new_value();
+          if (!tempval)
+          {
+             log_error("\nError: malloc failed: retval");
+             return false;
+          }
+          val_init_from_template(tempval, ncx_get_gen_container());
+          val_set_qname(tempval, 0, (const xmlChar *) "filter", strlen("filter"));
+          val_add_child(useval, tempval);
+          useval = tempval;
+       }
+    }
         switch (sub->filtertyp) {
         case OP_FILTER_SUBTREE:
             filterpassed = 
