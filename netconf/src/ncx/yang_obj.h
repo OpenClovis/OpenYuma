@@ -649,11 +649,6 @@ extern status_t
                                    ncx_module_t *mod,
                                    dlq_hdr_t *datadefQ);
 
-extern status_t 
-    yang_obj_get_resolved_xpath (tk_chain_t *tkc,
-			    ncx_module_t  *mod,
-			    dlq_hdr_t *datadefQ, int* size, char** xpaths);
-
 #ifdef __cplusplus
 }  /* end extern 'C' */
 #endif

@@ -3974,8 +3974,6 @@ extern obj_xpath_ptr_t *
 extern obj_xpath_ptr_t *
     obj_next_xpath_ptr (obj_xpath_ptr_t *xptr);
 
-extern obj_template_t* obj_new_blank_template();
-
 
 #ifdef __cplusplus
 }  /* end extern 'C' */

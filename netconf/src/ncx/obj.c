@@ -12029,9 +12029,6 @@ obj_xpath_ptr_t *
 
 }  /* obj_next_iffeature_ptr */
 
-obj_template_t* obj_new_blank_template()
-{
-	return new_blank_template();
-}
+
 
 /* END obj.c */

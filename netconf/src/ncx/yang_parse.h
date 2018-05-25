@@ -97,9 +97,6 @@ extern status_t
 			      yang_parsetype_t ptyp,
                               boolean isyang);
 
-extern status_t yang_parse_load_yang_module(const xmlChar  *filespec,
-                       tk_chain_t     **tkc);
-
 #ifdef __cplusplus
 }  /* end extern 'C' */
 #endif

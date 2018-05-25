@@ -4042,23 +4042,5 @@ status_t
 
 }  /* yang_parse_from_filespec */
 
-status_t yang_parse_load_yang_module(const xmlChar  *filespec,
-                       tk_chain_t     **tkc)
-{
-	status_t		res;
-	xmlChar        *str;
-	str = ncx_get_source(filespec, &res);
-    if ( !str || NO_ERR != res ) {
-        if ( str ) {
-            m__free( str );
-        }
-        else {
-            res = ERR_INTERNAL_MEM;
-        }
-        return res;
-    }
-	return load_yang_module(filespec, str, tkc);
-	
-}
 
 /* END file yang_parse.c */
