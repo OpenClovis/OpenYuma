@@ -965,7 +965,7 @@ static status_t
         *targval = resnode->node.valptr;
     }
 
-    free(result);
+    xpath_free_result(result);
     xpath_free_pcb(xpathpcb);
     return NO_ERR;
 }  /* find_val_node */
