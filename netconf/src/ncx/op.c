@@ -111,6 +111,8 @@ const xmlChar *
         return NCX_EL_TRANS_COMMIT;
     case OP_TRANS_ROLLBACK:
         return NCX_EL_TRANS_ROLLBACK;
+    case OP_ACTION:
+           return NCX_EL_ACTION;
     default:
         return NCX_EL_ILLEGAL;
     }

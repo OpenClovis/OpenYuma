@@ -274,7 +274,8 @@ void
         ? FALSE : TRUE;
 
     if (obj->objtype == OBJ_TYP_RPCIO || 
-        obj->objtype == OBJ_TYP_RPC) {
+        obj->objtype == OBJ_TYP_RPC ||
+        obj->objtype == OBJ_TYP_ACTION) {
         help_write_lines(obj_get_name(obj), indent, TRUE);
         count = 0;
     } else if (obj->objtype == OBJ_TYP_CASE) {
@@ -296,6 +297,7 @@ void
     case OBJ_TYP_CASE:
     case OBJ_TYP_RPC:
     case OBJ_TYP_RPCIO:
+    case OBJ_TYP_ACTION:
     case OBJ_TYP_NOTIF:
         break;
     default:
@@ -332,7 +334,7 @@ void
         if (val != NULL) {
             switch (mode) {
             case HELP_MODE_BRIEF:
-                if (obj->objtype == OBJ_TYP_RPC || 
+                if (obj->objtype == OBJ_TYP_RPC || obj->objtype == OBJ_TYP_ACTION ||
                     obj->objtype == OBJ_TYP_NOTIF) {
                     help_write_lines_max(val, 
                                          indent+NCX_DEF_INDENT,
@@ -606,6 +608,24 @@ void
                           mode, 
                           nestlevel,
                           indent+NCX_DEF_INDENT);
+        break;
+    case OBJ_TYP_ACTION:
+        testobj = obj_find_child(obj, NULL, YANG_K_INPUT);
+        if (testobj && obj_enabled_child_count(testobj)) {
+            obj_dump_template(testobj,
+                              mode,
+                              nestlevel,
+                              indent+NCX_DEF_INDENT);
+        }
+
+        testobj = obj_find_child(obj, NULL, YANG_K_OUTPUT);
+        if (testobj && obj_enabled_child_count(testobj)) {
+            obj_dump_template(testobj,
+                              mode,
+                              nestlevel,
+                              indent+NCX_DEF_INDENT);
+        }
+        help_write_lines((const xmlChar *)"\n", 0, FALSE);
         break;
     case OBJ_TYP_NOTIF:
         obj_dump_datadefQ(obj_get_datadefQ(obj),

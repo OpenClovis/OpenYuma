@@ -852,7 +852,7 @@ static void
     for (rpc = (obj_template_t *)dlq_firstEntry(&mod->datadefQ);
          rpc != NULL;
          rpc = (obj_template_t *)dlq_nextEntry(rpc)) {
-        if (rpc->objtype != OBJ_TYP_RPC) {
+        if (rpc->objtype != OBJ_TYP_RPC && rpc->objtype != OBJ_TYP_ACTION) {
             continue;
         }
         if (match) {
@@ -1697,7 +1697,39 @@ grp_template_t *
 }   /* ncx_find_grouping_que */
 
 // ----------------------------------------------------------------------------!
+/**
+ * \fn ncx_find_action
+ * \brief Check if a rpc_template_t in the mod->rpcQ
+ * \param mod ncx_module to check
+ * \param actionname ACTION name
+ * \return pointer to struct if present, NULL otherwise
+ */
+obj_template_t *
+    ncx_find_action (const xmlChar *actionname,dlq_hdr_t* datadefQ)
+{
+    obj_template_t *rpc;
+    obj_template_t *rpcret;
+    assert ( actionname && " param actionname is NULL" );
+    for (rpc = (obj_template_t *)dlq_firstEntry(datadefQ);
+         rpc != NULL;
+         rpc = (obj_template_t *)dlq_nextEntry(rpc)) {
+        if (rpc->objtype == OBJ_TYP_ACTION) {
+            if (!xml_strcmp(obj_get_name(rpc), actionname)) {
+                return rpc;
+            }
+        }else if(rpc->objtype == OBJ_TYP_CONTAINER)
+        {
+          rpcret = ncx_find_action(actionname, rpc->def.container->datadefQ);
+          if(rpcret != NULL) return rpcret;
+        }else if(rpc->objtype == OBJ_TYP_LIST)
+        {
+          rpcret = ncx_find_action(actionname, rpc->def.list->datadefQ);
+          if(rpcret != NULL) return rpcret;
+        }
+    }
+    return NULL;
 
+}   /* ncx_find_action */
 /**
  * \fn ncx_find_rpc
  * \brief Check if a rpc_template_t in the mod->rpcQ
@@ -1710,7 +1742,7 @@ obj_template_t *
                   const xmlChar *rpcname)
 {
     obj_template_t *rpc;
-
+    obj_template_t *rpcret;
     assert ( mod && " param mod is NULL" );
     assert ( rpcname && " param rpcname is NULL" );
 
@@ -1721,6 +1753,14 @@ obj_template_t *
             if (!xml_strcmp(obj_get_name(rpc), rpcname)) {
                 return rpc;
             }
+        }else if(rpc->objtype == OBJ_TYP_CONTAINER)
+        {
+          rpcret = ncx_find_action(rpcname, rpc->def.container->datadefQ);
+          if(rpcret != NULL) return rpcret;
+        }else if(rpc->objtype == OBJ_TYP_LIST)
+        {
+          rpcret = ncx_find_action(rpcname, rpc->def.list->datadefQ);
+          if(rpcret != NULL) return rpcret;
         }
     }
     return NULL;
@@ -1759,7 +1799,7 @@ obj_template_t *
     for (rpc = (obj_template_t *)dlq_firstEntry(&mod->datadefQ);
          rpc != NULL;
          rpc = (obj_template_t *)dlq_nextEntry(rpc)) {
-        if (rpc->objtype == OBJ_TYP_RPC) {
+        if (rpc->objtype == OBJ_TYP_RPC ||rpc->objtype == OBJ_TYP_ACTION) {
             if (!xml_strncmp(obj_get_name(rpc), rpcname, len)) {
                 if (firstfound == NULL) {
                     firstfound = rpc;

@@ -70,7 +70,8 @@ typedef enum op_method_t_ {
     OP_CANCEL_COMMIT,            /* base:1.1 + conf-commit */
     OP_TRANS_START,
     OP_TRANS_COMMIT,
-    OP_TRANS_ROLLBACK
+    OP_TRANS_ROLLBACK,
+    OP_ACTION
 } op_method_t;
 
 

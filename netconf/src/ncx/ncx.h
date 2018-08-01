@@ -350,7 +350,19 @@ extern grp_template_t *
     ncx_find_grouping_que (const dlq_hdr_t *groupingQ,
 			   const xmlChar *grpname);
 
-
+/********************************************************************
+* FUNCTION ncx_find_action
+*
+* Check if a rpc_template_t in the mod->rpcQ
+*
+* INPUTS:
+*   mod == ncx_module to check
+*   actionname == ACTION name
+* RETURNS:
+*  pointer to struct if present, NULL otherwise
+*********************************************************************/
+extern obj_template_t *
+ncx_find_action (const xmlChar *actionname, dlq_hdr_t* datadefQ);
 /********************************************************************
 * FUNCTION ncx_find_rpc
 *

@@ -965,7 +965,7 @@ static status_t
         *targval = resnode->node.valptr;
     }
 
-    free(result);
+    xpath_free_result(result);
     xpath_free_pcb(xpathpcb);
     return NO_ERR;
 }  /* find_val_node */
@@ -1401,6 +1401,7 @@ static status_t
         case OBJ_TYP_CASE:
         case OBJ_TYP_RPC:
         case OBJ_TYP_RPCIO:
+        case OBJ_TYP_ACTION:
         case OBJ_TYP_NOTIF:
             curobj = obj_find_child(curobj, usemod->name, name);
             if (!curobj) {
@@ -1857,7 +1858,7 @@ static status_t
              * this code will not be reached for a custom RPC
              * if dataonly is set to TRUE above
              */
-            if (targobj->objtype == OBJ_TYP_RPC) {
+            if (targobj->objtype == OBJ_TYP_RPC ||targobj->objtype == OBJ_TYP_ACTION) {
                 targobj = obj_find_child(targobj, 
                                          NULL, 
                                          YANG_K_INPUT);

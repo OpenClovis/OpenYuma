@@ -554,6 +554,11 @@ typedef enum ncx_protocol_t_ {
     NCX_PROTO_NETCONF11       /* RFC xxxx base:1.1 */
 } ncx_protocol_t;
 
+typedef enum ncx_yang_version_t_ {
+    NCX_YANG_VERSION10,
+    NCX_YANG_VERSION11
+} ncx_yang_version_t;
+
 
 /* YANG feature entry */
 typedef struct ncx_feature_t_ {
@@ -640,7 +645,7 @@ typedef struct ncx_module_t_ {
     const xmlChar    *belongsver;    /* back ptr to mod ver */
 
     xmlns_id_t        nsid;            /* assigned by xmlns */
-    uint32            langver;
+    ncx_yang_version_t langver;
     boolean           ismod;     /* module/submodule keyword */
     boolean           stmtmode;       /* T: save yang_stmt_t */
     boolean           added;         /* T: don't free on err */
@@ -674,6 +679,9 @@ typedef struct ncx_module_t_ {
     dlq_hdr_t         incchainQ;   /* used if parent == NULL */
 
     ncx_list_t        devmodlist;     /* for deviations list */
+
+   /* yang-library conformance-type {implement,import} */
+   boolean implemented;
 
 } ncx_module_t;
 

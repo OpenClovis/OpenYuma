@@ -236,11 +236,11 @@ static status_t
             if (res != NO_ERR) {
                 retres = res;
             } else {
-                if (xml_strcmp(TK_CUR_VAL(tkc), YANG_VERSION_STR)) {
+                if (xml_strcmp(TK_CUR_VAL(tkc), YANG_VERSION10_STR)) {
                     retres = ERR_NCX_WRONG_VERSION;
                     ncx_print_errormsg(tkc, mod, retres);
                 } else if (!mod->langver) {
-                    mod->langver = YANG_VERSION_NUM;
+                    mod->langver = NCX_YANG_VERSION10;
                 }
             }
             if (str) {
@@ -1226,11 +1226,11 @@ static status_t
                     return res;
                 }
             } else {
-                if (xml_strcmp(TK_CUR_VAL(tkc), YANG_VERSION_STR)) {
+                if (xml_strcmp(TK_CUR_VAL(tkc), YANG_VERSION10_STR)) {
                     retres = ERR_NCX_WRONG_VERSION;
                     ncx_print_errormsg(tkc, mod, retres);
                 } else {
-                    mod->langver = YANG_VERSION_NUM;
+                    mod->langver = NCX_YANG_VERSION10;
                 }
             }
 

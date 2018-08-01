@@ -2255,6 +2255,12 @@ static boolean
             return FALSE;
         }
         break;
+    case OBJ_TYP_ACTION:
+        /* no real setting for this, but has to be true
+         * to allow rpc/input to be true
+         */
+        *setflag = FALSE;
+        return TRUE;
     case OBJ_TYP_NOTIF:
         *setflag = FALSE;
         return FALSE;
@@ -3503,7 +3509,7 @@ static boolean obj_rpc_has_input_or_output( obj_template_t *obj,
                                             const xmlChar* chkParam )
 {
     assert(obj && "obj is NULL" );
-    if (obj->objtype != OBJ_TYP_RPC) {
+    if (obj->objtype != OBJ_TYP_RPC && obj->objtype != OBJ_TYP_ACTION) {
         return FALSE;
     }
 
@@ -3917,6 +3923,10 @@ obj_template_t* obj_new_template( obj_type_t objtype )
         obj->def.rpcio = new_rpcio();
         break;
 
+    case OBJ_TYP_ACTION:
+        obj->def.rpc = new_rpc();
+        break;
+
     case OBJ_TYP_NOTIF:
         obj->def.notif = new_notif();
         break;
@@ -4009,6 +4019,10 @@ void obj_free_template( obj_template_t *obj )
 
     case OBJ_TYP_RPCIO:
         free_rpcio(obj->def.rpcio);
+        break;
+
+    case OBJ_TYP_ACTION:
+        free_rpc(obj->def.rpc);
         break;
 
     case OBJ_TYP_NOTIF:
@@ -6039,6 +6053,9 @@ typ_template_t *
     case OBJ_TYP_RPCIO:
         que = &obj->def.rpcio->typedefQ;
         break;
+    case OBJ_TYP_ACTION:
+         que = &obj->def.rpc->typedefQ;
+         break;
     case OBJ_TYP_NOTIF:
         que = &obj->def.notif->typedefQ;
         break;
@@ -6111,6 +6128,9 @@ typ_template_t *
         break;
     case OBJ_TYP_RPCIO:
         que = &obj->def.rpcio->typedefQ;
+        break;
+    case OBJ_TYP_ACTION:
+        que = &obj->def.rpc->typedefQ;
         break;
     case OBJ_TYP_NOTIF:
         que = &obj->def.notif->typedefQ;
@@ -6202,6 +6222,9 @@ grp_template_t *
     case OBJ_TYP_RPCIO:
         que = &obj->def.rpcio->groupingQ;
         break;
+    case OBJ_TYP_ACTION:
+        que = &obj->def.rpc->groupingQ;
+        break;
     case OBJ_TYP_NOTIF:
         que = &obj->def.notif->groupingQ;
         break;
@@ -6274,6 +6297,9 @@ grp_template_t *
         break;
     case OBJ_TYP_RPCIO:
         que = &obj->def.rpcio->groupingQ;
+        break;
+    case OBJ_TYP_ACTION:
+        que = &obj->def.rpc->groupingQ;
         break;
     case OBJ_TYP_NOTIF:
         que = &obj->def.notif->groupingQ;
@@ -7382,7 +7408,7 @@ boolean
     for (obj = (const obj_template_t *)dlq_firstEntry(datadefQ);
          obj != NULL;
          obj = (const obj_template_t *)dlq_nextEntry(obj)) {
-        if (obj->objtype == OBJ_TYP_RPC) {
+        if (obj->objtype == OBJ_TYP_RPC || obj->objtype == OBJ_TYP_ACTION) {
             return TRUE;
         }
     }
@@ -7982,6 +8008,8 @@ const xmlChar *
         return obj->def.rpc->name;
     case OBJ_TYP_RPCIO:
         return obj->def.rpcio->name;
+    case OBJ_TYP_ACTION:
+        return obj->def.rpc->name;
     case OBJ_TYP_NOTIF:
         return obj->def.notif->name;
     case OBJ_TYP_NONE:
@@ -8054,6 +8082,9 @@ status_t
     case OBJ_TYP_RPCIO:
         namevar = &obj->def.rpcio->name;
         break;
+    case OBJ_TYP_ACTION:
+         namevar = &obj->def.rpc->name;
+         break;
     case OBJ_TYP_NOTIF:
         namevar = &obj->def.notif->name;
         break;
@@ -8122,6 +8153,7 @@ boolean
         return FALSE;
     case OBJ_TYP_RPC:
     case OBJ_TYP_RPCIO:
+    case OBJ_TYP_ACTION:
     case OBJ_TYP_NOTIF:
         return TRUE;
     case OBJ_TYP_NONE:
@@ -8215,6 +8247,8 @@ ncx_status_t
     case OBJ_TYP_RPCIO:
         return (obj->parent) ?
             obj_get_status(obj->parent) : NCX_STATUS_CURRENT;
+    case OBJ_TYP_ACTION:
+         return obj->def.rpc->status;
     case OBJ_TYP_NOTIF:
         return obj->def.notif->status;
     case OBJ_TYP_NONE:
@@ -8272,6 +8306,8 @@ const xmlChar *
         return obj->def.rpc->descr;
     case OBJ_TYP_RPCIO:
         return NULL;
+    case OBJ_TYP_ACTION:
+        return obj->def.rpc->descr;
     case OBJ_TYP_NOTIF:
         return obj->def.notif->descr;
     case OBJ_TYP_NONE:
@@ -8378,6 +8414,8 @@ const void *
         return &obj->def.rpc->descr;
     case OBJ_TYP_RPCIO:
         return NULL;
+    case OBJ_TYP_ACTION:
+        return &obj->def.rpc->descr;
     case OBJ_TYP_NOTIF:
         return &obj->def.notif->descr;
     case OBJ_TYP_NONE:
@@ -8435,6 +8473,8 @@ const xmlChar *
         return obj->def.rpc->ref;
     case OBJ_TYP_RPCIO:
         return NULL;
+    case OBJ_TYP_ACTION:
+         return obj->def.rpc->ref;
     case OBJ_TYP_NOTIF:
         return obj->def.notif->ref;
     case OBJ_TYP_NONE:
@@ -8492,6 +8532,8 @@ const void *
         return &obj->def.rpc->ref;
     case OBJ_TYP_RPCIO:
         return NULL;
+    case OBJ_TYP_ACTION:
+         return &obj->def.rpc->ref;
     case OBJ_TYP_NOTIF:
         return &obj->def.notif->ref;
     case OBJ_TYP_NONE:
@@ -8733,6 +8775,8 @@ const xmlChar *
         return YANG_K_RPC;
     case OBJ_TYP_RPCIO:
         return YANG_K_CONTAINER;
+    case OBJ_TYP_ACTION:
+        return YANG_K_RPC;
     case OBJ_TYP_NOTIF:
         return YANG_K_NOTIFICATION;
     case OBJ_TYP_NONE:
@@ -8789,6 +8833,8 @@ dlq_hdr_t *
         return &obj->def.rpc->datadefQ;
     case OBJ_TYP_RPCIO:
         return &obj->def.rpcio->datadefQ;
+    case OBJ_TYP_ACTION:
+        return &obj->def.rpc->datadefQ;
     case OBJ_TYP_NOTIF:
         return &obj->def.notif->datadefQ;
     default:
@@ -8843,6 +8889,8 @@ const dlq_hdr_t *
         return &obj->def.rpc->datadefQ;
     case OBJ_TYP_RPCIO:
         return &obj->def.rpcio->datadefQ;
+    case OBJ_TYP_ACTION:
+         return &obj->def.rpc->datadefQ;
     case OBJ_TYP_NOTIF:
         return &obj->def.notif->datadefQ;
     default:
@@ -9009,6 +9057,11 @@ boolean
         groupingQ = &obj->def.rpcio->groupingQ;
         datadefQ = &obj->def.rpcio->datadefQ;
         break;
+    case OBJ_TYP_ACTION:
+        typedefQ = &obj->def.rpc->typedefQ;
+        groupingQ = &obj->def.rpc->groupingQ;
+        datadefQ = &obj->def.rpc->datadefQ;
+        break;
     case OBJ_TYP_NOTIF:
         typedefQ = &obj->def.notif->typedefQ;
         groupingQ = &obj->def.notif->groupingQ;
@@ -9130,6 +9183,8 @@ ncx_btype_t
     case OBJ_TYP_RPC:
         return NCX_BT_CONTAINER;
     case OBJ_TYP_RPCIO:
+        return NCX_BT_CONTAINER;
+    case OBJ_TYP_ACTION:
         return NCX_BT_CONTAINER;
     case OBJ_TYP_NOTIF:
         return NCX_BT_CONTAINER;
@@ -9460,6 +9515,7 @@ ncx_iqual_t
         ret = NCX_IQUAL_ZMORE;
         break;
     case OBJ_TYP_RPC:
+    case OBJ_TYP_ACTION:
     case OBJ_TYP_NOTIF:
         ret = NCX_IQUAL_ONE;
         break;
@@ -9872,6 +9928,7 @@ obj_template_t *
     case OBJ_TYP_AUGMENT:
     case OBJ_TYP_REFINE:
     case OBJ_TYP_RPC:
+    case OBJ_TYP_ACTION:
     case OBJ_TYP_ANYXML:
         return NULL;
     case OBJ_TYP_RPCIO:
@@ -9969,6 +10026,11 @@ boolean
         } else {
             return FALSE;
         }
+    case OBJ_TYP_ACTION:
+        /* no real setting for this, but has to be true
+         * to allow rpc/input to be true
+         */
+        return TRUE;
     case OBJ_TYP_NOTIF:
         return FALSE;
     case OBJ_TYP_NONE:
@@ -10059,6 +10121,11 @@ boolean
         } else {
             return FALSE;
         }
+    case OBJ_TYP_ACTION:
+        /* no real setting for this, but has to be true
+         * to allow rpc/input to be true
+         */
+        return TRUE;
     case OBJ_TYP_NOTIF:
         return FALSE;
     case OBJ_TYP_NONE:
@@ -10214,7 +10281,6 @@ boolean obj_is_mandatory (obj_template_t *obj)
             }
         }
         return FALSE;
-
     case OBJ_TYP_LEAF:
         if (obj_is_key(obj)) {
             return TRUE;
@@ -10231,6 +10297,7 @@ boolean obj_is_mandatory (obj_template_t *obj)
     case OBJ_TYP_AUGMENT:
     case OBJ_TYP_REFINE:
     case OBJ_TYP_RPC:
+    case OBJ_TYP_ACTION:
     case OBJ_TYP_NOTIF:
         return FALSE;
     case OBJ_TYP_NONE:
@@ -10275,6 +10342,7 @@ boolean obj_is_mandatory_when_ex (obj_template_t *obj, boolean config_only)
         }
         return FALSE;
 
+
     case OBJ_TYP_LEAF:
         if (obj_is_key(obj)) {
             return TRUE;
@@ -10300,6 +10368,7 @@ boolean obj_is_mandatory_when_ex (obj_template_t *obj, boolean config_only)
     case OBJ_TYP_AUGMENT:
     case OBJ_TYP_REFINE:
     case OBJ_TYP_RPC:
+    case OBJ_TYP_ACTION:
     case OBJ_TYP_NOTIF:
         return FALSE;
     case OBJ_TYP_NONE:
@@ -10377,6 +10446,7 @@ boolean obj_is_data (const obj_template_t *obj)
 
     switch (obj->objtype) {
     case OBJ_TYP_RPC:
+    case OBJ_TYP_ACTION:
     case OBJ_TYP_NOTIF:
         return FALSE;
     case OBJ_TYP_RPCIO:
@@ -10411,6 +10481,7 @@ boolean obj_is_data_db (const obj_template_t *obj)
 
     switch (obj->objtype) {
     case OBJ_TYP_RPC:
+    case OBJ_TYP_ACTION:
     case OBJ_TYP_NOTIF:
         return FALSE;
     case OBJ_TYP_RPCIO:
@@ -10443,6 +10514,7 @@ boolean obj_in_rpc (const obj_template_t *obj)
 
     switch (obj->objtype) {
     case OBJ_TYP_RPC:
+    case OBJ_TYP_ACTION:
     case OBJ_TYP_NOTIF:
         return FALSE;
     case OBJ_TYP_RPCIO:
@@ -10474,6 +10546,7 @@ boolean obj_in_rpc_reply (const obj_template_t *obj)
 
     switch (obj->objtype) {
     case OBJ_TYP_RPC:
+    case OBJ_TYP_ACTION:
     case OBJ_TYP_NOTIF:
         return FALSE;
     case OBJ_TYP_RPCIO:
@@ -10507,6 +10580,7 @@ boolean obj_in_notif (const obj_template_t *obj)
 
     switch (obj->objtype) {
     case OBJ_TYP_RPC:
+    case OBJ_TYP_ACTION:
         return FALSE;
     case OBJ_TYP_NOTIF:
         return TRUE;
@@ -10534,7 +10608,7 @@ boolean obj_in_notif (const obj_template_t *obj)
 boolean obj_is_rpc (const obj_template_t *obj)
 {
     assert(obj && "obj is NULL" );
-    return (obj->objtype == OBJ_TYP_RPC) ? TRUE : FALSE;
+    return (obj->objtype == OBJ_TYP_RPC||obj->objtype == OBJ_TYP_ACTION) ? TRUE : FALSE;
 }  /* obj_is_rpc */
 
 

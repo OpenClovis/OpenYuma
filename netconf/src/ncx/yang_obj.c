@@ -291,6 +291,13 @@ static status_t
                         tk_chain_t *tkc,
                         ncx_module_t *mod,
                         obj_template_t *obj);
+static status_t
+    consume_action (yang_pcb_t *pcb,
+                 tk_chain_t *tkc,
+                 ncx_module_t *mod,
+                 dlq_hdr_t  *que,
+                 obj_template_t *parent,
+                 grp_template_t *grp);
 
 /*************    U T I L I T Y   F U N C T I O N S    **********/
 /**
@@ -879,6 +886,8 @@ static status_t
                                      &con->ref,
                                      &ref, 
                                      &obj->appinfoQ);
+        } else if (!xml_strcmp(val, YANG_K_ACTION)) {
+          res = consume_action(pcb,tkc, mod, que, parent, grp);
         } else {
             res = yang_obj_consume_datadef(pcb,
                                            tkc,
@@ -1598,6 +1607,8 @@ static status_t
                                      &list->ref,
                                      &ref, 
                                      &obj->appinfoQ);
+        } else if (!xml_strcmp(val, YANG_K_ACTION)) {
+          res = consume_action(pcb,tkc, mod, que, parent, grp);
         } else {
             res = yang_obj_consume_datadef(pcb,
                                            tkc, 
@@ -3342,7 +3353,226 @@ static status_t
 
 }  /* consume_rpc */
 
+/********************************************************************
+* FUNCTION consume_action
+*
+* Parse the next N tokens as an action-stmt
+* Create and fill in an obj_template_t struct
+*
+* Error messages are printed by this function!!
+* Do not duplicate error messages upon error return
+*
+* Current token is the 'action' keyword
+*
+* INPUTS:
+*   pcb == parser control block to use
+*   tkc == token chain
+*   mod == module in progress
+*   que == Q to hold the obj_template_t that gets created
+*   parent == parent object or NULL if top-level
+*   grp == parent grp_template_t or NULL if not child of grp
+*
+* RETURNS:
+*   status of the operation
+*********************************************************************/
+static status_t
+    consume_action (yang_pcb_t *pcb,
+                 tk_chain_t *tkc,
+                 ncx_module_t *mod,
+                 dlq_hdr_t  *que,
+                 obj_template_t *parent,
+                 grp_template_t *grp)
+{
+    obj_template_t        *obj = NULL, *chobj = NULL;
+    const obj_template_t  *testobj = NULL;
+    obj_rpc_t             *rpc = NULL;
+    const xmlChar         *val = NULL;
+    const char            *expstr = "keyword";
+    tk_type_t              tktyp = TK_TT_NONE;
+    boolean                done = FALSE, stat = FALSE;
+    boolean                desc = FALSE, ref = FALSE;
+    status_t               res = NO_ERR, retres = NO_ERR;
+    /* Get a new obj_template_t to fill in */
+    obj = obj_new_template(OBJ_TYP_ACTION);
+    if (!obj) {
+        res = ERR_INTERNAL_MEM;
+        ncx_print_errormsg(tkc, mod, res);
+        return res;
+    }
 
+    ncx_set_error(&obj->tkerr,
+                  mod,
+                  TK_CUR_LNUM(tkc),
+                  TK_CUR_LPOS(tkc));
+
+    obj->parent = parent;
+    obj->nsid = mod->nsid;
+    obj->grp = grp;
+    if (que == &mod->datadefQ) {
+        obj->flags |= (OBJ_FL_TOP | OBJ_FL_CONFSET | OBJ_FL_CONFIG);
+    }
+
+    rpc = obj->def.rpc;
+
+    /* Get the mandatory RPC method name */
+    res = yang_consume_id_string(tkc, mod, &rpc->name);
+    CHK_OBJ_EXIT(obj, res, retres);
+    res = consume_semi_lbrace(tkc, mod, obj, &done);
+    CHK_OBJ_EXIT(obj, res, retres);
+
+    /* get the container statements and any appinfo extensions */
+    while (!done) {
+        /* get the next token */
+        res = TK_ADV(tkc);
+        if (res != NO_ERR) {
+            ncx_print_errormsg(tkc, mod, res);
+            obj_free_template(obj);
+            return res;
+        }
+
+        tktyp = TK_CUR_TYP(tkc);
+        val = TK_CUR_VAL(tkc);
+        /* check the current token type */
+        switch (tktyp) {
+        case TK_TT_NONE:
+            res = ERR_NCX_EOF;
+            ncx_print_errormsg(tkc, mod, res);
+            obj_free_template(obj);
+            return res;
+        case TK_TT_MSTRING:
+            /* vendor-specific clause found instead */
+            res = ncx_consume_appinfo(tkc, mod, &obj->appinfoQ);
+            CHK_OBJ_EXIT(obj, res, retres);
+            continue;
+        case TK_TT_RBRACE:
+            done = TRUE;
+            continue;
+        case TK_TT_TSTRING:
+            break;  /* YANG clause assumed */
+        default:
+            retres = ERR_NCX_WRONG_TKTYPE;
+            ncx_mod_exp_err(tkc, mod, retres, expstr);
+            continue;
+        }
+        /* Got a token string so check the value */
+        if (!xml_strcmp(val, YANG_K_IF_FEATURE)) {
+            res = yang_consume_iffeature(tkc,
+                                         mod,
+                                         &obj->iffeatureQ,
+                                         &obj->appinfoQ);
+        } else if (!xml_strcmp(val, YANG_K_TYPEDEF)) {
+            res = yang_typ_consume_typedef(pcb,
+                                           tkc,
+                                           mod,
+                                           &rpc->typedefQ);
+        } else if (!xml_strcmp(val, YANG_K_GROUPING)) {
+            res = yang_grp_consume_grouping(pcb,
+                                            tkc,
+                                            mod,
+                                            &rpc->groupingQ,
+                                            obj);
+        } else if (!xml_strcmp(val, YANG_K_STATUS)) {
+            res = yang_consume_status(tkc,
+                                      mod,
+                                      &rpc->status,
+                                      &stat,
+                                      &obj->appinfoQ);
+        } else if (!xml_strcmp(val, YANG_K_DESCRIPTION)) {
+            res = yang_consume_descr(tkc,
+                                     mod,
+                                     &rpc->descr,
+                                     &desc,
+                                     &obj->appinfoQ);
+        } else if (!xml_strcmp(val, YANG_K_REFERENCE)) {
+            res = yang_consume_descr(tkc,
+                                     mod,
+                                     &rpc->ref,
+                                     &ref,
+                                     &obj->appinfoQ);
+        } else if (!xml_strcmp(val, YANG_K_INPUT) ||
+                   !xml_strcmp(val, YANG_K_OUTPUT)) {
+            res = consume_rpcio(pcb,
+                                tkc,
+                                mod,
+                                &rpc->datadefQ,
+                                obj);
+        } else {
+            res = ERR_NCX_WRONG_TKVAL;
+            ncx_mod_exp_err(tkc, mod, res, expstr);
+        }
+        CHK_OBJ_EXIT(obj, res, retres);
+    }
+    /* save or delete the obj_template_t struct */
+    if (rpc->name && ncx_valid_name2(rpc->name)) {
+
+        /* make sure the rpc node has an input and output node
+         * for augment purposes
+         */
+        testobj = obj_find_child(obj, NULL, YANG_K_INPUT);
+        if (!testobj) {
+            chobj = obj_new_template(OBJ_TYP_RPCIO);
+            if (!chobj) {
+                res = ERR_INTERNAL_MEM;
+                ncx_print_errormsg(tkc, mod, res);
+                obj_free_template(obj);
+                return res;
+            }
+
+            ncx_set_error(&chobj->tkerr,
+                          mod,
+                          obj->tkerr.linenum,
+                          obj->tkerr.linepos);
+
+            chobj->parent = obj;
+
+            chobj->def.rpcio->name = xml_strdup(YANG_K_INPUT);
+            if (!chobj->def.rpcio->name) {
+                res = ERR_INTERNAL_MEM;
+                ncx_print_errormsg(tkc, mod, res);
+                obj_free_template(chobj);
+                obj_free_template(obj);
+                return res;
+            }
+            obj_set_ncx_flags(chobj);
+            dlq_enque(chobj, &obj->def.rpc->datadefQ);
+        }
+
+        testobj = obj_find_child(obj, NULL, YANG_K_OUTPUT);
+        if (!testobj) {
+            chobj = obj_new_template(OBJ_TYP_RPCIO);
+            if (!chobj) {
+                res = ERR_INTERNAL_MEM;
+                ncx_print_errormsg(tkc, mod, res);
+                obj_free_template(obj);
+                return res;
+            }
+
+            ncx_set_error(&chobj->tkerr,
+                          mod,
+                          obj->tkerr.linenum,
+                          obj->tkerr.linepos);
+
+            chobj->parent = obj;
+
+            chobj->def.rpcio->name = xml_strdup(YANG_K_OUTPUT);
+            if (!chobj->def.rpcio->name) {
+                res = ERR_INTERNAL_MEM;
+                ncx_print_errormsg(tkc, mod, res);
+                obj_free_template(chobj);
+                obj_free_template(obj);
+                return res;
+            }
+            obj_set_ncx_flags(chobj);
+            dlq_enque(chobj, &obj->def.rpc->datadefQ);
+        }
+        res = add_object(tkc, mod, que, obj);
+        CHK_EXIT(res, retres);
+    } else {
+        obj_free_template(obj);
+    }
+    return retres;
+
+}  /* consume_action */
 /********************************************************************
 * FUNCTION consume_notif
 * 
@@ -7454,7 +7684,7 @@ static status_t
                 continue;
             }
         
-            if (obj_is_mandatory(testobj)) {
+            if (testobj->tkerr.mod->langver == NCX_YANG_VERSION10 && obj_is_mandatory(testobj)) {
                 if (augextern) {
                     log_error("\nError: Mandatory object '%s' not allowed "
                               "in external augment statement",
@@ -7477,6 +7707,7 @@ static status_t
      */
     switch (targobj->objtype) {
     case OBJ_TYP_RPC:
+    case OBJ_TYP_ACTION:
         log_error("\nError: cannot augment rpc node '%s'; use 'input' "
                   "or 'output' instead", 
                   obj_get_name(targobj));
@@ -7490,6 +7721,7 @@ static status_t
             switch (testobj->objtype) {
             case OBJ_TYP_RPC:
             case OBJ_TYP_RPCIO:
+            case OBJ_TYP_ACTION:
             case OBJ_TYP_NOTIF:
             case OBJ_TYP_CHOICE:
                 log_error("\nError: invalid %s '%s' augmenting choice node",
@@ -7525,6 +7757,7 @@ static status_t
             switch (testobj->objtype) {
             case OBJ_TYP_RPC:
             case OBJ_TYP_RPCIO:
+            case OBJ_TYP_ACTION:
             case OBJ_TYP_NOTIF:
             case OBJ_TYP_CASE:
                 log_error("\nError: invalid %s '%s' augmenting data node",
@@ -7566,7 +7799,7 @@ static status_t
         /* Move the must statements */
         xpath_pcb_t   *must;
         xpath_pcb_t   *must_clone;
-        must = (obj_template_t *)dlq_firstEntry(aug_mustQ);
+        must = (xpath_pcb_t *)dlq_firstEntry(aug_mustQ);
         for (; must != NULL; must = (xpath_pcb_t*)dlq_nextEntry(must)) {
             must_clone = xpath_clone_pcb(must);
             dlq_enque(must_clone, targ_mustQ);
@@ -8607,6 +8840,9 @@ static status_t
     case OBJ_TYP_RPCIO:
         res = resolve_rpcio(pcb, tkc, mod, testobj->def.rpcio, testobj, redo);
         break;
+    case OBJ_TYP_ACTION:
+        res = resolve_rpc(pcb, tkc, mod, testobj->def.rpc, testobj, redo);
+        break;
     case OBJ_TYP_NOTIF:
         res = resolve_notif(pcb, tkc, mod, testobj->def.notif, testobj, redo);
         break;
@@ -8747,6 +8983,8 @@ static status_t
             res = consume_choice(pcb, tkc, mod, que, parent, grp);
         } else if (!xml_strcmp(val, YANG_K_USES)) {
             res = consume_uses(pcb, tkc, mod, que, parent, grp);
+        } else if ((mod->langver>=NCX_YANG_VERSION11) && !xml_strcmp(val, YANG_K_ACTION)) {
+            res = consume_action(pcb, tkc, mod, que, parent, grp);
         } else {
             res = ERR_NCX_WRONG_TKVAL;
             errdone = FALSE;
@@ -9353,6 +9591,9 @@ static status_t
             break;
         case OBJ_TYP_RPCIO:
             res = resolve_xpath(tkc, mod, &testobj->def.rpcio->datadefQ);
+            break;
+        case OBJ_TYP_ACTION:
+            res = resolve_xpath(tkc, mod, &testobj->def.rpc->datadefQ);
             break;
         case OBJ_TYP_NOTIF:
             res = resolve_xpath(tkc, mod, &testobj->def.notif->datadefQ);
@@ -10178,6 +10419,16 @@ status_t
                                         &testobj->def.rpcio->datadefQ);
             CHK_EXIT(res, retres);
             break;
+        case OBJ_TYP_ACTION:
+            res = yang_grp_resolve_complete(pcb, tkc, mod,
+                                            &testobj->def.rpc->groupingQ,
+                                            testobj);
+            CHK_EXIT(res, retres);
+
+            res = yang_obj_resolve_uses(pcb, tkc, mod,
+                                        &testobj->def.rpc->datadefQ);
+            CHK_EXIT(res, retres);
+            break;
         case OBJ_TYP_NOTIF:
             res = yang_grp_resolve_complete(pcb, tkc, mod,
                                             &testobj->def.notif->groupingQ,
@@ -10628,25 +10879,44 @@ status_t
                                     &testobj->def.rpcio->groupingQ);
             }
             break;
-        case OBJ_TYP_NOTIF:
+        case OBJ_TYP_ACTION:
             if (notclone) {
                 res = 
                     yang_grp_resolve_final(pcb, tkc, mod, 
-                                           &testobj->def.notif->groupingQ);
+                                           &testobj->def.rpc->groupingQ);
                 CHK_EXIT(res, retres);
             }
 
-            res = 
-                yang_obj_resolve_final(pcb, tkc, mod, 
-                                       &testobj->def.notif->datadefQ,
-                                       ingrouping);
+            res = yang_obj_resolve_final(pcb, tkc, mod,
+                                         &testobj->def.rpc->datadefQ,
+                                         ingrouping);
 
             if (notclone) {
                 yang_check_obj_used(tkc, mod,
-                                    &testobj->def.notif->typedefQ,
-                                    &testobj->def.notif->groupingQ);
+                                    &testobj->def.rpc->typedefQ,
+                                    &testobj->def.rpc->groupingQ);
             }
             break;
+         case OBJ_TYP_NOTIF:
+             if (notclone) {
+                 res =
+                     yang_grp_resolve_final(pcb, tkc, mod,
+                                            &testobj->def.notif->groupingQ);
+                 CHK_EXIT(res, retres);
+             }
+
+             res =
+                 yang_obj_resolve_final(pcb, tkc, mod,
+                                        &testobj->def.notif->datadefQ,
+                                        ingrouping);
+
+             if (notclone) {
+                 yang_check_obj_used(tkc, mod,
+                                     &testobj->def.notif->typedefQ,
+                                     &testobj->def.notif->groupingQ);
+             }
+             break;
+
         case OBJ_TYP_REFINE:
             break;
         case OBJ_TYP_NONE:

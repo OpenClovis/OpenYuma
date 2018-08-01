@@ -542,6 +542,7 @@ static status_t
             }
             break;
         case OBJ_TYP_RPC:
+        case OBJ_TYP_ACTION:
         case OBJ_TYP_NOTIF:
         default:
             res = SET_ERROR(ERR_INTERNAL_VAL);
@@ -1082,6 +1083,7 @@ void
     case OBJ_TYP_CHOICE:
     case OBJ_TYP_CASE:
     case OBJ_TYP_RPC:
+    case OBJ_TYP_ACTION:
         SET_ERROR(ERR_INTERNAL_VAL);
         return;
     case OBJ_TYP_LIST:
@@ -1123,6 +1125,7 @@ void
     case OBJ_TYP_CHOICE:
     case OBJ_TYP_CASE:
     case OBJ_TYP_RPC:
+    case OBJ_TYP_ACTION:
         SET_ERROR(ERR_INTERNAL_VAL);
         break;
     case OBJ_TYP_LIST:

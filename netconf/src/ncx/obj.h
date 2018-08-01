@@ -190,6 +190,7 @@ typedef enum obj_type_t_ {
     OBJ_TYP_AUGMENT,
     OBJ_TYP_RPC,
     OBJ_TYP_RPCIO,
+    OBJ_TYP_ACTION,
     OBJ_TYP_NOTIF
 } obj_type_t;
 

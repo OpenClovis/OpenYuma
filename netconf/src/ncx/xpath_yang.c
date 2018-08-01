@@ -299,7 +299,7 @@ static obj_template_t* find_object_from_root( const xmlChar* nodename,
 
 static obj_template_t* ensure_found_object_is_rpc( obj_template_t* foundobj )
 {
-    if (foundobj && foundobj->objtype == OBJ_TYP_RPC) {
+    if (foundobj && (foundobj->objtype == OBJ_TYP_RPC || foundobj->objtype == OBJ_TYP_ACTION)) {
         return foundobj;
      }
     return NULL;
@@ -1863,7 +1863,7 @@ status_t
          * if obj is config, it can point at only config targobj
          * if obj not config, it can point at any targobj node
          */
-        if (obj_get_config_flag(obj) &&
+        if (mod && mod->langver<NCX_YANG_VERSION11 && obj_get_config_flag(obj) &&
             !obj_get_config_flag(pcb->targobj)) {
 
             doerror = TRUE;

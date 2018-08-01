@@ -190,7 +190,7 @@ static void
          rpc != NULL;
          rpc = (obj_template_t *)dlq_nextEntry(rpc)) {
 
-        if (rpc->objtype == OBJ_TYP_RPC) {
+        if (rpc->objtype == OBJ_TYP_RPC||rpc->objtype == OBJ_TYP_ACTION) {
             anyout = TRUE;
             obj_dump_template(rpc, mode, nestlevel, indent);
         }
