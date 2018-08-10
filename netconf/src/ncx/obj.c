@@ -10867,6 +10867,11 @@ boolean
 {
     assert(obj && "obj is NULL" );
 
+    if (obj->objtype == OBJ_TYP_ACTION)
+    {
+      return obj->def.rpc->supported;//use for action only
+    }
+
     if (obj->objtype != OBJ_TYP_CONTAINER) {
         return FALSE;
     }
