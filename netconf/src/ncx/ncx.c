@@ -1253,7 +1253,7 @@ ncx_module_t *
 #endif
 
     (void)memset(mod, 0x0, sizeof(ncx_module_t));
-    mod->langver = 1;
+    mod->langver = NCX_YANG_VERSION11;
     mod->defaultrev = TRUE;
     dlq_createSQue(&mod->revhistQ);
     dlq_createSQue(&mod->importQ);
