@@ -541,10 +541,12 @@ static status_t
                 }
             }
             break;
-        case OBJ_TYP_RPC:
         case OBJ_TYP_ACTION:
+	    break;
+        case OBJ_TYP_RPC:
         case OBJ_TYP_NOTIF:
         default:
+            log_error("\nHUX:invalid internal value: %s\n", obj_get_name(chobj));
             res = SET_ERROR(ERR_INTERNAL_VAL);
         }
     }
